@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>AlchemyStars.Cli</RootNamespace>
+    <AssemblyName>AlchemyStars.Cli</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AlchemyStars.Core\AlchemyStars.Core.csproj" />
+  </ItemGroup>
+</Project>
+

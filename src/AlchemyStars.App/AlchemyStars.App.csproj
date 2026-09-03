@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>AlchemyStars.App</RootNamespace>
+    <AssemblyName>Alchemy Stars</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Version>1.0.0</Version>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AlchemyStars.Core\AlchemyStars.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\..\third_party\cast\maya\cast.py" Link="maya-plugin\cast.py" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\third_party\cast\maya\castplugin.py" Link="maya-plugin\castplugin.py" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\third_party\cast\LICENSE" Link="maya-plugin\LICENSE" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
+

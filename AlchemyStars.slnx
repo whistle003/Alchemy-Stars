@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="src/AlchemyStars.Core/AlchemyStars.Core.csproj" />
+  <Project Path="src/AlchemyStars.Cli/AlchemyStars.Cli.csproj" />
+  <Project Path="src/AlchemyStars.App/AlchemyStars.App.csproj" />
+  <Project Path="tests/AlchemyStars.Tests/AlchemyStars.Tests.csproj" />
+</Solution>
+

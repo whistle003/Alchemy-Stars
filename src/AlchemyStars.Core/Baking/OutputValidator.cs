@@ -19,7 +19,8 @@ internal static class OutputValidator
         }
 
         var curves = animations[0].ChildrenOfType(CastConstants.Curve).ToArray();
-        var expectedCurveCount = checked(rig.Bones.Count * 4);
+        const int transformCurveCount = 7; // rq + tx/ty/tz + sx/sy/sz
+        var expectedCurveCount = checked(rig.Bones.Count * transformCurveCount);
         if (curves.Length != expectedCurveCount)
         {
             throw new InvalidDataException($"输出曲线数量应为 {expectedCurveCount}，实际为 {curves.Length}。");
@@ -36,7 +37,7 @@ internal static class OutputValidator
 
         foreach (var curve in curves)
         {
-            if (curve.StringProperty("m") != "absolute")
+            if (curve.StringProperty("m") != CastConstants.ModeAbsolute)
             {
                 throw new InvalidDataException("输出仍包含非绝对模式曲线，无法保证 Maya 导入结果唯一。");
             }
@@ -55,7 +56,7 @@ internal static class OutputValidator
                 throw new InvalidDataException("输出曲线包含 NaN 或 Infinity。");
             }
 
-            if (curve.StringProperty("kp") == "rq")
+            if (curve.StringProperty("kp") == CastConstants.CurveRotation)
             {
                 for (var i = 0; i < values.Length; i += 4)
                 {
@@ -76,4 +77,3 @@ internal static class OutputValidator
         }
     }
 }
-

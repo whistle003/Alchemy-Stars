@@ -10,67 +10,49 @@ public sealed class AlchemyStarsBaker
         string animationPath,
         string? additiveAnimationPath = null)
     {
-        ValidateInputPath(armsModelPath, "手臂模型");
-        ValidateInputPath(weaponModelPath, "武器模型");
-        ValidateInputPath(animationPath, "主动画");
-        if (!string.IsNullOrWhiteSpace(additiveAnimationPath))
-        {
-            ValidateInputPath(additiveAnimationPath, "Additive 动画");
-        }
-
-        var arms = CastIo.Load(armsModelPath);
-        var weapon = CastIo.Load(weaponModelPath);
-        var animation = AnimationClip.Load(CastIo.Load(animationPath), animationPath);
-        var additive = string.IsNullOrWhiteSpace(additiveAnimationPath)
-            ? null
-            : AnimationClip.Load(CastIo.Load(additiveAnimationPath), additiveAnimationPath);
-        var rig = SkeletonRig.FromModels(arms, weapon);
-        var armsNames = GetBoneNames(arms);
-        var weaponNames = GetBoneNames(weapon);
-        var missingTargets = animation.TargetNames.Where(x => !rig.TryGetIndex(x, out _)).Order().ToArray();
+        var input = LoadInputs(armsModelPath, weaponModelPath, animationPath, additiveAnimationPath);
+        var armsNames = GetBoneNames(input.Arms);
+        var weaponNames = GetBoneNames(input.Weapon);
+        var missingTargets = input.BaseClip.TargetNames
+            .Where(x => !input.Rig.TryGetIndex(x, out _))
+            .Order()
+            .ToArray();
 
         return new InputAnalysis
         {
             ArmsBoneCount = armsNames.Count,
             WeaponBoneCount = weaponNames.Count,
             SharedBoneCount = armsNames.Intersect(weaponNames, StringComparer.Ordinal).Count(),
-            CombinedBoneCount = rig.Bones.Count,
-            AnimationTargetCount = animation.TargetNames.Count,
+            CombinedBoneCount = input.Rig.Bones.Count,
+            AnimationTargetCount = input.BaseClip.TargetNames.Count,
             MissingAnimationTargetCount = missingTargets.Length,
             MissingTargets = missingTargets,
-            FrameStart = animation.FrameStart,
-            FrameEnd = animation.FrameEnd,
-            Framerate = animation.Framerate,
-            AdditiveFrameCount = additive is null ? 0 : additive.FrameEnd - additive.FrameStart + 1,
-            HasLeftHandIkChain = rig.CanSolveChain(IkChainNames.LeftHand),
-            HasRightHandIkChain = rig.CanSolveChain(IkChainNames.RightHand),
+            FrameStart = input.BaseClip.FrameStart,
+            FrameEnd = input.BaseClip.FrameEnd,
+            Framerate = input.BaseClip.Framerate,
+            AdditiveFrameCount = input.AdditiveClip is null
+                ? 0
+                : input.AdditiveClip.FrameEnd - input.AdditiveClip.FrameStart + 1,
+            HasLeftHandIkChain = input.Rig.CanSolveChain(IkChainNames.LeftHand),
+            HasRightHandIkChain = input.Rig.CanSolveChain(IkChainNames.RightHand),
         };
     }
 
     public BakeReport Bake(BakeRequest request, IProgress<int>? progress = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        ValidateInputPath(request.ArmsModelPath, "手臂模型");
-        ValidateInputPath(request.WeaponModelPath, "武器模型");
-        ValidateInputPath(request.BaseAnimationPath, "主动画");
-        if (!string.IsNullOrWhiteSpace(request.AdditiveAnimationPath))
-        {
-            ValidateInputPath(request.AdditiveAnimationPath, "Additive 动画");
-        }
-
         if (string.IsNullOrWhiteSpace(request.AnimationName))
         {
             throw new ArgumentException("输出动画名称不能为空。", nameof(request));
         }
 
         progress?.Report(2);
-        var arms = CastIo.Load(request.ArmsModelPath);
-        var weapon = CastIo.Load(request.WeaponModelPath);
-        var baseClip = AnimationClip.Load(CastIo.Load(request.BaseAnimationPath), request.BaseAnimationPath);
-        var additiveClip = string.IsNullOrWhiteSpace(request.AdditiveAnimationPath)
-            ? null
-            : AnimationClip.Load(CastIo.Load(request.AdditiveAnimationPath), request.AdditiveAnimationPath);
-        var rig = SkeletonRig.FromModels(arms, weapon);
+        var input = LoadInputs(
+            request.ArmsModelPath,
+            request.WeaponModelPath,
+            request.BaseAnimationPath,
+            request.AdditiveAnimationPath);
+        var (arms, weapon, baseClip, additiveClip, rig) = input;
         progress?.Report(10);
 
         var warnings = new List<string>();
@@ -170,6 +152,34 @@ public sealed class AlchemyStarsBaker
             .ToHashSet(StringComparer.Ordinal);
     }
 
+    private static LoadedInputs LoadInputs(
+        string armsModelPath,
+        string weaponModelPath,
+        string animationPath,
+        string? additiveAnimationPath)
+    {
+        ValidateInputPath(armsModelPath, "手臂模型");
+        ValidateInputPath(weaponModelPath, "武器模型");
+        ValidateInputPath(animationPath, "主动画");
+        if (!string.IsNullOrWhiteSpace(additiveAnimationPath))
+        {
+            ValidateInputPath(additiveAnimationPath, "Additive 动画");
+        }
+
+        var arms = CastIo.Load(armsModelPath);
+        var weapon = CastIo.Load(weaponModelPath);
+        var baseClip = AnimationClip.Load(CastIo.Load(animationPath), animationPath);
+        var additiveClip = string.IsNullOrWhiteSpace(additiveAnimationPath)
+            ? null
+            : AnimationClip.Load(CastIo.Load(additiveAnimationPath), additiveAnimationPath);
+        return new LoadedInputs(
+            arms,
+            weapon,
+            baseClip,
+            additiveClip,
+            SkeletonRig.FromModels(arms, weapon));
+    }
+
     private static void ValidateInputPath(string path, string label)
     {
         if (string.IsNullOrWhiteSpace(path))
@@ -187,4 +197,11 @@ public sealed class AlchemyStarsBaker
             throw new ArgumentException($"{label}必须是 .cast 文件：{path}", nameof(path));
         }
     }
+
+    private sealed record LoadedInputs(
+        CastDocument Arms,
+        CastDocument Weapon,
+        AnimationClip BaseClip,
+        AnimationClip? AdditiveClip,
+        SkeletonRig Rig);
 }

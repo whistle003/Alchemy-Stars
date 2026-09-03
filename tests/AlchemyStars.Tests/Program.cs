@@ -1,10 +1,13 @@
 using AlchemyStars.Core.Baking;
 using AlchemyStars.Core.Cast;
+using System.Numerics;
 
 var tests = new (string Name, Action Run)[]
 {
     ("CAST 所有属性类型可无损往返", TestPropertyRoundTrip),
     ("模型与 Additive 动画烘焙后只有一个动画", TestBakeCreatesOneAnimation),
+    ("通用动画保留缩放并解析层级曲线模式覆盖", TestScaleAndCurveModeOverride),
+    ("父级缩放参与 IK 世界坐标计算", TestScaledParentIk),
     ("用户提供的五个 CAST 文件可被分析", TestProvidedFilesWhenAvailable),
 };
 
@@ -20,6 +23,33 @@ foreach (var (name, run) in tests)
     {
         failures.Add($"{name}: {exception}");
         Console.WriteLine($"FAIL  {name}: {exception.Message}");
+    }
+}
+
+static void TestScaledParentIk()
+{
+    var arms = CreateModel("root", includeTarget: false);
+    var armsSkeleton = arms.NodesOfType(CastConstants.Skeleton).Single();
+    var rootBone = armsSkeleton.ChildrenOfType(CastConstants.Bone).Single();
+    rootBone.SetProperty(new CastProperty("s", "3v", new[] { 2f, 2f, 2f }));
+    armsSkeleton.Children.Add(CreateBone("shoulder", 0, 20, new[] { 0f, 0f, 0f }));
+    armsSkeleton.Children.Add(CreateBone("elbow", 1, 21, new[] { 1f, 0f, 0f }));
+    armsSkeleton.Children.Add(CreateBone("wrist", 2, 22, new[] { 1f, 0f, 0f }));
+
+    var weapon = CreateModel("root", includeTarget: false);
+    var weaponSkeleton = weapon.NodesOfType(CastConstants.Skeleton).Single();
+    weaponSkeleton.Children.Add(CreateBone("target", 0, 23, new[] { 1f, 1f, 0f }));
+
+    var rig = SkeletonRig.FromModels(arms, weapon);
+    var pose = new PoseFrame(rig);
+    var chain = new IkChainNames("shoulder", "elbow", "wrist", "target");
+    Equal(true, TwoBoneIkBaker.TryApply(pose, rig, chain), "缩放骨架 IK 求解");
+    rig.TryGetIndex("wrist", out var wristIndex);
+    rig.TryGetIndex("target", out var targetIndex);
+    var error = Vector3.Distance(pose.WorldPositions[wristIndex], pose.WorldPositions[targetIndex]);
+    if (error > 0.001f)
+    {
+        throw new InvalidOperationException($"缩放骨架 IK 误差过大：{error}");
     }
 }
 
@@ -107,11 +137,79 @@ static void TestBakeCreatesOneAnimation()
         var tx = animation.ChildrenOfType(CastConstants.Curve)
             .Single(x => x.StringProperty("nn") == "root" && x.StringProperty("kp") == "tx");
         SequenceEqual(new[] { 3f, 3f }, tx.Property("kv")!.GetFloats(), "Additive 位移");
-        Equal(report.BoneCount * 4, animation.ChildrenOfType(CastConstants.Curve).Count(), "每根骨骼唯一四条变换曲线");
+        Equal(report.BoneCount * 7, animation.ChildrenOfType(CastConstants.Curve).Count(), "每根骨骼唯一七条变换曲线");
     }
     finally
     {
         foreach (var path in new[] { armsPath, weaponPath, basePath, additivePath, outputPath })
+        {
+            File.Delete(path);
+        }
+    }
+}
+
+static void TestScaleAndCurveModeOverride()
+{
+    var armsPath = TemporaryCastPath();
+    var weaponPath = TemporaryCastPath();
+    var animationPath = TemporaryCastPath();
+    var outputPath = TemporaryCastPath();
+    try
+    {
+        CastIo.Save(CreateModel("root", includeTarget: false), armsPath);
+        var weapon = CreateModel("root", includeTarget: true);
+        var targetBone = weapon.NodesOfType(CastConstants.Bone)
+            .Single(x => x.StringProperty("n") == "target");
+        targetBone.SetProperty(new CastProperty("lp", "3v", new[] { 10f, 0f, 0f }));
+        targetBone.SetProperty(new CastProperty("s", "3v", new[] { 3f, 3f, 3f }));
+        CastIo.Save(weapon, weaponPath);
+
+        var animation = CreateAnimation(
+            frames: new[] { 0, 1 },
+            translation: new[] { 0f, 0f },
+            rotation: new[] { 0f, 0f, 0f, 1f, 0f, 0f, 0f, 1f });
+        var animationNode = animation.NodesOfType(CastConstants.Animation).Single();
+        animationNode.Children.Add(CreateCurve("target", CastConstants.CurveTranslateX, new[] { 0, 1 }, "f", new[] { 2f, 4f }));
+        animationNode.Children.Add(CreateCurve("target", CastConstants.CurveScaleX, new[] { 0, 1 }, "f", new[] { 2f, 2f }));
+        var modeOverride = new CastNode(CastConstants.CurveModeOverride, 99);
+        modeOverride.Properties.Add(new CastProperty("nn", "s", "root"));
+        modeOverride.Properties.Add(new CastProperty("m", "s", CastConstants.ModeRelative));
+        modeOverride.Properties.Add(new CastProperty("ot", "b", new byte[] { 1 }));
+        modeOverride.Properties.Add(new CastProperty("os", "b", new byte[] { 1 }));
+        animationNode.Children.Add(modeOverride);
+        CastIo.Save(animation, animationPath);
+
+        new AlchemyStarsBaker().Bake(new BakeRequest
+        {
+            ArmsModelPath = armsPath,
+            WeaponModelPath = weaponPath,
+            BaseAnimationPath = animationPath,
+            OutputPath = outputPath,
+            AnimationName = "generic_with_override",
+            EnableLeftHandIk = false,
+            EnableRightHandIk = false,
+        });
+
+        var outputAnimation = CastIo.Load(outputPath).NodesOfType(CastConstants.Animation).Single();
+        var curves = outputAnimation.ChildrenOfType(CastConstants.Curve).ToArray();
+        SequenceEqual(
+            new[] { 12f, 14f },
+            FindCurveValues(curves, "target", CastConstants.CurveTranslateX),
+            "CMOV 相对位移");
+        SequenceEqual(
+            new[] { 6f, 6f },
+            FindCurveValues(curves, "target", CastConstants.CurveScaleX),
+            "CMOV 相对缩放");
+        SequenceEqual(
+            new[] { 3f, 3f },
+            FindCurveValues(curves, "target", CastConstants.CurveScaleY),
+            "未动画缩放轴使用绑定值");
+        Equal(14, curves.Length, "两根骨骼的完整绝对变换曲线数");
+        Equal(true, curves.All(x => x.StringProperty("m") == CastConstants.ModeAbsolute), "全部输出曲线为绝对模式");
+    }
+    finally
+    {
+        foreach (var path in new[] { armsPath, weaponPath, animationPath, outputPath })
         {
             File.Delete(path);
         }
@@ -158,12 +256,12 @@ static CastDocument CreateModel(string rootName, bool includeTarget)
     return document;
 }
 
-static CastNode CreateBone(string name, int parentIndex, ulong hash)
+static CastNode CreateBone(string name, int parentIndex, ulong hash, float[]? position = null)
 {
     var bone = new CastNode(CastConstants.Bone, hash);
     bone.Properties.Add(new CastProperty("n", "s", name));
     bone.Properties.Add(new CastProperty("p", "i", new[] { unchecked((uint)parentIndex) }));
-    bone.Properties.Add(new CastProperty("lp", "3v", new[] { 0f, 0f, 0f }));
+    bone.Properties.Add(new CastProperty("lp", "3v", position ?? new[] { 0f, 0f, 0f }));
     bone.Properties.Add(new CastProperty("lr", "4v", new[] { 0f, 0f, 0f, 1f }));
     return bone;
 }
@@ -192,6 +290,11 @@ static CastNode CreateCurve(string name, string property, int[] frames, string v
     curve.Properties.Add(new CastProperty("m", "s", "absolute"));
     return curve;
 }
+
+static float[] FindCurveValues(IEnumerable<CastNode> curves, string nodeName, string propertyName) =>
+    curves.Single(x => x.StringProperty("nn") == nodeName && x.StringProperty("kp") == propertyName)
+        .Property("kv")!
+        .GetFloats();
 
 static string TemporaryCastPath() => Path.Combine(Path.GetTempPath(), $"alchemy-stars-test-{Guid.NewGuid():N}.cast");
 

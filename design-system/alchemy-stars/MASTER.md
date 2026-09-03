@@ -8,7 +8,7 @@
 
 **Project:** Alchemy Stars
 **Generated:** 2026-09-04 02:15:18
-**Category:** Flashcard & Study Tool
+**Category:** Native Windows 3D Content Utility
 **Design Dials:** Variance 5/10 (Balanced / Modern) | Motion 3/10 (Subtle) | Density 8/10 (Dense / Dashboard)
 
 ---
@@ -34,15 +34,10 @@
 
 ### Typography
 
-- **Heading Font:** Inter
-- **Body Font:** Inter
+- **Heading Font:** Segoe UI Variable Text (Segoe UI fallback)
+- **Body Font:** Segoe UI Variable Text (Segoe UI fallback)
 - **Mood:** dark, cinematic, technical, precision, clean, premium, developer, professional, high-end utility
-- **Google Fonts:** [Inter + Inter](https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap)
-
-**CSS Import:**
-```css
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-```
+- **Platform note:** This is an offline WPF desktop tool. Use the native Windows UI family so the self-contained build has no web-font or separately installed font dependency.
 
 ### Spacing Variables
 
@@ -222,6 +217,6 @@ Before delivering any UI code, verify:
 - [ ] Light mode: text contrast 4.5:1 minimum
 - [ ] Focus states visible for keyboard navigation
 - [ ] `prefers-reduced-motion` respected
-- [ ] Responsive: 375px, 768px, 1024px, 1440px
+- [ ] Resizable desktop layout verified at 760px, 1024px, 1260px, and 1440px widths
 - [ ] No content hidden behind fixed navbars
 - [ ] No horizontal scroll on mobile

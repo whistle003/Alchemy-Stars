@@ -12,6 +12,27 @@ import sys
 from pathlib import Path
 
 
+def is_visible(cmds, node: str) -> bool:
+    """Return whether a DAG shape and every ancestor are visible."""
+    current = node
+    while current:
+        if cmds.attributeQuery("visibility", node=current, exists=True):
+            if not bool(cmds.getAttr(f"{current}.visibility")):
+                return False
+        parents = cmds.listRelatives(current, parent=True, fullPath=True) or []
+        current = parents[0] if parents else ""
+    return True
+
+
+def top_joint(cmds, joint: str) -> str:
+    current = joint
+    while True:
+        parents = cmds.listRelatives(current, parent=True, fullPath=True, type="joint") or []
+        if not parents:
+            return current
+        current = parents[0]
+
+
 def main() -> int:
     if len(sys.argv) < 2:
         raise SystemExit("Usage: mayapy verify_cast_in_maya.py <output.cast> [scene.ma] [report.json]")
@@ -59,6 +80,7 @@ def main() -> int:
         joints = cmds.ls(type="joint", long=True) or []
         # Skin clusters create one intermediate *Orig shape per visible mesh.
         meshes = cmds.ls(type="mesh", long=True, noIntermediate=True) or []
+        visible_meshes = [mesh for mesh in meshes if is_visible(cmds, mesh)]
         animation_curves = cmds.ls(type=["animCurveTA", "animCurveTL", "animCurveTU"]) or []
         gun_roots = cmds.ls("j_gun", type="joint", long=True) or []
         wrist_keys = cmds.keyframe("j_wrist_le", attribute="rotateX", query=True, keyframeCount=True) or 0
@@ -102,11 +124,34 @@ def main() -> int:
         max_ik_error = {side: max(values) for side, values in ik_distances.items()}
         max_reach_residual = {side: max(values) for side, values in reach_residuals.items()}
 
+        expected_key_times = [float(frame) for frame in range(int(minimum), int(maximum) + 1)]
+        transform_attributes = (
+            "translateX", "translateY", "translateZ",
+            "rotateX", "rotateY", "rotateZ",
+            "scaleX", "scaleY", "scaleZ",
+        )
+        incomplete_channels = []
+        for joint in joints:
+            for attribute in transform_attributes:
+                key_times = cmds.keyframe(
+                    joint,
+                    attribute=attribute,
+                    query=True,
+                    timeChange=True,
+                ) or []
+                if [float(value) for value in key_times] != expected_key_times:
+                    incomplete_channels.append(f"{joint}.{attribute}")
+
+        skeleton_roots = sorted({top_joint(cmds, joint) for joint in joints})
+        time_unit = cmds.currentUnit(query=True, time=True)
+
         checks = {
-            "singleMergedSkeleton": len(joints) == 214 and len(gun_roots) == 1,
-            "allMeshesImported": len(meshes) == 21,
-            "animationCurvesCreated": len(animation_curves) >= 1284,
-            "wristHasEveryFrame": int(wrist_keys) == 67,
+            "maya2025": str(cmds.about(version=True)).startswith("2025"),
+            "singleMergedSkeleton": len(joints) == 214 and len(gun_roots) == 1 and len(skeleton_roots) == 1,
+            "allMeshesImportedAndVisible": len(meshes) == 21 and len(visible_meshes) == len(meshes),
+            "animationCurvesCreated": len(animation_curves) >= len(joints) * len(transform_attributes),
+            "everyTransformChannelKeyedEveryFrame": not incomplete_channels,
+            "thirtyFps": time_unit == "ntsc",
             "playbackRange": minimum == 0.0 and maximum == 66.0,
             "leftIkReachesPhysicalOptimum": all(
                 actual <= residual + 0.05
@@ -121,14 +166,18 @@ def main() -> int:
             "cast": str(cast_path),
             "jointCount": len(joints),
             "meshCount": len(meshes),
+            "visibleMeshCount": len(visible_meshes),
             "animationCurveCount": len(animation_curves),
             "jGunJointCount": len(gun_roots),
+            "skeletonRoots": skeleton_roots,
             "leftWristRotateXKeys": int(wrist_keys),
+            "incompleteTransformChannelCount": len(incomplete_channels),
+            "incompleteTransformChannelExamples": incomplete_channels[:10],
             "maximumIkPositionError": max_ik_error,
             "maximumTheoreticalReachResidual": max_reach_residual,
             "frameZeroChains": chain_samples,
             "playbackRange": [minimum, maximum],
-            "timeUnit": cmds.currentUnit(query=True, time=True),
+            "timeUnit": time_unit,
             "headlessMaterialImportSkipped": True,
             "checks": checks,
             "passed": all(checks.values()),

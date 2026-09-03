@@ -11,6 +11,7 @@ internal sealed class PoseFrame
         Scales = rig.Bones.Select(static x => x.RestScale).ToArray();
         WorldPositions = new Vector3[rig.Bones.Count];
         WorldRotations = new Quaternion[rig.Bones.Count];
+        WorldMatrices = new Matrix4x4[rig.Bones.Count];
         RecalculateWorld(rig);
     }
 
@@ -19,6 +20,7 @@ internal sealed class PoseFrame
     public Vector3[] Scales { get; }
     public Vector3[] WorldPositions { get; }
     public Quaternion[] WorldRotations { get; }
+    public Matrix4x4[] WorldMatrices { get; }
 
     public void RecalculateWorld(SkeletonRig rig)
     {
@@ -27,17 +29,21 @@ internal sealed class PoseFrame
             var parentIndex = rig.Bones[i].ParentIndex;
             var localRotation = SkeletonRig.NormalizeSafe(Rotations[i]);
             Rotations[i] = localRotation;
+            var localMatrix = Matrix4x4.CreateScale(Scales[i])
+                * Matrix4x4.CreateFromQuaternion(localRotation)
+                * Matrix4x4.CreateTranslation(Positions[i]);
 
             if (parentIndex < 0)
             {
-                WorldPositions[i] = Positions[i];
+                WorldMatrices[i] = localMatrix;
+                WorldPositions[i] = localMatrix.Translation;
                 WorldRotations[i] = localRotation;
                 continue;
             }
 
-            WorldPositions[i] = Vector3.Transform(Positions[i], WorldRotations[parentIndex]) + WorldPositions[parentIndex];
+            WorldMatrices[i] = localMatrix * WorldMatrices[parentIndex];
+            WorldPositions[i] = WorldMatrices[i].Translation;
             WorldRotations[i] = SkeletonRig.NormalizeSafe(WorldRotations[parentIndex] * localRotation);
         }
     }
 }
-

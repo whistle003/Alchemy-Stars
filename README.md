@@ -39,7 +39,7 @@ Alchemy Stars 是一个面向 Windows 与 Autodesk Maya 2025 的 CAST 模型/动
 
 - 模型与动画保存在同一个 CAST v1 文件；
 - 恰好一个 Animation 节点；
-- 每个合并骨骼只有一组 `rq/tx/ty/tz` 曲线；
+- 每个合并骨骼只有一组完整的 `rq/tx/ty/tz/sx/sy/sz` 曲线；
 - 所有曲线为 `absolute`，不依赖 Maya 中已有动画或导入顺序；
 - 所有节点哈希唯一，帧范围一致，四元数有限且归一化；
 - Additive 层在每帧采样后烘焙，不作为第二个动画保留；
@@ -50,6 +50,7 @@ Alchemy Stars 是一个面向 Windows 与 Autodesk Maya 2025 的 CAST 模型/动
 ## 其他动画
 
 “Idle 单动画”预设会使用 Idle 文件作为主动画并关闭偏移层。也可以把任何含一个 Animation 节点的 CAST 放入“冲刺循环”输入框，将它作为通用主动画处理；偏移层可留空。
+通用动画的平移、旋转、缩放以及层级 `CMOV` 模式覆盖都会在程序内解析，最终统一烘焙为绝对曲线。
 
 命令行版本支持自动化：
 
@@ -87,4 +88,3 @@ dotnet run --project .\src\AlchemyStars.Cli -- bake `
 ## 设计与来源
 
 处理流程借鉴了 [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist) 的逐帧 Additive/IK 烘焙思路；CAST 格式依据 [dtzxporter/cast](https://github.com/dtzxporter/cast) 的公开规范独立实现。项目没有链接 Alchemist 或 RedFox 代码。随包分发的官方 CAST Python/Maya 插件采用 MIT 许可，详见 `THIRD_PARTY_NOTICES.md` 与 `third_party/cast/LICENSE`。
-

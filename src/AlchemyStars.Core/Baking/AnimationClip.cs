@@ -5,10 +5,14 @@ namespace AlchemyStars.Core.Baking;
 
 internal sealed class AnimationClip
 {
-    private AnimationClip(CastNode sourceNode, IReadOnlyList<CurveTrack> tracks)
+    private AnimationClip(
+        CastNode sourceNode,
+        IReadOnlyList<CurveTrack> tracks,
+        IReadOnlyList<CurveModeOverride> modeOverrides)
     {
         SourceNode = sourceNode;
         Tracks = tracks;
+        ModeOverrides = modeOverrides;
         Framerate = sourceNode.Property("fr")?.GetFloats().FirstOrDefault() ?? 30f;
         Looping = sourceNode.Property("lo")?.GetBytes().FirstOrDefault() > 0;
 
@@ -19,6 +23,7 @@ internal sealed class AnimationClip
 
     public CastNode SourceNode { get; }
     public IReadOnlyList<CurveTrack> Tracks { get; }
+    public IReadOnlyList<CurveModeOverride> ModeOverrides { get; }
     public float Framerate { get; }
     public bool Looping { get; }
     public int FrameStart { get; }
@@ -53,7 +58,11 @@ internal sealed class AnimationClip
             throw new InvalidDataException($"动画存在重复曲线：{string.Join(", ", duplicates.Take(8))}");
         }
 
-        return new AnimationClip(animation, tracks);
+        var modeOverrides = animation.ChildrenOfType(CastConstants.CurveModeOverride)
+            .Select(CurveModeOverride.FromNode)
+            .ToArray();
+
+        return new AnimationClip(animation, tracks, modeOverrides);
     }
 
     public void Apply(PoseFrame pose, SkeletonRig rig, float frame, bool forceAdditive)
@@ -65,41 +74,78 @@ internal sealed class AnimationClip
                 continue;
             }
 
-            var mode = forceAdditive ? "additive" : track.Mode;
+            var mode = forceAdditive
+                ? CastConstants.ModeAdditive
+                : ResolveMode(track, rig, index);
             var weight = Math.Clamp(track.AdditiveBlendWeight, 0f, 1f);
 
             switch (track.PropertyName)
             {
-                case "rq":
+                case CastConstants.CurveRotation:
                 {
                     var sampled = track.SampleQuaternion(frame);
                     pose.Rotations[index] = mode switch
                     {
-                        "relative" => SkeletonRig.NormalizeSafe(rig.Bones[index].RestRotation * sampled),
-                        "additive" => SkeletonRig.NormalizeSafe(
+                        CastConstants.ModeRelative => SkeletonRig.NormalizeSafe(rig.Bones[index].RestRotation * sampled),
+                        CastConstants.ModeAdditive => SkeletonRig.NormalizeSafe(
                             pose.Rotations[index] * Quaternion.Slerp(Quaternion.Identity, sampled, weight)),
                         _ => SkeletonRig.NormalizeSafe(sampled),
                     };
                     break;
                 }
-                case "tx": ApplyScalar(ref pose.Positions[index].X, rig.Bones[index].RestPosition.X, track.SampleScalar(frame), mode, weight, scale: false); break;
-                case "ty": ApplyScalar(ref pose.Positions[index].Y, rig.Bones[index].RestPosition.Y, track.SampleScalar(frame), mode, weight, scale: false); break;
-                case "tz": ApplyScalar(ref pose.Positions[index].Z, rig.Bones[index].RestPosition.Z, track.SampleScalar(frame), mode, weight, scale: false); break;
-                case "sx": ApplyScalar(ref pose.Scales[index].X, rig.Bones[index].RestScale.X, track.SampleScalar(frame), mode, weight, scale: true); break;
-                case "sy": ApplyScalar(ref pose.Scales[index].Y, rig.Bones[index].RestScale.Y, track.SampleScalar(frame), mode, weight, scale: true); break;
-                case "sz": ApplyScalar(ref pose.Scales[index].Z, rig.Bones[index].RestScale.Z, track.SampleScalar(frame), mode, weight, scale: true); break;
+                case CastConstants.CurveTranslateX: ApplyScalar(ref pose.Positions[index].X, rig.Bones[index].RestPosition.X, track.SampleScalar(frame), mode, weight, scale: false); break;
+                case CastConstants.CurveTranslateY: ApplyScalar(ref pose.Positions[index].Y, rig.Bones[index].RestPosition.Y, track.SampleScalar(frame), mode, weight, scale: false); break;
+                case CastConstants.CurveTranslateZ: ApplyScalar(ref pose.Positions[index].Z, rig.Bones[index].RestPosition.Z, track.SampleScalar(frame), mode, weight, scale: false); break;
+                case CastConstants.CurveScaleX: ApplyScalar(ref pose.Scales[index].X, rig.Bones[index].RestScale.X, track.SampleScalar(frame), mode, weight, scale: true); break;
+                case CastConstants.CurveScaleY: ApplyScalar(ref pose.Scales[index].Y, rig.Bones[index].RestScale.Y, track.SampleScalar(frame), mode, weight, scale: true); break;
+                case CastConstants.CurveScaleZ: ApplyScalar(ref pose.Scales[index].Z, rig.Bones[index].RestScale.Z, track.SampleScalar(frame), mode, weight, scale: true); break;
             }
         }
+    }
+
+    private string ResolveMode(CurveTrack track, SkeletonRig rig, int boneIndex)
+    {
+        var channel = track.PropertyName switch
+        {
+            CastConstants.CurveRotation => CurveChannel.Rotation,
+            CastConstants.CurveScaleX or CastConstants.CurveScaleY or CastConstants.CurveScaleZ => CurveChannel.Scale,
+            CastConstants.CurveTranslateX or CastConstants.CurveTranslateY or CastConstants.CurveTranslateZ => CurveChannel.Translation,
+            _ => CurveChannel.Other,
+        };
+        if (channel == CurveChannel.Other || ModeOverrides.Count == 0)
+        {
+            return track.Mode;
+        }
+
+        // Match the official CAST importer's hierarchy semantics: overrides apply
+        // to descendants, and the first override encountered from root to parent wins.
+        var ancestors = new Stack<string>();
+        for (var parent = rig.Bones[boneIndex].ParentIndex; parent >= 0; parent = rig.Bones[parent].ParentIndex)
+        {
+            ancestors.Push(rig.Bones[parent].Name);
+        }
+
+        foreach (var ancestor in ancestors)
+        {
+            var modeOverride = ModeOverrides.FirstOrDefault(x =>
+                string.Equals(x.NodeName, ancestor, StringComparison.Ordinal) && x.AppliesTo(channel));
+            if (modeOverride is not null)
+            {
+                return modeOverride.Mode;
+            }
+        }
+
+        return track.Mode;
     }
 
     private static void ApplyScalar(ref float current, float rest, float sampled, string mode, float weight, bool scale)
     {
         current = mode switch
         {
-            "relative" when scale => rest * sampled,
-            "relative" => rest + sampled,
-            "additive" when scale => current * Lerp(1f, sampled, weight),
-            "additive" => current + sampled * weight,
+            CastConstants.ModeRelative when scale => rest * sampled,
+            CastConstants.ModeRelative => rest + sampled,
+            CastConstants.ModeAdditive when scale => current * Lerp(1f, sampled, weight),
+            CastConstants.ModeAdditive => current + sampled * weight,
             _ => sampled,
         };
     }
@@ -158,7 +204,7 @@ internal sealed class CurveTrack
             "f" or "2v" or "3v" or "4v" => valueProperty.GetFloats().ToArray(),
             _ => throw new InvalidDataException($"曲线 {nodeName}.{propertyName} 使用了不支持的值类型：{valueProperty.Type}"),
         };
-        var components = propertyName == "rq" ? 4 : 1;
+        var components = propertyName == CastConstants.CurveRotation ? 4 : 1;
         if (frames.Length == 0 || values.Length != frames.Length * components)
         {
             throw new InvalidDataException(
@@ -173,8 +219,8 @@ internal sealed class CurveTrack
             }
         }
 
-        var mode = node.StringProperty("m") ?? "absolute";
-        if (mode is not ("absolute" or "relative" or "additive"))
+        var mode = node.StringProperty("m") ?? CastConstants.ModeAbsolute;
+        if (!CurveModeOverride.IsSupportedMode(mode))
         {
             throw new InvalidDataException($"曲线 {nodeName}.{propertyName} 的模式无效：{mode}");
         }
@@ -228,5 +274,62 @@ internal sealed class CurveTrack
 
         var amount = (frame - Frames[previous]) / (Frames[next] - Frames[previous]);
         return (previous, next, amount);
+    }
+}
+
+internal enum CurveChannel
+{
+    Other,
+    Translation,
+    Rotation,
+    Scale,
+}
+
+internal sealed record CurveModeOverride(
+    string NodeName,
+    string Mode,
+    bool Translation,
+    bool Rotation,
+    bool Scale)
+{
+    public static CurveModeOverride FromNode(CastNode node)
+    {
+        var nodeName = node.StringProperty("nn");
+        var mode = node.StringProperty("m");
+        if (string.IsNullOrWhiteSpace(nodeName) || string.IsNullOrWhiteSpace(mode))
+        {
+            throw new InvalidDataException("曲线模式覆盖缺少 nn 或 m 属性。");
+        }
+
+        if (!IsSupportedMode(mode))
+        {
+            throw new InvalidDataException($"曲线模式覆盖 {nodeName} 的模式无效：{mode}");
+        }
+
+        return new CurveModeOverride(
+            nodeName,
+            mode,
+            ReadFlag(node, "ot"),
+            ReadFlag(node, "or"),
+            ReadFlag(node, "os"));
+    }
+
+    public bool AppliesTo(CurveChannel channel) => channel switch
+    {
+        CurveChannel.Translation => Translation,
+        CurveChannel.Rotation => Rotation,
+        CurveChannel.Scale => Scale,
+        _ => false,
+    };
+
+    public static bool IsSupportedMode(string mode) =>
+        mode is CastConstants.ModeAbsolute or CastConstants.ModeRelative or CastConstants.ModeAdditive;
+
+    private static bool ReadFlag(CastNode node, string propertyName)
+    {
+        var property = node.Property(propertyName);
+        return property is not null
+            && property.Type == "b"
+            && property.GetBytes().FirstOrDefault() > 0;
     }
 }

@@ -15,19 +15,19 @@ internal static class TwoBoneIkBaker
         }
 
         pose.RecalculateWorld(rig);
-        var a = pose.WorldPositions[startIndex];
-        var b = pose.WorldPositions[middleIndex];
-        var c = pose.WorldPositions[endIndex];
+        var startPosition = pose.WorldPositions[startIndex];
+        var middlePosition = pose.WorldPositions[middleIndex];
+        var endPosition = pose.WorldPositions[endIndex];
         var target = pose.WorldPositions[targetIndex];
 
-        var upperLength = Vector3.Distance(a, b);
-        var lowerLength = Vector3.Distance(b, c);
+        var upperLength = Vector3.Distance(startPosition, middlePosition);
+        var lowerLength = Vector3.Distance(middlePosition, endPosition);
         if (upperLength < 1e-5f || lowerLength < 1e-5f)
         {
             return false;
         }
 
-        var rootToTarget = target - a;
+        var rootToTarget = target - startPosition;
         var rawTargetDistance = rootToTarget.Length();
         if (rawTargetDistance < 1e-5f)
         {
@@ -40,8 +40,9 @@ internal static class TwoBoneIkBaker
             upperLength + lowerLength - 1e-5f);
 
         var aimDirection = NormalizeOr(rootToTarget, Vector3.UnitX);
-        var currentUpperDirection = NormalizeOr(b - a, Vector3.UnitY);
-        var bendDirection = (b - a) - (Vector3.Dot(b - a, aimDirection) * aimDirection);
+        var currentUpperDirection = NormalizeOr(middlePosition - startPosition, Vector3.UnitY);
+        var bendDirection = (middlePosition - startPosition)
+            - (Vector3.Dot(middlePosition - startPosition, aimDirection) * aimDirection);
         bendDirection = NormalizeOr(bendDirection, FindPerpendicular(aimDirection));
 
         var distanceAlongAim =
@@ -50,10 +51,10 @@ internal static class TwoBoneIkBaker
         var bendHeightSquared = MathF.Max(
             0f,
             (upperLength * upperLength) - (distanceAlongAim * distanceAlongAim));
-        var desiredMiddle = a
+        var desiredMiddle = startPosition
             + (aimDirection * distanceAlongAim)
             + (bendDirection * MathF.Sqrt(bendHeightSquared));
-        var desiredUpperDirection = NormalizeOr(desiredMiddle - a, currentUpperDirection);
+        var desiredUpperDirection = NormalizeOr(desiredMiddle - startPosition, currentUpperDirection);
 
         var rootDelta = RotationFromTo(currentUpperDirection, desiredUpperDirection, FindPerpendicular(currentUpperDirection));
         var startWorld = SkeletonRig.NormalizeSafe(rootDelta * pose.WorldRotations[startIndex]);

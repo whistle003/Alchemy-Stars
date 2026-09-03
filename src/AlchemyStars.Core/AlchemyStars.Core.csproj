@@ -4,5 +4,8 @@
     <RootNamespace>AlchemyStars.Core</RootNamespace>
     <AssemblyName>AlchemyStars.Core</AssemblyName>
   </PropertyGroup>
-</Project>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="AlchemyStars.Tests" />
+  </ItemGroup>
+</Project>

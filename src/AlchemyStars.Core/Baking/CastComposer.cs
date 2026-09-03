@@ -77,24 +77,39 @@ internal static class CastComposer
             var boneName = rig.Bones[boneIndex].Name;
             animation.Children.Add(CreateQuaternionCurve(
                 boneName,
-                "rq",
+                CastConstants.CurveRotation,
                 frameValues,
                 frames.Select(x => x.Rotations[boneIndex])));
             animation.Children.Add(CreateScalarCurve(
                 boneName,
-                "tx",
+                CastConstants.CurveTranslateX,
                 frameValues,
                 frames.Select(x => x.Positions[boneIndex].X)));
             animation.Children.Add(CreateScalarCurve(
                 boneName,
-                "ty",
+                CastConstants.CurveTranslateY,
                 frameValues,
                 frames.Select(x => x.Positions[boneIndex].Y)));
             animation.Children.Add(CreateScalarCurve(
                 boneName,
-                "tz",
+                CastConstants.CurveTranslateZ,
                 frameValues,
                 frames.Select(x => x.Positions[boneIndex].Z)));
+            animation.Children.Add(CreateScalarCurve(
+                boneName,
+                CastConstants.CurveScaleX,
+                frameValues,
+                frames.Select(x => x.Scales[boneIndex].X)));
+            animation.Children.Add(CreateScalarCurve(
+                boneName,
+                CastConstants.CurveScaleY,
+                frameValues,
+                frames.Select(x => x.Scales[boneIndex].Y)));
+            animation.Children.Add(CreateScalarCurve(
+                boneName,
+                CastConstants.CurveScaleZ,
+                frameValues,
+                frames.Select(x => x.Scales[boneIndex].Z)));
         }
 
         foreach (var notification in source.SourceNode.ChildrenOfType(CastConstants.Notification))
@@ -137,7 +152,7 @@ internal static class CastComposer
         curve.SetProperty(new CastProperty("nn", "s", nodeName));
         curve.SetProperty(new CastProperty("kp", "s", propertyName));
         curve.SetProperty(CreateFrameProperty(frames));
-        curve.SetProperty(new CastProperty("m", "s", "absolute"));
+        curve.SetProperty(new CastProperty("m", "s", CastConstants.ModeAbsolute));
         return curve;
     }
 
@@ -180,4 +195,3 @@ internal static class CastComposer
         }
     }
 }
-

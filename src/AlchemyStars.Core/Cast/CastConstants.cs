@@ -17,6 +17,18 @@ public static class CastConstants
 
     public const ulong HashBase = 0x534E495752545250;
 
+    public const string CurveRotation = "rq";
+    public const string CurveTranslateX = "tx";
+    public const string CurveTranslateY = "ty";
+    public const string CurveTranslateZ = "tz";
+    public const string CurveScaleX = "sx";
+    public const string CurveScaleY = "sy";
+    public const string CurveScaleZ = "sz";
+
+    public const string ModeAbsolute = "absolute";
+    public const string ModeRelative = "relative";
+    public const string ModeAdditive = "additive";
+
     public static uint FourCc(string value)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(value);
@@ -39,4 +51,3 @@ public static class CastConstants
         (char)((value >> 24) & 0xFF),
     ]);
 }
-

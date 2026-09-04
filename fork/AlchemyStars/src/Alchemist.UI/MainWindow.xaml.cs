@@ -1,7 +1,6 @@
 ﻿using Alchemist.Scripting;
 using MaterialDesignThemes.Wpf;
 using Microsoft.Win32;
-using Ookii.Dialogs.Wpf;
 using RedFox.UI;
 using RedFox.Zenith;
 using RedFox.Zenith.LicenseStorages;
@@ -17,7 +16,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
-using System.Windows.Forms.Design;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -31,6 +29,7 @@ namespace Alchemist.UI
     public partial class MainWindow : Window
     {
         public static MainViewModel ViewModel { get; set; } = new((message) => { }, string.Empty);
+        private AboutWindow? aboutWindow;
 
         public MainWindow()
         {
@@ -38,6 +37,8 @@ namespace Alchemist.UI
 
             InitializeComponent();
             DataContext = ViewModel;
+            LocalizationManager.LanguageChanged += OnLanguageChanged;
+            Closed += (_, _) => LocalizationManager.LanguageChanged -= OnLanguageChanged;
             LoadStartupProject();
         }
 
@@ -48,21 +49,19 @@ namespace Alchemist.UI
                 .FirstOrDefault(path =>
                     string.Equals(Path.GetExtension(path), ".aprj", StringComparison.OrdinalIgnoreCase)
                     && File.Exists(path));
-            var bundledProject = Path.Combine(AppContext.BaseDirectory, "Presets", "sat_vm_ar_hawk_sprint.aprj");
-            var project = requestedProject ?? (File.Exists(bundledProject) ? bundledProject : null);
-            if (project is null)
+            if (requestedProject is null)
                 return;
 
             try
             {
-                ViewModel.LoadProjectFile(project);
+                ViewModel.LoadProjectFile(requestedProject);
             }
             catch (Exception ex)
             {
-                Logging.Logger.Error($"Failed to load startup project: {project}", ex);
+                Logging.Logger.Error($"Failed to load startup project: {requestedProject}", ex);
                 MessageBox.Show(
-                    $"无法载入启动预设：\n{project}\n\n{ex.Message}",
-                    "Alchemy Stars | 预设载入失败",
+                    LocalizationManager.Format("StartupProjectFailedMessage", requestedProject, ex.Message),
+                    LocalizationManager.Get("StartupProjectFailedTitle"),
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
             }
@@ -70,13 +69,116 @@ namespace Alchemist.UI
 
         private void CurrentDomainUnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            MessageBox.Show($"Alchemy Stars 遇到无法恢复的错误并必须关闭：\n\n{e.ExceptionObject}\n\n当前项目已保存到程序目录下的临时备份。", "Alchemy Stars | 严重错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(
+                LocalizationManager.Format("FatalErrorMessage", e.ExceptionObject),
+                LocalizationManager.Get("FatalErrorTitle"),
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
 
             try
             {
-                MainViewModel.SaveProject(ViewModel, "Backup.aprj");
+                var backupDirectory = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "Alchemy Stars");
+                Directory.CreateDirectory(backupDirectory);
+                MainViewModel.SaveProject(ViewModel, Path.Combine(backupDirectory, "Backup.aprj"));
             }
             catch { }
+        }
+
+        private static void OnLanguageChanged(object? sender, EventArgs e) => ViewModel.RefreshLocalization();
+
+        private void ToggleLanguageClick(object sender, RoutedEventArgs e) => LocalizationManager.Toggle();
+
+        private void OpenAboutClick(object sender, RoutedEventArgs e)
+        {
+            Logging.Logger.Info("Opening About window.");
+            if (aboutWindow is not null)
+            {
+                aboutWindow.Activate();
+                return;
+            }
+
+            aboutWindow = new AboutWindow { Owner = this };
+            aboutWindow.Closed += (_, _) => aboutWindow = null;
+            aboutWindow.Show();
+            Logging.Logger.Info($"About window shown: {aboutWindow.IsVisible}.");
+        }
+
+        private void BrowseAnimationClick(object sender, RoutedEventArgs e)
+        {
+            if ((sender as FrameworkElement)?.DataContext is not Animation animation)
+                return;
+
+            var selected = FileBrowserService.ChooseCastFile(this, "DialogAddAnimation", animation.Name);
+            if (selected is null)
+                return;
+
+            var previousOutputName = Path.GetFileNameWithoutExtension(animation.Name);
+            var previousOutputFolder = Path.GetDirectoryName(animation.Name) ?? string.Empty;
+            animation.Name = selected;
+            if (string.IsNullOrWhiteSpace(animation.OutputName) || animation.OutputName == previousOutputName)
+                animation.OutputName = Path.GetFileNameWithoutExtension(selected);
+            if (string.IsNullOrWhiteSpace(animation.OutputFolder) || animation.OutputFolder == previousOutputFolder)
+                animation.OutputFolder = Path.GetDirectoryName(selected) ?? string.Empty;
+        }
+
+        private void BrowsePoseClick(object sender, RoutedEventArgs e)
+        {
+            if ((sender as FrameworkElement)?.DataContext is not Animation animation || sender is not Button button)
+                return;
+
+            var isLeft = Equals(button.Tag, "Left");
+            var current = isLeft ? animation.LeftHandPoseFile : animation.RightHandPoseFile;
+            var selected = FileBrowserService.ChooseCastFile(this, isLeft ? "DialogLeftPose" : "DialogRightPose", current);
+            if (selected is null)
+                return;
+
+            if (isLeft)
+                animation.LeftHandPoseFile = selected;
+            else
+                animation.RightHandPoseFile = selected;
+        }
+
+        private void ClearPoseClick(object sender, RoutedEventArgs e)
+        {
+            if ((sender as FrameworkElement)?.DataContext is not Animation animation || sender is not Button button)
+                return;
+
+            if (Equals(button.Tag, "Left"))
+                animation.LeftHandPoseFile = string.Empty;
+            else
+                animation.RightHandPoseFile = string.Empty;
+        }
+
+        private void BrowseLayerClick(object sender, RoutedEventArgs e)
+        {
+            if ((sender as FrameworkElement)?.DataContext is not AnimationLayer layer)
+                return;
+
+            var selected = FileBrowserService.ChooseCastFile(this, "DialogAddLayer", layer.Name);
+            if (selected is not null)
+                layer.Name = selected;
+        }
+
+        private void BrowseOutputFolderClick(object sender, RoutedEventArgs e)
+        {
+            if ((sender as FrameworkElement)?.DataContext is not Animation animation)
+                return;
+
+            var selected = FileBrowserService.ChooseFolder(this, animation.OutputFolder);
+            if (selected is not null)
+                animation.OutputFolder = selected;
+        }
+
+        private void BrowsePartClick(object sender, RoutedEventArgs e)
+        {
+            if ((sender as FrameworkElement)?.DataContext is not Part part)
+                return;
+
+            var selected = FileBrowserService.ChooseCastFile(this, "DialogAddPart", part.FilePath);
+            if (selected is not null)
+                part.FilePath = selected;
         }
 
         private void TextBoxGotFocus(object sender, RoutedEventArgs e)
@@ -214,12 +316,12 @@ namespace Alchemist.UI
                     case "AcceptPrefix":
                         if (!string.IsNullOrWhiteSpace(PrefixBox.Text))
                             foreach (var anim in ViewModel.SelectedAnimations)
-                                anim.OutputName += PrefixBox.Text.Trim();
+                                anim.OutputName = PrefixBox.Text.Trim() + anim.OutputName;
                         break;
                     case "AcceptSuffix":
                         if (!string.IsNullOrWhiteSpace(SuffixBox.Text))
                             foreach (var anim in ViewModel.SelectedAnimations)
-                                anim.OutputName = SuffixBox.Text.Trim() + anim.OutputName;
+                                anim.OutputName += SuffixBox.Text.Trim();
                         break;
                     case "Run":
                         foreach (var script in ScriptsListBox.SelectedItems.Cast<Script>())

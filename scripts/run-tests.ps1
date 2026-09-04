@@ -21,3 +21,8 @@ if (Test-Path -LiteralPath $mayaPython) {
         $mayaReport
     if ($LASTEXITCODE -ne 0) { throw "Maya 2025 acceptance failed with exit code $LASTEXITCODE" }
 }
+
+& (Join-Path $PSScriptRoot 'build-release.ps1')
+if ($LASTEXITCODE -ne 0) { throw "Release build failed with exit code $LASTEXITCODE" }
+& (Join-Path $PSScriptRoot 'test-ui.ps1')
+if ($LASTEXITCODE -ne 0) { throw "UI smoke tests failed with exit code $LASTEXITCODE" }

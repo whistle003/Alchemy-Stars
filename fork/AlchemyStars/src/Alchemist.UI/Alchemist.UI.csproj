@@ -8,19 +8,19 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-    <ApplicationIcon>AlchemistIcon.ico</ApplicationIcon>
+    <ApplicationIcon>Assets\AlchemyStarsIcon.ico</ApplicationIcon>
     <FileVersion>1.0.0.0</FileVersion>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="AlchemistIcon.ico" />
+    <Resource Include="Assets\AlchemyStarsIcon.png" />
+    <Content Include="Assets\AlchemyStarsIcon.ico" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="log4net" Version="3.4.0" />
     <PackageReference Include="MaterialDesignThemes" Version="5.0.1-ci662" />
-    <PackageReference Include="Ookii.Dialogs.Wpf" Version="5.0.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -36,10 +36,6 @@
     <None Update="LogSettings.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <Content Include="..\..\presets\*.aprj">
-      <Link>Presets\%(Filename)%(Extension)</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Include="..\..\..\..\third_party\cast\maya\*.py">
       <Link>MayaPlugin\%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

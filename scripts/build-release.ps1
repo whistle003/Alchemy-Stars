@@ -16,8 +16,9 @@ if (Test-Path -LiteralPath $resolvedPublishDir) {
 dotnet publish (Join-Path $projectRoot 'fork\AlchemyStars\src\Alchemist.UI\Alchemist.UI.csproj') `
     -c Release `
     -r win-x64 `
-    --self-contained true `
+    --self-contained false `
     -p:PublishSingleFile=true `
+    -p:EnableCompressionInSingleFile=true `
     -p:IncludeNativeLibrariesForSelfExtract=true `
     -p:DebugType=None `
     -p:DebugSymbols=false `

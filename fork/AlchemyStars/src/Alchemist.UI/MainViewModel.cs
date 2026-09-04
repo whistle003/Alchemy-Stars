@@ -23,7 +23,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
 
 namespace Alchemist.UI
 {
@@ -63,8 +62,19 @@ namespace Alchemist.UI
 
         public int SelectedIndex { get; set; }
 
-        public MVVMItemList<string> LayerTypes { get; set; } = [..Enum.GetNames<AnimationLayerType>()];
-        public MVVMItemList<string> PartTypes { get; set; } = [..Enum.GetNames<PartType>()];
+        public IReadOnlyList<LocalizedEnumOption<AnimationLayerType>> LayerTypeOptions { get; } =
+        [
+            new(AnimationLayerType.Normal, "LayerTypeNormal"),
+            new(AnimationLayerType.Additive, "LayerTypeAdditive"),
+            new(AnimationLayerType.Gesture, "LayerTypeGesture"),
+            new(AnimationLayerType.GesturePose, "LayerTypeGesturePose"),
+        ];
+        public IReadOnlyList<LocalizedEnumOption<PartType>> PartTypeOptions { get; } =
+        [
+            new(PartType.ViewHands, "PartTypeViewHands"),
+            new(PartType.Weapon, "PartTypeWeapon"),
+            new(PartType.Attachment, "PartTypeAttachment"),
+        ];
 
         public int FileColumnWith { get => GetValue(0); set => SetValue(value); }
         public int IKSettingsColumnWith { get => GetValue(0); set => SetValue(value); }
@@ -86,7 +96,9 @@ namespace Alchemist.UI
 
         public string? CurrentProjectFile { get => GetValue<string?>(null); set => SetValue(value); }
 
-        public string Title => $"Alchemy Stars | {CurrentProjectFile ?? "未命名批处理"} | Version: {FileVersion ?? "Unknown"}";
+        public int LocalizationRevision { get => GetValue(0); private set => SetValue(value); }
+
+        public string Title => $"{LocalizationManager.Get("AppDisplayName")} | {CurrentProjectFile ?? LocalizationManager.Get("UntitledBatch")} | {LocalizationManager.Get("VersionLabel")}: {FileVersion}";
 
         public string OutputFormat { get => GetValue(".cast"); set => SetValue(value); }
 
@@ -104,6 +116,8 @@ namespace Alchemist.UI
             AutoAdjustColumns(1200);
             // Binds
             AddBinds(nameof(CurrentProjectFile), nameof(Title));
+            AddBinds(nameof(LocalizationRevision), nameof(Title));
+            RefreshLocalization();
             // Callbacks
             OnCommandFailure = onCommandFailure;
             // Data
@@ -120,40 +134,22 @@ namespace Alchemist.UI
             AddAnimationsCommand = new ButtonCommand((obj) =>
             {
                 // TODO: Move to a service for multi-plat/Avalonia/etc
-                var dialog = new OpenFileDialog()
+                var files = FileBrowserService.ChooseCastFiles(Application.Current?.MainWindow, "DialogAddAnimation");
+                foreach (var file in files)
                 {
-                    Title = "Alchemy Stars | 添加动画",
-                    Filter = "All files (*.*)|*.*",
-                    Multiselect = true,
-                };
-
-                if(dialog.ShowDialog() == true)
-                {
-                    foreach (var file in dialog.FileNames)
-                    {
-                        var anim = new Animation(file);
-                        Animations.Add(anim);
-                    }
+                    var anim = new Animation(file);
+                    Animations.Add(anim);
                 }
             });
             // Parts Commands
             AddPartsCommand = new ButtonCommand((obj) =>
             {
                 // TODO: Move to a service for multi-plat/Avalonia/etc
-                var dialog = new OpenFileDialog()
+                var files = FileBrowserService.ChooseCastFiles(Application.Current?.MainWindow, "DialogAddPart");
+                foreach (var file in files)
                 {
-                    Title = "Alchemy Stars | 添加模型部件",
-                    Filter = "All files (*.*)|*.*",
-                    Multiselect = true,
-                };
-
-                if (dialog.ShowDialog() == true)
-                {
-                    foreach (var file in dialog.FileNames)
-                    {
-                        var model = new Part(this, file);
-                        Parts.Add(model);
-                    }
+                    var model = new Part(this, file);
+                    Parts.Add(model);
                 }
             });
             SaveAnimationsCommand = new ButtonCommand((obj) =>
@@ -162,8 +158,8 @@ namespace Alchemist.UI
                 {
                     var outputs = ExportAnimations();
                     MessageBox.Show(
-                        $"已导出 {outputs.Count} 个动画文件。",
-                        "Alchemy Stars | 完成",
+                        LocalizationManager.Format("ExportCompleteMessage", outputs.Count),
+                        LocalizationManager.Get("ExportCompleteTitle"),
                         MessageBoxButton.OK,
                         MessageBoxImage.Information);
                 }
@@ -173,7 +169,7 @@ namespace Alchemist.UI
                     OnCommandFailure(ex.Message);
                     MessageBox.Show(
                         ex.Message,
-                        "Alchemy Stars | 导出失败",
+                        LocalizationManager.Get("ExportFailedTitle"),
                         MessageBoxButton.OK,
                         MessageBoxImage.Error);
                 }
@@ -198,16 +194,12 @@ namespace Alchemist.UI
             });
             SetOutputFolderCommand = new ButtonCommand((obj) =>
             {
-                var outputDialog = new OpenFolderDialog()
-                {
-                    Title = "Alchemy Stars | 选择输出目录",
-                };
-
-                if (outputDialog.ShowDialog() == false)
+                var folder = FileBrowserService.ChooseFolder(Application.Current?.MainWindow);
+                if (folder is null)
                     return;
 
                 foreach (var anim in SelectedAnimations)
-                    anim.OutputFolder = outputDialog.FolderName;
+                    anim.OutputFolder = folder;
             });
             // IK Commands
             ToggleLeftHandIKCommand = new ButtonCommand((obj) =>
@@ -227,26 +219,21 @@ namespace Alchemist.UI
             SetPoseFileCommand = new ButtonCommand((obj) =>
             {
                 // TODO: Move to a service for multi-plat/Avalonia/etc
-                var dialog = new OpenFileDialog()
+                var isLeft = "Left".Equals(obj);
+                var path = FileBrowserService.ChooseCastFile(
+                    Application.Current?.MainWindow,
+                    isLeft ? "DialogLeftPose" : "DialogRightPose");
+                if (path is not null)
                 {
-                    Title = $"Alchemy Stars | 选择 {obj} 姿势文件",
-                    Filter = "All files (*.*)|*.*",
-                    Multiselect = false,
-                };
-
-                if(dialog.ShowDialog() == true)
-                {
-                    var isLeft = "Left".Equals(obj);
-
                     foreach (var anim in SelectedAnimations)
                     {
                         if(isLeft)
                         {
-                            anim.LeftHandPoseFile = dialog.FileName;
+                            anim.LeftHandPoseFile = path;
                         }
                         else
                         {
-                            anim.RightHandPoseFile = dialog.FileName;
+                            anim.RightHandPoseFile = path;
                         }
                     }
                 }
@@ -255,21 +242,12 @@ namespace Alchemist.UI
             AddLayerCommand = new ButtonCommand((obj) =>
             {
                 // TODO: Move to a service for multi-plat/Avalonia/etc
-                var dialog = new OpenFileDialog()
+                var files = FileBrowserService.ChooseCastFiles(Application.Current?.MainWindow, "DialogAddLayer");
+                foreach (var file in files)
                 {
-                    Title = "Alchemy Stars | 添加动画层",
-                    Filter = "All files (*.*)|*.*",
-                    Multiselect = true,
-                };
-
-                if (dialog.ShowDialog() == true)
-                {
-                    foreach (var file in dialog.FileNames)
+                    foreach (var anim in SelectedAnimations)
                     {
-                        foreach (var anim in SelectedAnimations)
-                        {
-                            anim.Layers.Add(new(file, anim));
-                        }
+                        anim.Layers.Add(new(file, anim));
                     }
                 }
             });
@@ -318,35 +296,21 @@ namespace Alchemist.UI
             ImportProjectCommand = new ButtonCommand((obj) =>
             {
                 // TODO: Move to a service for multi-plat/Avalonia/etc
-                var dialog = new OpenFileDialog()
-                {
-                    Title = "Alchemy Stars | 导入项目",
-                    Filter = "All files (*.*)|*.*",
-                    Multiselect = true,
-                };
-
-                if (dialog.ShowDialog() == true)
-                {
-                    LoadProjectFile(dialog.FileName);
-                }
+                var path = FileBrowserService.ChooseProject(Application.Current?.MainWindow);
+                if (path is not null)
+                    LoadProjectFile(path);
             });
             SaveProjectCommand = new ButtonCommand((obj) =>
             {
                 if (string.IsNullOrWhiteSpace(CurrentProjectFile) || (obj is bool saveAs && saveAs))
                 {
                     // TODO: Move to a service for multi-plat/Avalonia/etc
-                    var dialog = new SaveFileDialog()
-                    {
-                        Title = "Alchemy Stars | 保存项目",
-                        Filter = "Alchemy Stars 项目文件 (*.aprj)|*.aprj",
-                    };
-
-                    if (dialog.ShowDialog() == false)
+                    var path = FileBrowserService.ChooseProjectDestination(Application.Current?.MainWindow, CurrentProjectFile);
+                    if (path is null)
                         return;
 
-                    CurrentProjectFile = dialog.FileName;
-
-                    SaveProject(this, dialog.FileName);
+                    CurrentProjectFile = path;
+                    SaveProject(this, path);
                 }
                 else
                 {
@@ -356,18 +320,12 @@ namespace Alchemist.UI
             SaveProjectAsCommand = new ButtonCommand((obj) =>
             {
                 // TODO: Move to a service for multi-plat/Avalonia/etc
-                var dialog = new SaveFileDialog()
-                {
-                    Title = "Alchemy Stars | 保存项目",
-                    Filter = "Alchemy Stars 项目文件 (*.aprj)|*.aprj",
-                };
-
-                if (dialog.ShowDialog() == false)
+                var path = FileBrowserService.ChooseProjectDestination(Application.Current?.MainWindow, CurrentProjectFile);
+                if (path is null)
                     return;
 
-                CurrentProjectFile = dialog.FileName;
-
-                SaveProject(this, dialog.FileName);
+                CurrentProjectFile = path;
+                SaveProject(this, path);
             });
             RunScriptCommand = new ButtonCommand((obj) =>
             {
@@ -381,9 +339,9 @@ namespace Alchemist.UI
         public IReadOnlyList<string> ExportAnimations()
         {
             if (Animations.Count == 0)
-                throw new InvalidOperationException("请至少添加一个动画。");
+                throw new InvalidOperationException(LocalizationManager.Get("NeedAnimation"));
             if (Parts.Count == 0)
-                throw new InvalidOperationException("请至少添加一个模型部件。");
+                throw new InvalidOperationException(LocalizationManager.Get("NeedPart"));
 
             var skeleton = AnimationConverter.LoadSkeletonFromParts(Parts, MatchOldCallOfDuty);
             var outputs = new List<string>(Animations.Count);
@@ -418,6 +376,15 @@ namespace Alchemist.UI
             }
 
             return outputs;
+        }
+
+        public void RefreshLocalization()
+        {
+            foreach (var option in LayerTypeOptions)
+                option.Refresh();
+            foreach (var option in PartTypeOptions)
+                option.Refresh();
+            LocalizationRevision++;
         }
 
         public void LoadProjectFile(string filePath)

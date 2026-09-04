@@ -1,4 +1,4 @@
-# Alchemy Stars
+# Alchemy Stars（炼金之星）
 
 Alchemy Stars 是 [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist) 的可用化改进版，面向 Windows、CAST 第一人称武器资产与 Autodesk Maya 2025。项目保留原版 Alchemist 的 WPF 批处理界面和 RedFox 动画管线，并补齐了原仓库尚未完成的模型/动画一体化导出。
 
@@ -14,6 +14,9 @@ Alchemy Stars 是 [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist) 
 - 项目载入后恢复层和部件的 UI 所有权，拖动、删除与排序命令可继续使用。
 - CAST 写入采用临时文件替换，并在写入前后验证模型数、唯一动画和节点哈希。
 - 工具与产品名改为 Alchemy Stars；移除未使用的 Supabase 依赖，并将 `log4net` 更新至 3.4.0。
+- 所有动画、姿势层、模型和输出目录均通过系统文件浏览器选择；程序不再自动载入带固定路径的内置预设。
+- 主界面、对话框和 About 窗口支持中文/英文即时切换，并会记忆语言选择。
+- 使用“炼金术瓶 + 星芒”主题的新应用图标。
 
 ## 直接使用
 
@@ -21,15 +24,17 @@ Alchemy Stars 是 [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist) 
 
 `E:\Alchemy Stars\release\Alchemy Stars\Alchemy Stars.exe`
 
-程序默认载入冲刺预设，其中已经填好用户提供的五个输入路径。点击工具栏中的“保存动画”按钮即可生成：
+程序以空白批处理启动。点击工具栏的动画与模型按钮，或使用每个路径字段右侧的文件夹按钮，通过系统文件浏览器选择文件；可选姿势文件旁的清除按钮可恢复为空。
+
+选择手臂、武器、基础动画和需要的动画层后，点击工具栏中的“保存动画”按钮即可生成：
 
 `E:\Alchemy Stars\fork\AlchemyStars\output\sat_vm_ar_hawk_sprint_alchemy_stars.cast`
 
-Idle 预设位于：
+开发仓库仍保留用于自动化验收的冲刺和 Idle 项目夹具：
 
 `E:\Alchemy Stars\fork\AlchemyStars\presets\sat_vm_ar_hawk_idle.aprj`
 
-把 `.aprj` 拖进窗口或作为命令行参数传给程序即可载入。批处理中可以加入更多原项目支持的动画；程序会为每个条目分别输出一个 CAST，所以每个文件始终只有一个动画。
+它们不会随程序发布，也不会自动加载。用户自己保存的 `.aprj` 可从文件浏览器打开、拖进窗口或作为命令行参数载入。批处理中可以加入更多原项目支持的动画；程序会为每个条目分别输出一个 CAST，所以每个文件始终只有一个动画。
 
 ## Maya 2025
 
@@ -48,14 +53,14 @@ Idle 预设位于：
 
 ## 构建与验证
 
-需要 .NET 9 SDK：
+开发构建需要 .NET 9 SDK；运行发布版需要本机安装 [.NET 9 Desktop Runtime (x64)](https://dotnet.microsoft.com/download/dotnet/9.0)：
 
 ```powershell
 .\scripts\run-tests.ps1
 .\scripts\build-release.ps1
 ```
 
-`run-tests.ps1` 会编译改进后的原项目、用真实资产重新生成冲刺与 Idle CAST，并在检测到 `D:\Maya2025\bin\mayapy.exe` 时执行 Maya 2025 验收。`build-release.ps1` 会生成自包含的 Windows x64 发布包和 ZIP。
+`run-tests.ps1` 会编译改进后的原项目、用真实资产重新生成冲刺与 Idle CAST，并在检测到 `D:\Maya2025\bin\mayapy.exe` 时执行 Maya 2025 验收。`build-release.ps1` 会生成不内置 .NET 运行环境的精简 Windows x64 单文件发布包和 ZIP。
 
 ## 源码与许可
 

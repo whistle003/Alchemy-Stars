@@ -12,6 +12,7 @@ namespace Alchemist.UI
     {
         protected override void OnStartup(StartupEventArgs e)
         {
+            LocalizationManager.Initialize();
             EventManager.RegisterClassHandler(typeof(TextBox),
                 Control.PreviewMouseDoubleClickEvent,
                 new RoutedEventHandler(TextBox_GotFocus));

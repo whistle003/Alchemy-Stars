@@ -82,32 +82,7 @@ Run("System language detection and explicit language choices resolve predictably
 Run("Context animation import adds every selected animation", TestContextAnimationImport);
 Run("Context layer import targets only the requested animation", TestContextLayerImport);
 Run("External drop over animation layers prioritizes the hovered animation", TestLayerDropTargetPriority);
-Run("Path inputs accept pasted and directly dropped paths", () =>
-{
-    var temporaryDirectory = Directory.CreateTempSubdirectory("alchemy-stars-path-input-");
-    try
-    {
-        var castPath = Path.Combine(temporaryDirectory.FullName, "dropped animation.cast");
-        var textPath = Path.Combine(temporaryDirectory.FullName, "not-an-animation.txt");
-        File.WriteAllText(castPath, string.Empty);
-        File.WriteAllText(textPath, string.Empty);
-
-        Assert(MainWindow.NormalizePastedPath($"  \"{castPath}\"  ") == castPath,
-            "Quoted paths copied from Explorer should be normalized.");
-        Assert(MainWindow.TryResolveDroppedPath("AnimationPathTextBox", [castPath], out var resolvedCast) && resolvedCast == castPath,
-            "A CAST file dropped on a source path should be accepted.");
-        Assert(!MainWindow.TryResolveDroppedPath("AnimationPathTextBox", [textPath], out _),
-            "A non-CAST file dropped on a source path should be rejected.");
-        Assert(MainWindow.TryResolveDroppedPath("OutputFolderTextBox", [castPath], out var resolvedFolder) && resolvedFolder == temporaryDirectory.FullName,
-            "A file dropped on the output-folder field should resolve to its containing folder.");
-        Assert(MainWindow.TryResolveDroppedPath("OutputFolderTextBox", [temporaryDirectory.FullName], out resolvedFolder) && resolvedFolder == temporaryDirectory.FullName,
-            "A folder dropped on the output-folder field should be accepted directly.");
-    }
-    finally
-    {
-        temporaryDirectory.Delete(recursive: true);
-    }
-});
+Run("Path inputs accept paste/drop and consume rejected file drops", TestPathInputs);
 Run("Context model import adds every selected model part", TestContextPartImport);
 Run("Sprint example restores layer and part ownership", () => TestExampleProject(sprintProject, expectedLayerCount: 2));
 Run("Idle example restores part ownership", () => TestExampleProject(idleProject, expectedLayerCount: 0));
@@ -349,6 +324,74 @@ static void TestContextPartImport()
     Assert(viewModel.Parts.All(part => ReferenceEquals(part.Owner, viewModel)), "Imported model part ownership was not assigned to the current project.");
 }
 
+static void TestPathInputs()
+{
+    var temporaryDirectory = Directory.CreateTempSubdirectory("alchemy-stars-path-input-");
+    try
+    {
+        var castPath = Path.Combine(temporaryDirectory.FullName, "dropped animation.cast");
+        var textPath = Path.Combine(temporaryDirectory.FullName, "not-an-animation.txt");
+        File.WriteAllText(castPath, string.Empty);
+        File.WriteAllText(textPath, string.Empty);
+
+        Assert(MainWindow.NormalizePastedPath($"  \"{castPath}\"  ") == castPath,
+            "Quoted paths copied from Explorer should be normalized.");
+        Assert(MainWindow.TryResolveDroppedPath("AnimationPathTextBox", [castPath], out var resolvedCast) && resolvedCast == castPath,
+            "A CAST file dropped on a source path should be accepted.");
+        Assert(!MainWindow.TryResolveDroppedPath("AnimationPathTextBox", [textPath], out _),
+            "A non-CAST file dropped on a source path should be rejected.");
+        Assert(MainWindow.TryResolveDroppedPath("OutputFolderTextBox", [castPath], out var resolvedFolder) && resolvedFolder == temporaryDirectory.FullName,
+            "A file dropped on the output-folder field should resolve to its containing folder.");
+        Assert(MainWindow.TryResolveDroppedPath("OutputFolderTextBox", [temporaryDirectory.FullName], out resolvedFolder) && resolvedFolder == temporaryDirectory.FullName,
+            "A folder dropped on the output-folder field should be accepted directly.");
+
+        Exception? routingFailure = null;
+        var routingThread = new Thread(() =>
+        {
+            try
+            {
+                var textBox = new TextBox();
+                AutomationProperties.SetAutomationId(textBox, "AnimationPathTextBox");
+                var data = new DataObject();
+                data.SetData(DataFormats.FileDrop, new[] { textPath });
+                var window = (MainWindow)RuntimeHelpers.GetUninitializedObject(typeof(MainWindow));
+
+                var dragOver = CreateDragEvent(data, textBox, DragDrop.PreviewDragOverEvent);
+                var dragOverHandler = typeof(MainWindow).GetMethod("PathTextBoxPreviewDragOver", BindingFlags.Instance | BindingFlags.NonPublic)
+                    ?? throw new InvalidOperationException("Path drag-over handler was not found.");
+                dragOverHandler.Invoke(window, [textBox, dragOver]);
+                Assert(dragOver.Handled && dragOver.Effects == DragDropEffects.None,
+                    "A rejected file drag over a path field must show no-drop and stop routing.");
+
+                var drop = CreateDragEvent(data, textBox, DragDrop.PreviewDropEvent);
+                var dropHandler = typeof(MainWindow).GetMethod("PathTextBoxPreviewDrop", BindingFlags.Instance | BindingFlags.NonPublic)
+                    ?? throw new InvalidOperationException("Path drop handler was not found.");
+                dropHandler.Invoke(window, [textBox, drop]);
+                Assert(drop.Handled && drop.Effects == DragDropEffects.None,
+                    "A rejected file drop on a path field must not bubble to its surrounding import list.");
+                Assert(textBox.Text.Length == 0, "A rejected file drop changed the path field.");
+            }
+            catch (TargetInvocationException ex) when (ex.InnerException is not null)
+            {
+                routingFailure = ex.InnerException;
+            }
+            catch (Exception ex)
+            {
+                routingFailure = ex;
+            }
+        });
+        routingThread.SetApartmentState(ApartmentState.STA);
+        routingThread.Start();
+        routingThread.Join();
+        if (routingFailure is not null)
+            throw new InvalidOperationException("Path field drop routing failed.", routingFailure);
+    }
+    finally
+    {
+        temporaryDirectory.Delete(recursive: true);
+    }
+}
+
 static void TestLayerDropTargetPriority()
 {
     Exception? failure = null;
@@ -371,16 +414,7 @@ static void TestLayerDropTargetPriority()
             var data = new DataObject();
             data.SetData(DataFormats.FileDrop, new[] { "offset.cast", "gesture.cast" });
 
-            var dragEventConstructor = typeof(DragEventArgs).GetConstructor(
-                BindingFlags.Instance | BindingFlags.NonPublic,
-                binder: null,
-                [typeof(IDataObject), typeof(DragDropKeyStates), typeof(DragDropEffects), typeof(DependencyObject), typeof(Point)],
-                modifiers: null)
-                ?? throw new InvalidOperationException("DragEventArgs constructor was not found.");
-            var dragEvent = (DragEventArgs)dragEventConstructor.Invoke(
-                [data, DragDropKeyStates.None, DragDropEffects.Copy, hoveredLayerList, new Point(4, 4)]);
-            dragEvent.RoutedEvent = DragDrop.DropEvent;
-            dragEvent.Source = hoveredLayerList;
+            var dragEvent = CreateDragEvent(data, hoveredLayerList, DragDrop.DropEvent);
 
             var window = (MainWindow)RuntimeHelpers.GetUninitializedObject(typeof(MainWindow));
             var dropHandler = typeof(MainWindow).GetMethod("ListViewDrop", BindingFlags.Instance | BindingFlags.NonPublic)
@@ -411,6 +445,21 @@ static void TestLayerDropTargetPriority()
 
     if (failure is not null)
         throw new InvalidOperationException("Animation-layer drop routing failed.", failure);
+}
+
+static DragEventArgs CreateDragEvent(IDataObject data, DependencyObject source, RoutedEvent routedEvent)
+{
+    var constructor = typeof(DragEventArgs).GetConstructor(
+        BindingFlags.Instance | BindingFlags.NonPublic,
+        binder: null,
+        [typeof(IDataObject), typeof(DragDropKeyStates), typeof(DragDropEffects), typeof(DependencyObject), typeof(Point)],
+        modifiers: null)
+        ?? throw new InvalidOperationException("DragEventArgs constructor was not found.");
+    var dragEvent = (DragEventArgs)constructor.Invoke(
+        [data, DragDropKeyStates.None, DragDropEffects.Copy, source, new Point(4, 4)]);
+    dragEvent.RoutedEvent = routedEvent;
+    dragEvent.Source = source;
+    return dragEvent;
 }
 
 static void TestMergedSkeleton(Skeleton skeleton)

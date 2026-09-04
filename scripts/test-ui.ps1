@@ -155,9 +155,6 @@ function Test-ContextMenu([System.Diagnostics.Process]$process, $control, [strin
     }
 
     $shell = New-Object -ComObject WScript.Shell
-    [void]$shell.AppActivate($process.Id)
-    $control.SetFocus()
-    Start-Sleep -Milliseconds 100
     $bounds = $control.Current.BoundingRectangle
     if ($bounds.Width -le 0 -or $bounds.Height -le 0) {
         throw "Context-menu surface has no visible bounds: $menuItemId"
@@ -165,14 +162,18 @@ function Test-ContextMenu([System.Diagnostics.Process]$process, $control, [strin
     $point = New-Object System.Drawing.Point(
         [int]($bounds.Left + ($bounds.Width / 2)),
         [int]($bounds.Top + ($bounds.Height / 2)))
-    [System.Windows.Forms.Cursor]::Position = $point
-    [UiSmokeMouse]::mouse_event(0x0008, 0, 0, 0, [System.UIntPtr]::Zero)
-    [UiSmokeMouse]::mouse_event(0x0010, 0, 0, 0, [System.UIntPtr]::Zero)
-
     $menuItem = $null
-    for ($attempt = 0; $attempt -lt 20 -and $null -eq $menuItem; $attempt++) {
-        Start-Sleep -Milliseconds 100
-        $menuItem = Find-ProcessControl $process.Id $menuItemId
+    for ($clickAttempt = 0; $clickAttempt -lt 3 -and $null -eq $menuItem; $clickAttempt++) {
+        [void]$shell.AppActivate($process.Id)
+        $control.SetFocus()
+        Start-Sleep -Milliseconds 200
+        [System.Windows.Forms.Cursor]::Position = $point
+        [UiSmokeMouse]::mouse_event(0x0008, 0, 0, 0, [System.UIntPtr]::Zero)
+        [UiSmokeMouse]::mouse_event(0x0010, 0, 0, 0, [System.UIntPtr]::Zero)
+        for ($attempt = 0; $attempt -lt 20 -and $null -eq $menuItem; $attempt++) {
+            Start-Sleep -Milliseconds 100
+            $menuItem = Find-ProcessControl $process.Id $menuItemId
+        }
     }
     if ($null -eq $menuItem) {
         throw "Context menu item did not open: $menuItemId"
@@ -182,6 +183,7 @@ function Test-ContextMenu([System.Diagnostics.Process]$process, $control, [strin
     }
 
     [System.Windows.Forms.SendKeys]::SendWait('{ESC}')
+    Start-Sleep -Milliseconds 150
 }
 
 function Stop-TestProcess([System.Diagnostics.Process]$process) {
@@ -221,11 +223,17 @@ function Save-WindowCapture($window, [string]$path) {
 }
 
 function Select-Language([System.Diagnostics.Process]$process, $button, [string]$menuItemId) {
-    Invoke-Control $button 'LanguageButton'
+    $shell = New-Object -ComObject WScript.Shell
     $menuItem = $null
-    for ($attempt = 0; $attempt -lt 20 -and $null -eq $menuItem; $attempt++) {
-        Start-Sleep -Milliseconds 100
-        $menuItem = Find-ProcessControl $process.Id $menuItemId
+    for ($openAttempt = 0; $openAttempt -lt 3 -and $null -eq $menuItem; $openAttempt++) {
+        [void]$shell.AppActivate($process.Id)
+        $button.SetFocus()
+        Start-Sleep -Milliseconds 150
+        Invoke-Control $button 'LanguageButton'
+        for ($attempt = 0; $attempt -lt 20 -and $null -eq $menuItem; $attempt++) {
+            Start-Sleep -Milliseconds 100
+            $menuItem = Find-ProcessControl $process.Id $menuItemId
+        }
     }
     Invoke-Control $menuItem $menuItemId
     Start-Sleep -Milliseconds 300

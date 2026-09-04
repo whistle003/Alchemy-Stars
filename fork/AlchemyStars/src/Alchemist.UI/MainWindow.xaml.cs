@@ -163,22 +163,31 @@ namespace Alchemist.UI
 
         private void PathTextBoxPreviewDragOver(object sender, DragEventArgs e)
         {
-            if (sender is TextBox textBox && TryGetDroppedPath(textBox, e.Data, out _))
-            {
-                e.Effects = DragDropEffects.Copy;
-                e.Handled = true;
-            }
+            if (sender is not TextBox textBox || !e.Data.GetDataPresent(DataFormats.FileDrop))
+                return;
+
+            e.Effects = TryGetDroppedPath(textBox, e.Data, out _)
+                ? DragDropEffects.Copy
+                : DragDropEffects.None;
+            e.Handled = true;
         }
 
         private void PathTextBoxPreviewDrop(object sender, DragEventArgs e)
         {
-            if (sender is not TextBox textBox || !TryGetDroppedPath(textBox, e.Data, out var path))
+            if (sender is not TextBox textBox || !e.Data.GetDataPresent(DataFormats.FileDrop))
                 return;
 
-            textBox.Text = path;
-            textBox.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
-            RememberDroppedPath(textBox, path);
-            e.Effects = DragDropEffects.Copy;
+            if (TryGetDroppedPath(textBox, e.Data, out var path))
+            {
+                textBox.Text = path;
+                textBox.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
+                RememberDroppedPath(textBox, path);
+                e.Effects = DragDropEffects.Copy;
+            }
+            else
+            {
+                e.Effects = DragDropEffects.None;
+            }
             e.Handled = true;
         }
 

@@ -121,6 +121,8 @@ function Stop-TestProcess([System.Diagnostics.Process]$process) {
 
 $process = Start-Process -FilePath $executable -PassThru -WindowStyle Hidden
 try {
+    $expectedVersion = '1.0.1'
+
     if (-not $process.WaitForInputIdle(10000)) {
         throw 'Application did not become input-idle within 10 seconds.'
     }
@@ -131,6 +133,9 @@ try {
     }
 
     $initialTitle = $mainWindow.Current.Name
+    if ($initialTitle -notmatch [regex]::Escape($expectedVersion)) {
+        throw "Main window title does not contain version $expectedVersion`: $initialTitle"
+    }
     $animationList = Find-Control $mainWindow 'AnimationList'
     $listItemCondition = New-Object System.Windows.Automation.PropertyCondition(
         [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
@@ -154,6 +159,9 @@ try {
     if ($switchedTitle -eq $initialTitle) {
         throw "Language switch did not update the window title: $switchedTitle"
     }
+    if ($switchedTitle -notmatch [regex]::Escape($expectedVersion)) {
+        throw "Localized window title does not contain version $expectedVersion`: $switchedTitle"
+    }
 
     Invoke-Control $languageButton 'LanguageButton'
     Start-Sleep -Milliseconds 500
@@ -169,6 +177,10 @@ try {
     }
     if ($null -eq $aboutValidation -or $aboutValidation.Current.Name -notmatch 'Maya 2025') {
         throw 'About window was not shown with the current Maya 2025 validation information.'
+    }
+    $aboutVersion = Find-ProcessControl $process.Id 'AboutAppVersion'
+    if ($null -eq $aboutVersion -or $aboutVersion.Current.Name -ne $expectedVersion) {
+        throw "About window does not show version $expectedVersion."
     }
     $initialAboutValidation = $aboutValidation.Current.Name
     Invoke-Control $languageButton 'LanguageButton'

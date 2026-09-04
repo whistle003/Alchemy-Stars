@@ -85,7 +85,8 @@
                         <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <TextBlock Text="{DynamicResource AboutVersion}" Margin="0,3" Opacity="0.7"/>
-                    <TextBlock Grid.Column="1" Text="{Binding AppVersion}" Margin="0,3"/>
+                    <TextBlock Grid.Column="1" Text="{Binding AppVersion}" Margin="0,3"
+                               AutomationProperties.AutomationId="AboutAppVersion"/>
                     <TextBlock Grid.Row="1" Text="{DynamicResource AboutRuntime}" Margin="0,3" Opacity="0.7"/>
                     <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding RuntimeVersion}" Margin="0,3"/>
                     <TextBlock Grid.Row="2" Text="{DynamicResource AboutDistribution}" Margin="0,3" Opacity="0.7"/>

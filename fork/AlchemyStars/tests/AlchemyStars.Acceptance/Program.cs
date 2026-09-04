@@ -1,6 +1,7 @@
 using Alchemist.InverseKinematics;
 using Alchemist.UI;
 using Cast.NET;
+using Cast.NET.Nodes;
 using RedFox.Graphics3D.Skeletal;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -76,7 +77,7 @@ if (requiredFiles.All(File.Exists))
         var outputs = sprintProject.ExportAnimations();
         Assert(outputs.Count == 1, "Sprint example should export exactly one file.");
         sprintOutput = Path.GetFullPath(outputs.Single());
-        ValidateMayaPackage(sprintOutput);
+        ValidateMayaPackage(sprintOutput, sprintProject.Parts);
     });
 
     Run("Weapon-first part order exports one CAST for Maya validation", () =>
@@ -86,7 +87,7 @@ if (requiredFiles.All(File.Exists))
         var outputs = weaponFirstSprintProject.ExportAnimations();
         Assert(outputs.Count == 1, "Weapon-first sprint example should export exactly one file.");
         weaponFirstSprintOutput = Path.GetFullPath(outputs.Single());
-        ValidateMayaPackage(weaponFirstSprintOutput);
+        ValidateMayaPackage(weaponFirstSprintOutput, weaponFirstSprintProject.Parts);
     });
 
     Run("Idle bakes into a separate one-animation Maya CAST", () =>
@@ -95,7 +96,7 @@ if (requiredFiles.All(File.Exists))
         var outputs = idleProject.ExportAnimations();
         Assert(outputs.Count == 1, "Idle example should export exactly one file.");
         idleOutput = Path.GetFullPath(outputs.Single());
-        ValidateMayaPackage(idleOutput);
+        ValidateMayaPackage(idleOutput, idleProject.Parts);
     });
 
     Run("Batch example exports two valid one-animation Maya CAST files", () =>
@@ -108,7 +109,7 @@ if (requiredFiles.All(File.Exists))
         Assert(outputs.Count == 2, "Batch example should export exactly two files.");
         Assert(outputs.Distinct(StringComparer.OrdinalIgnoreCase).Count() == 2, "Batch example output paths must be unique.");
         foreach (var output in outputs)
-            ValidateMayaPackage(output);
+            ValidateMayaPackage(output, batchProject.Parts);
     });
 }
 else
@@ -403,14 +404,52 @@ static string FindFile(params string[] relativeParts)
     throw new FileNotFoundException("Unable to locate test fixture: " + Path.Combine(relativeParts));
 }
 
-static void ValidateMayaPackage(string path)
+static void ValidateMayaPackage(string path, IEnumerable<Part> sourceParts)
 {
     Assert(File.Exists(path), "Output CAST was not created.");
     var cast = CastReader.Load(path);
     var nodes = cast.RootNodes.SelectMany(DescendantsAndSelf).ToArray();
-    Assert(nodes.Count(x => x.Identifier == CastNodeIdentifier.Model) >= 2, "CAST package does not contain both source models.");
+    Assert(nodes.Count(x => x.Identifier == CastNodeIdentifier.Model) == 1, "CAST package must contain one physically merged model.");
     Assert(nodes.Count(x => x.Identifier == CastNodeIdentifier.Animation) == 1, "CAST package must contain exactly one animation.");
     Assert(nodes.Count(x => x.Identifier == CastNodeIdentifier.Curve) > 0, "CAST package contains no animation curves.");
+    var model = nodes.OfType<ModelNode>().Single();
+    var skeleton = model.Skeleton ?? throw new InvalidDataException("Merged CAST model has no skeleton.");
+    Assert(skeleton.Bones.Count(bone => bone.ParentIndex < 0) == 1, "Merged CAST model must contain one skeleton root.");
+    Assert(skeleton.Bones.GroupBy(bone => bone.Name, StringComparer.OrdinalIgnoreCase).All(group => group.Count() == 1), "Merged CAST skeleton contains duplicate bone names.");
+    Assert(skeleton.Bones.Count(bone => string.Equals(bone.Name, "j_gun", StringComparison.OrdinalIgnoreCase)) == 1, "Merged CAST skeleton must contain one j_gun.");
+    Assert(nodes.OfType<CurveNode>().Count(curve => string.Equals(curve.NodeName, "j_gun", StringComparison.OrdinalIgnoreCase)) == 4, "Merged CAST animation must contain all j_gun transform curves.");
+    Assert(model.Meshes.All(mesh => mesh.EnumerateBoneWeights().All(influence => influence.Item1 >= 0 && influence.Item1 < skeleton.Bones.Length)), "Merged CAST mesh contains an out-of-range bone influence.");
+    var sourceModels = sourceParts
+        .OrderBy(part => part.Type switch
+        {
+            PartType.ViewHands => 0,
+            PartType.Weapon => 1,
+            PartType.Attachment => 2,
+            _ => 3,
+        })
+        .SelectMany(part => CastReader.Load(part.FilePath).RootNodes)
+        .SelectMany(DescendantsAndSelf)
+        .OfType<ModelNode>()
+        .ToArray();
+    var sourceMeshes = sourceModels.SelectMany(sourceModel => sourceModel.Meshes.Select(mesh => (Model: sourceModel, Mesh: mesh))).ToArray();
+    Assert(model.Meshes.Length == sourceMeshes.Length, "Merged CAST model did not retain every source mesh.");
+    for (var meshIndex = 0; meshIndex < sourceMeshes.Length; meshIndex++)
+    {
+        var sourceModel = sourceMeshes[meshIndex].Model;
+        var sourceSkeleton = sourceModel.Skeleton ?? throw new InvalidDataException("Source CAST model has no skeleton.");
+        var sourceInfluences = sourceMeshes[meshIndex].Mesh.EnumerateBoneWeights().ToArray();
+        var mergedInfluences = model.Meshes[meshIndex].EnumerateBoneWeights().ToArray();
+        Assert(sourceInfluences.Length == mergedInfluences.Length, $"Merged CAST mesh {meshIndex} changed its influence count.");
+        for (var influenceIndex = 0; influenceIndex < sourceInfluences.Length; influenceIndex++)
+        {
+            var sourceInfluence = sourceInfluences[influenceIndex];
+            var mergedInfluence = mergedInfluences[influenceIndex];
+            var sourceBoneName = sourceSkeleton.Bones[sourceInfluence.Item1].Name;
+            var mergedBoneName = skeleton.Bones[mergedInfluence.Item1].Name;
+            Assert(string.Equals(sourceBoneName, mergedBoneName, StringComparison.OrdinalIgnoreCase), $"Merged CAST mesh {meshIndex} remapped influence {influenceIndex} to the wrong bone.");
+            Assert(Math.Abs(sourceInfluence.Item2 - mergedInfluence.Item2) < 0.000001f, $"Merged CAST mesh {meshIndex} changed influence {influenceIndex} weight.");
+        }
+    }
     Assert(nodes.Select(x => x.Hash).Distinct().Count() == nodes.Length, "CAST package contains duplicate hashes.");
 }
 

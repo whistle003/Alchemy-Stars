@@ -120,10 +120,10 @@
     <sys:String x:Key="AboutFeaturesTitle">主要能力</sys:String>
     <sys:String x:Key="AboutFeatureFiles">支持文件浏览器、拖放和列表区域右键导入；项目可保存为 .aprj 并重复使用</sys:String>
     <sys:String x:Key="AboutFeatureLayers">支持普通、叠加、手势、手势姿势动画层、帧偏移及左右手 IK</sys:String>
-    <sys:String x:Key="AboutFeatureModels">按“手臂 → 武器 → 附件”规范化骨架合并顺序，避免列表顺序导致 Maya 生成重复骨架</sys:String>
+    <sys:String x:Key="AboutFeatureModels">按“手臂 → 武器 → 附件”规范化顺序并物理合并为单个模型，无需依赖 Maya 的 Import Merge 选项</sys:String>
     <sys:String x:Key="AboutFeatureMaya">随发布包提供 Maya CAST 导入插件、标准 MP5/Hawk 示例和中英文使用文档</sys:String>
     <sys:String x:Key="AboutValidationTitle">兼容性与验证</sys:String>
-    <sys:String x:Key="AboutValidation">当前版本已在 Autodesk Maya 2025 中验证：导入后保持单一骨架和单一目标动画，采用 30 FPS，可正常播放和继续编辑。Hawk 冲刺及“武器排在手臂之前”的回归场景已纳入自动验收。</sys:String>
+    <sys:String x:Key="AboutValidation">当前版本已在 Autodesk Maya 2025 关闭 Import Merge 的条件下验证：导入后保持单一骨架和单一目标动画，武器正常随动画运动。Hawk 冲刺及“武器排在手臂之前”的场景已纳入自动验收。</sys:String>
     <sys:String x:Key="AboutBuildTitle">版本与运行环境</sys:String>
     <sys:String x:Key="AboutVersion">应用版本</sys:String>
     <sys:String x:Key="AboutRuntime">当前 .NET 运行时</sys:String>

@@ -120,10 +120,10 @@
     <sys:String x:Key="AboutFeaturesTitle">Key capabilities</sys:String>
     <sys:String x:Key="AboutFeatureFiles">Import through file browsers, drag and drop, or list-area context menus; save reusable .aprj projects</sys:String>
     <sys:String x:Key="AboutFeatureLayers">Normal, Additive, Gesture, and Gesture Pose layers, frame offsets, and left/right hand IK</sys:String>
-    <sys:String x:Key="AboutFeatureModels">Canonical View Hands → Weapon → Attachment skeleton order prevents list order from creating duplicate Maya skeletons</sys:String>
+    <sys:String x:Key="AboutFeatureModels">Canonical View Hands → Weapon → Attachment order is physically merged into one model without relying on Maya Import Merge</sys:String>
     <sys:String x:Key="AboutFeatureMaya">Includes the Maya CAST importer, standard MP5/Hawk examples, and bilingual usage guides</sys:String>
     <sys:String x:Key="AboutValidationTitle">Compatibility and validation</sys:String>
-    <sys:String x:Key="AboutValidation">This version is verified in Autodesk Maya 2025 with one skeleton, one target animation, 30 FPS playback, and an editable scene. Automated acceptance covers Hawk sprint and the weapon-before-hands regression case.</sys:String>
+    <sys:String x:Key="AboutValidation">This version is verified in Autodesk Maya 2025 with Import Merge off: one skeleton, one target animation, and an animated weapon. Automated acceptance covers Hawk sprint and the weapon-before-hands case.</sys:String>
     <sys:String x:Key="AboutBuildTitle">Version and environment</sys:String>
     <sys:String x:Key="AboutVersion">Application version</sys:String>
     <sys:String x:Key="AboutRuntime">Current .NET runtime</sys:String>

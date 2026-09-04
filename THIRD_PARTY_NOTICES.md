@@ -19,6 +19,7 @@ file translator from [dtzxporter/cast](https://github.com/dtzxporter/cast).
 Those files are licensed under the MIT License; the original license text is
 stored at `third_party/cast/LICENSE`.
 
-Alchemy Stars output contains viewhands and weapon model roots sharing `j_gun`.
-The acceptance runner enables the plugin's `importMerge` option so a single
-file import creates one Maya skeleton before applying the baked animation.
+Alchemy Stars physically combines viewhands, weapon, and attachment data into
+one model node with one skeleton before writing CAST output. The plugin's
+`importMerge` option is therefore not required for importing into a new scene;
+it remains available for intentionally merging into an existing scene skeleton.

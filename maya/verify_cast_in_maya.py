@@ -57,7 +57,10 @@ def main() -> int:
         import maya.cmds as cmds
         import castplugin
 
-        castplugin.sceneSettings["importMerge"] = True
+        # Match a normal GUI import with Import Merge disabled. Alchemy Stars
+        # output must already be one physical model and must not depend on an
+        # importer preference to avoid duplicate skeletons or ambiguous tracks.
+        castplugin.sceneSettings["importMerge"] = False
         castplugin.sceneSettings["importReset"] = False
         castplugin.sceneSettings["importAtTime"] = False
         castplugin.sceneSettings["importSkin"] = True
@@ -90,8 +93,20 @@ def main() -> int:
         ik_distances = {"left": [], "right": []}
         reach_residuals = {"left": [], "right": []}
         chain_samples = {}
+        gun_reference_matrix = None
+        gun_matrix_deltas = []
         for frame in range(int(minimum), int(maximum) + 1):
             cmds.currentTime(frame, edit=True)
+            if len(gun_roots) == 1:
+                gun_matrix = [
+                    float(value)
+                    for value in cmds.xform(gun_roots[0], query=True, worldSpace=True, matrix=True)
+                ]
+                if gun_reference_matrix is None:
+                    gun_reference_matrix = gun_matrix
+                gun_matrix_deltas.append(
+                    max(abs(current - initial) for current, initial in zip(gun_matrix, gun_reference_matrix))
+                )
             for side, shoulder, elbow, wrist, target in (
                 ("left", "j_shoulder_le", "j_elbow_le", "j_wrist_le", "tag_ik_loc_le"),
                 ("right", "j_shoulder_ri", "j_elbow_ri", "j_wrist_ri", "tag_ik_loc_ri"),
@@ -129,6 +144,13 @@ def main() -> int:
             "translateX", "translateY", "translateZ",
             "rotateX", "rotateY", "rotateZ",
         )
+        gun_transform_key_count = 0
+        if len(gun_roots) == 1:
+            gun_transform_key_count = sum(
+                int(cmds.keyframe(gun_roots[0], attribute=attribute, query=True, keyframeCount=True) or 0)
+                for attribute in animated_transform_attributes
+            )
+        maximum_gun_matrix_delta = max(gun_matrix_deltas, default=0.0)
         incomplete_channels = []
         for joint in joints:
             for attribute in animated_transform_attributes:
@@ -156,6 +178,11 @@ def main() -> int:
                 actual <= residual + 0.05
                 for actual, residual in zip(ik_distances["left"], reach_residuals["left"])
             ),
+            "weaponAnimationPresent": (
+                len(gun_roots) == 1
+                and gun_transform_key_count == len(expected_key_times) * len(animated_transform_attributes)
+                and maximum_gun_matrix_delta > 0.001
+            ),
             "rightHandAnimationPresent": int(
                 cmds.keyframe("j_wrist_ri", attribute="rotateX", query=True, keyframeCount=True) or 0
             ) == 67,
@@ -168,6 +195,8 @@ def main() -> int:
             "visibleMeshCount": len(visible_meshes),
             "animationCurveCount": len(animation_curves),
             "jGunJointCount": len(gun_roots),
+            "jGunTransformKeyCount": gun_transform_key_count,
+            "maximumJGunWorldMatrixDelta": maximum_gun_matrix_delta,
             "skeletonRoots": skeleton_roots,
             "leftWristRotateXKeys": int(wrist_keys),
             "incompleteTransformChannelCount": len(incomplete_channels),

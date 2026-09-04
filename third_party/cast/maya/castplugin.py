@@ -34,9 +34,9 @@ sceneSettings = {
     "importIK": True,
     "importConstraints": True,
     "importBlendShapes": True,
-    # Alchemy Stars packages viewhands + weapon as two model roots. Merge by
-    # default so a single import produces one shared skeleton through j_gun.
-    "importMerge": True,
+    # Alchemy Stars emits one physically merged model. Keep this opt-in for
+    # users who intentionally merge an import into an existing scene skeleton.
+    "importMerge": False,
     "importAxis": True,
     "importHair": True,
     "exportAnim": True,

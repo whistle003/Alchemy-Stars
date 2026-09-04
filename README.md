@@ -7,8 +7,8 @@ Alchemy Stars 是 [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist) 
 ## 已完成的改进
 
 - 手臂和武器按同名骨骼合并，避免共享 `j_gun` 被改名或生成两套骨架。
-- 导出时按 ViewHands → Weapon → Attachment 规范化模型顺序；即使工程把武器放在手臂之前，Maya 也只会生成一套骨架。
-- 每个输出 CAST 保留全部模型、材质和蒙皮，但只包含当前选中的一个烘焙动画。
+- 导出时按 ViewHands → Weapon → Attachment 规范化模型顺序，并把全部部件物理合并成一个 Model；即使工程把武器放在手臂之前、Maya 未启用 Import Merge，也只会生成一套骨架。
+- 每个输出 CAST 保留全部模型网格、材质和重映射后的蒙皮权重，但只包含当前选中的一个烘焙动画。
 - Additive、Gesture、GesturePose、普通层以及正负帧偏移继续走原版 RedFox 采样流程，最终转为绝对动画曲线。
 - 修复原版双骨 IK 算法；循环目标会被拒绝，防止右手腕通过 `j_gun` 反向依赖自身。
 - 修复动画复制时右手 IK、目标覆盖与层偏移丢失的问题。

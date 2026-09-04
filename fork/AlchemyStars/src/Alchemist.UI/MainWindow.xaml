@@ -18,6 +18,22 @@
             <Setter Property="Padding" Value="8"/>
             <Setter Property="ToolTip" Value="{DynamicResource Browse}"/>
         </Style>
+        <Style x:Key="TopBarIconButton" TargetType="Button" BasedOn="{StaticResource MaterialDesignToolButton}">
+            <Setter Property="Width" Value="44"/>
+            <Setter Property="Height" Value="44"/>
+            <Setter Property="Margin" Value="1,0"/>
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="ToolTipService.InitialShowDelay" Value="350"/>
+            <Setter Property="ToolTipService.ShowDuration" Value="6000"/>
+        </Style>
+        <Style x:Key="TopBarIcon" TargetType="materialDesign:PackIcon">
+            <Setter Property="Width" Value="22"/>
+            <Setter Property="Height" Value="22"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
     </Window.Resources>
 
     <materialDesign:DialogHost DialogClosing="DialogHostDialogClosing"
@@ -28,22 +44,46 @@
             <Grid Grid.Row="0">
                 <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                 <ToolBarTray IsLocked="True" Grid.Column="0">
-                    <ToolBar ClipToBounds="False" Style="{StaticResource MaterialDesignToolBar}">
-                    <Button Content="{materialDesign:PackIcon Kind=PackageDown}" ToolTip="{DynamicResource TipLoadProject}" Command="{Binding ImportProjectCommand}"/>
-                    <Button Content="{materialDesign:PackIcon Kind=PackageUp}" ToolTip="{DynamicResource TipSaveProject}" Command="{Binding SaveProjectCommand}"/>
-                    <Button Content="{materialDesign:PackIcon Kind=Package}" ToolTip="{DynamicResource TipSaveProjectAs}" Command="{Binding SaveProjectAsCommand}"/>
+                    <ToolBar ClipToBounds="False" Style="{StaticResource MaterialDesignToolBar}" KeyboardNavigation.TabNavigation="Cycle">
+                    <Button Style="{StaticResource TopBarIconButton}" ToolTip="{DynamicResource TipLoadProject}" AutomationProperties.Name="{DynamicResource TipLoadProject}" AutomationProperties.AutomationId="OpenProjectButton" Command="{Binding ImportProjectCommand}">
+                        <materialDesign:PackIcon Kind="FolderOpenOutline" Style="{StaticResource TopBarIcon}"/>
+                    </Button>
+                    <Button Style="{StaticResource TopBarIconButton}" ToolTip="{DynamicResource TipSaveProject}" AutomationProperties.Name="{DynamicResource TipSaveProject}" AutomationProperties.AutomationId="SaveProjectButton" Command="{Binding SaveProjectCommand}">
+                        <materialDesign:PackIcon Kind="ContentSaveOutline" Style="{StaticResource TopBarIcon}"/>
+                    </Button>
+                    <Button Style="{StaticResource TopBarIconButton}" ToolTip="{DynamicResource TipSaveProjectAs}" AutomationProperties.Name="{DynamicResource TipSaveProjectAs}" AutomationProperties.AutomationId="SaveProjectAsButton" Command="{Binding SaveProjectAsCommand}">
+                        <materialDesign:PackIcon Kind="ContentSaveEditOutline" Style="{StaticResource TopBarIcon}"/>
+                    </Button>
                     <Separator/>
-                    <Button Content="{materialDesign:PackIcon Kind=FileUpload}" ToolTip="{DynamicResource TipAddAnimations}" Command="{Binding AddAnimationsCommand}"/>
-                    <Button Content="{materialDesign:PackIcon Kind=FileDownload}" ToolTip="{DynamicResource TipExportAnimations}" Command="{Binding SaveAnimationsCommand}"/>
-                    <Button Content="{materialDesign:PackIcon Kind=FileRemove}" ToolTip="{DynamicResource TipRemoveAnimations}" Command="{Binding RemoveAnimationsCommand}"/>
-                    <Button Content="{materialDesign:PackIcon Kind=Folder}" ToolTip="{DynamicResource TipOutputFolder}" Command="{Binding SetOutputFolderCommand}"/>
+                    <Button Style="{StaticResource TopBarIconButton}" ToolTip="{DynamicResource TipAddAnimations}" AutomationProperties.Name="{DynamicResource TipAddAnimations}" AutomationProperties.AutomationId="AddAnimationsButton" Command="{Binding AddAnimationsCommand}">
+                        <materialDesign:PackIcon Kind="AnimationPlusOutline" Style="{StaticResource TopBarIcon}"/>
+                    </Button>
+                    <Button Style="{StaticResource TopBarIconButton}" ToolTip="{DynamicResource TipExportAnimations}" AutomationProperties.Name="{DynamicResource TipExportAnimations}" AutomationProperties.AutomationId="ExportAnimationsButton" Command="{Binding SaveAnimationsCommand}">
+                        <materialDesign:PackIcon Kind="FileExportOutline" Style="{StaticResource TopBarIcon}"/>
+                    </Button>
+                    <Button Style="{StaticResource TopBarIconButton}" ToolTip="{DynamicResource TipRemoveAnimations}" AutomationProperties.Name="{DynamicResource TipRemoveAnimations}" AutomationProperties.AutomationId="RemoveAnimationsButton" Command="{Binding RemoveAnimationsCommand}">
+                        <materialDesign:PackIcon Kind="AnimationMinusOutline" Style="{StaticResource TopBarIcon}"/>
+                    </Button>
+                    <Button Style="{StaticResource TopBarIconButton}" ToolTip="{DynamicResource TipOutputFolder}" AutomationProperties.Name="{DynamicResource TipOutputFolder}" AutomationProperties.AutomationId="OutputFolderButton" Command="{Binding SetOutputFolderCommand}">
+                        <materialDesign:PackIcon Kind="FolderCogOutline" Style="{StaticResource TopBarIcon}"/>
+                    </Button>
                     <Separator/>
-                    <Button Content="{materialDesign:PackIcon Kind=ArrowLeftBold}" ToolTip="{DynamicResource TipEnableLeftIK}" Command="{Binding ToggleLeftHandIKCommand}" CommandParameter="Enable"/>
-                    <Button Content="{materialDesign:PackIcon Kind=ArrowRightBold}" ToolTip="{DynamicResource TipEnableRightIK}" Command="{Binding ToggleRightHandIKCommand}" CommandParameter="Enable"/>
-                    <Button Content="{materialDesign:PackIcon Kind=ArrowLeftBoldOutline}" ToolTip="{DynamicResource TipDisableLeftIK}" Command="{Binding ToggleLeftHandIKCommand}" CommandParameter="Disable"/>
-                    <Button Content="{materialDesign:PackIcon Kind=ArrowRightBoldOutline}" ToolTip="{DynamicResource TipDisableRightIK}" Command="{Binding ToggleRightHandIKCommand}" CommandParameter="Disable"/>
-                    <Button Content="{materialDesign:PackIcon Kind=StepBackward}" ToolTip="{DynamicResource TipAddPrefix}"
+                    <Button Style="{StaticResource TopBarIconButton}" ToolTip="{DynamicResource TipEnableLeftIK}" AutomationProperties.Name="{DynamicResource TipEnableLeftIK}" AutomationProperties.AutomationId="EnableLeftIkButton" Command="{Binding ToggleLeftHandIKCommand}" CommandParameter="Enable">
+                        <Grid Width="28" Height="22"><materialDesign:PackIcon Kind="VectorPolylinePlus" Width="22" Height="22" HorizontalAlignment="Left"/><TextBlock Text="L" FontSize="9" FontWeight="Bold" HorizontalAlignment="Right" VerticalAlignment="Bottom"/></Grid>
+                    </Button>
+                    <Button Style="{StaticResource TopBarIconButton}" ToolTip="{DynamicResource TipEnableRightIK}" AutomationProperties.Name="{DynamicResource TipEnableRightIK}" AutomationProperties.AutomationId="EnableRightIkButton" Command="{Binding ToggleRightHandIKCommand}" CommandParameter="Enable">
+                        <Grid Width="28" Height="22"><materialDesign:PackIcon Kind="VectorPolylinePlus" Width="22" Height="22" HorizontalAlignment="Left"/><TextBlock Text="R" FontSize="9" FontWeight="Bold" HorizontalAlignment="Right" VerticalAlignment="Bottom"/></Grid>
+                    </Button>
+                    <Button Style="{StaticResource TopBarIconButton}" ToolTip="{DynamicResource TipDisableLeftIK}" AutomationProperties.Name="{DynamicResource TipDisableLeftIK}" AutomationProperties.AutomationId="DisableLeftIkButton" Command="{Binding ToggleLeftHandIKCommand}" CommandParameter="Disable">
+                        <Grid Width="28" Height="22"><materialDesign:PackIcon Kind="VectorPolylineMinus" Width="22" Height="22" HorizontalAlignment="Left"/><TextBlock Text="L" FontSize="9" FontWeight="Bold" HorizontalAlignment="Right" VerticalAlignment="Bottom"/></Grid>
+                    </Button>
+                    <Button Style="{StaticResource TopBarIconButton}" ToolTip="{DynamicResource TipDisableRightIK}" AutomationProperties.Name="{DynamicResource TipDisableRightIK}" AutomationProperties.AutomationId="DisableRightIkButton" Command="{Binding ToggleRightHandIKCommand}" CommandParameter="Disable">
+                        <Grid Width="28" Height="22"><materialDesign:PackIcon Kind="VectorPolylineMinus" Width="22" Height="22" HorizontalAlignment="Left"/><TextBlock Text="R" FontSize="9" FontWeight="Bold" HorizontalAlignment="Right" VerticalAlignment="Bottom"/></Grid>
+                    </Button>
+                    <Separator/>
+                    <Button Style="{StaticResource TopBarIconButton}" ToolTip="{DynamicResource TipAddPrefix}" AutomationProperties.Name="{DynamicResource TipAddPrefix}" AutomationProperties.AutomationId="AddPrefixButton"
                             Command="{x:Static materialDesign:DialogHost.OpenDialogCommand}" materialDesign:DialogHost.DialogClosingAttached="DialogHostDialogClosing">
+                        <Button.Content><materialDesign:PackIcon Kind="FormatLetterStartsWith" Style="{StaticResource TopBarIcon}"/></Button.Content>
                         <Button.CommandParameter>
                             <StackPanel Margin="20" Width="320">
                                 <TextBlock Text="{DynamicResource AddPrefixPrompt}" FontSize="16" TextWrapping="Wrap"/>
@@ -55,8 +95,9 @@
                             </StackPanel>
                         </Button.CommandParameter>
                     </Button>
-                    <Button Content="{materialDesign:PackIcon Kind=StepForward}" ToolTip="{DynamicResource TipAddSuffix}"
+                    <Button Style="{StaticResource TopBarIconButton}" ToolTip="{DynamicResource TipAddSuffix}" AutomationProperties.Name="{DynamicResource TipAddSuffix}" AutomationProperties.AutomationId="AddSuffixButton"
                             Command="{x:Static materialDesign:DialogHost.OpenDialogCommand}" materialDesign:DialogHost.DialogClosingAttached="DialogHostDialogClosing">
+                        <Button.Content><materialDesign:PackIcon Kind="FormatLetterEndsWith" Style="{StaticResource TopBarIcon}"/></Button.Content>
                         <Button.CommandParameter>
                             <StackPanel Margin="20" Width="320">
                                 <TextBlock Text="{DynamicResource AddSuffixPrompt}" FontSize="16" TextWrapping="Wrap"/>
@@ -68,16 +109,29 @@
                             </StackPanel>
                         </Button.CommandParameter>
                     </Button>
-                    <Button Content="{materialDesign:PackIcon Kind=HandBackLeft}" ToolTip="{DynamicResource TipSetLeftPose}" Command="{Binding SetPoseFileCommand}" CommandParameter="Left"/>
-                    <Button Content="{materialDesign:PackIcon Kind=HandBackRight}" ToolTip="{DynamicResource TipSetRightPose}" Command="{Binding SetPoseFileCommand}" CommandParameter="Right"/>
+                    <Button Style="{StaticResource TopBarIconButton}" ToolTip="{DynamicResource TipSetLeftPose}" AutomationProperties.Name="{DynamicResource TipSetLeftPose}" AutomationProperties.AutomationId="SetLeftPoseButton" Command="{Binding SetPoseFileCommand}" CommandParameter="Left">
+                        <materialDesign:PackIcon Kind="HandBackLeftOutline" Style="{StaticResource TopBarIcon}"/>
+                    </Button>
+                    <Button Style="{StaticResource TopBarIconButton}" ToolTip="{DynamicResource TipSetRightPose}" AutomationProperties.Name="{DynamicResource TipSetRightPose}" AutomationProperties.AutomationId="SetRightPoseButton" Command="{Binding SetPoseFileCommand}" CommandParameter="Right">
+                        <materialDesign:PackIcon Kind="HandBackRightOutline" Style="{StaticResource TopBarIcon}"/>
+                    </Button>
                     <Separator/>
-                    <Button Content="{materialDesign:PackIcon Kind=FileUploadOutline}" ToolTip="{DynamicResource TipAddLayers}" Command="{Binding AddLayerCommand}"/>
-                    <Button Content="{materialDesign:PackIcon Kind=FileRemoveOutline}" ToolTip="{DynamicResource TipRemoveLayers}" Command="{Binding RemoveLayerCommand}"/>
+                    <Button Style="{StaticResource TopBarIconButton}" ToolTip="{DynamicResource TipAddLayers}" AutomationProperties.Name="{DynamicResource TipAddLayers}" AutomationProperties.AutomationId="AddLayersButton" Command="{Binding AddLayerCommand}">
+                        <materialDesign:PackIcon Kind="LayersPlus" Style="{StaticResource TopBarIcon}"/>
+                    </Button>
+                    <Button Style="{StaticResource TopBarIconButton}" ToolTip="{DynamicResource TipRemoveLayers}" AutomationProperties.Name="{DynamicResource TipRemoveLayers}" AutomationProperties.AutomationId="RemoveLayersButton" Command="{Binding RemoveLayerCommand}">
+                        <materialDesign:PackIcon Kind="LayersMinus" Style="{StaticResource TopBarIcon}"/>
+                    </Button>
                     <Separator/>
-                    <Button Content="{materialDesign:PackIcon Kind=Bone}" ToolTip="{DynamicResource TipAddParts}" Command="{Binding AddPartsCommand}"/>
-                    <Button Content="{materialDesign:PackIcon Kind=BoneOff}" ToolTip="{DynamicResource TipRemoveParts}" Command="{Binding RemovePartsCommand}"/>
+                    <Button Style="{StaticResource TopBarIconButton}" ToolTip="{DynamicResource TipAddParts}" AutomationProperties.Name="{DynamicResource TipAddParts}" AutomationProperties.AutomationId="AddPartsButton" Command="{Binding AddPartsCommand}">
+                        <materialDesign:PackIcon Kind="BoxPlusOutline" Style="{StaticResource TopBarIcon}"/>
+                    </Button>
+                    <Button Style="{StaticResource TopBarIconButton}" ToolTip="{DynamicResource TipRemoveParts}" AutomationProperties.Name="{DynamicResource TipRemoveParts}" AutomationProperties.AutomationId="RemovePartsButton" Command="{Binding RemovePartsCommand}">
+                        <materialDesign:PackIcon Kind="BoxMinusOutline" Style="{StaticResource TopBarIcon}"/>
+                    </Button>
                     <Separator/>
-                    <Button Content="{materialDesign:PackIcon Kind=Cog}" ToolTip="{DynamicResource TipSettings}" Command="{x:Static materialDesign:DialogHost.OpenDialogCommand}">
+                    <Button Style="{StaticResource TopBarIconButton}" ToolTip="{DynamicResource TipSettings}" AutomationProperties.Name="{DynamicResource TipSettings}" AutomationProperties.AutomationId="SettingsButton" Command="{x:Static materialDesign:DialogHost.OpenDialogCommand}">
+                        <Button.Content><materialDesign:PackIcon Kind="CogOutline" Style="{StaticResource TopBarIcon}"/></Button.Content>
                         <Button.CommandParameter>
                             <StackPanel Margin="20" Width="360">
                                 <TextBlock Text="{DynamicResource SettingsTitle}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
@@ -97,7 +151,8 @@
                             </StackPanel>
                         </Button.CommandParameter>
                     </Button>
-                    <Button Content="{materialDesign:PackIcon Kind=Script}" ToolTip="{DynamicResource TipExperimental}" Command="{x:Static materialDesign:DialogHost.OpenDialogCommand}" materialDesign:DialogHost.DialogClosing="DialogHostDialogClosing">
+                    <Button Style="{StaticResource TopBarIconButton}" ToolTip="{DynamicResource TipExperimental}" AutomationProperties.Name="{DynamicResource TipExperimental}" AutomationProperties.AutomationId="ExperimentalScriptsButton" Command="{x:Static materialDesign:DialogHost.OpenDialogCommand}" materialDesign:DialogHost.DialogClosing="DialogHostDialogClosing">
+                        <Button.Content><materialDesign:PackIcon Kind="ScriptTextPlayOutline" Style="{StaticResource TopBarIcon}"/></Button.Content>
                         <Button.CommandParameter>
                             <StackPanel Margin="20" Width="280">
                                 <TextBlock Text="{DynamicResource ScriptsTitle}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
@@ -114,9 +169,9 @@
                 <Border Grid.Column="1" Background="{DynamicResource MaterialDesignPaper}" Padding="4,0,8,0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <Button x:Name="LanguageButton" ToolTip="{DynamicResource TipLanguage}" AutomationProperties.Name="{DynamicResource TipLanguage}" Click="ToggleLanguageClick" MinWidth="58" Height="44" Style="{StaticResource MaterialDesignFlatButton}">
-                            <StackPanel Orientation="Horizontal"><materialDesign:PackIcon Kind="Translate" Width="20" Height="20"/><TextBlock Text="{DynamicResource LanguageButton}" Margin="5,0,0,0" VerticalAlignment="Center"/></StackPanel>
+                            <StackPanel Orientation="Horizontal"><materialDesign:PackIcon Kind="TranslateVariant" Width="20" Height="20"/><TextBlock Text="{DynamicResource LanguageButton}" Margin="5,0,0,0" VerticalAlignment="Center"/></StackPanel>
                         </Button>
-                        <Button x:Name="AboutButton" Content="{materialDesign:PackIcon Kind=InformationOutline}" ToolTip="{DynamicResource TipAbout}" AutomationProperties.Name="{DynamicResource TipAbout}" Click="OpenAboutClick" Width="44" Height="44" Style="{StaticResource MaterialDesignFlatButton}"/>
+                        <Button x:Name="AboutButton" Content="{materialDesign:PackIcon Kind=InformationSlabCircleOutline}" ToolTip="{DynamicResource TipAbout}" AutomationProperties.Name="{DynamicResource TipAbout}" Click="OpenAboutClick" Width="44" Height="44" Style="{StaticResource MaterialDesignFlatButton}"/>
                     </StackPanel>
                 </Border>
             </Grid>
@@ -127,7 +182,7 @@
                         <ListView.ContextMenu>
                             <ContextMenu DataContext="{Binding PlacementTarget, RelativeSource={RelativeSource Self}}">
                                 <MenuItem Header="{DynamicResource ContextImportAnimations}" AutomationProperties.Name="{DynamicResource ContextImportAnimations}" AutomationProperties.AutomationId="ImportAnimationsContextMenuItem" Command="{Binding DataContext.AddAnimationsCommand}">
-                                    <MenuItem.Icon><materialDesign:PackIcon Kind="FileUploadOutline" Width="20" Height="20"/></MenuItem.Icon>
+                                    <MenuItem.Icon><materialDesign:PackIcon Kind="AnimationPlusOutline" Width="20" Height="20"/></MenuItem.Icon>
                                 </MenuItem>
                             </ContextMenu>
                         </ListView.ContextMenu>
@@ -149,7 +204,7 @@
                                         <ListBox.ContextMenu>
                                             <ContextMenu DataContext="{Binding PlacementTarget, RelativeSource={RelativeSource Self}}">
                                                 <MenuItem Header="{DynamicResource ContextImportLayers}" AutomationProperties.Name="{DynamicResource ContextImportLayers}" AutomationProperties.AutomationId="ImportLayersContextMenuItem" Command="{Binding Tag.AddLayersForAnimationCommand}" CommandParameter="{Binding DataContext}">
-                                                    <MenuItem.Icon><materialDesign:PackIcon Kind="FileUploadOutline" Width="20" Height="20"/></MenuItem.Icon>
+                                                    <MenuItem.Icon><materialDesign:PackIcon Kind="LayersPlus" Width="20" Height="20"/></MenuItem.Icon>
                                                 </MenuItem>
                                             </ContextMenu>
                                         </ListBox.ContextMenu>
@@ -169,7 +224,7 @@
                         <ListView.ContextMenu>
                             <ContextMenu DataContext="{Binding PlacementTarget, RelativeSource={RelativeSource Self}}">
                                 <MenuItem Header="{DynamicResource ContextImportParts}" AutomationProperties.Name="{DynamicResource ContextImportParts}" AutomationProperties.AutomationId="ImportPartsContextMenuItem" Command="{Binding DataContext.AddPartsCommand}">
-                                    <MenuItem.Icon><materialDesign:PackIcon Kind="FileUploadOutline" Width="20" Height="20"/></MenuItem.Icon>
+                                    <MenuItem.Icon><materialDesign:PackIcon Kind="BoxPlusOutline" Width="20" Height="20"/></MenuItem.Icon>
                                 </MenuItem>
                             </ContextMenu>
                         </ListView.ContextMenu>

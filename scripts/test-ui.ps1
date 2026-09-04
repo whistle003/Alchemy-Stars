@@ -121,7 +121,7 @@ function Stop-TestProcess([System.Diagnostics.Process]$process) {
 
 $process = Start-Process -FilePath $executable -PassThru -WindowStyle Hidden
 try {
-    $expectedVersion = '1.0.1'
+    $expectedVersion = '1.0.2'
 
     if (-not $process.WaitForInputIdle(10000)) {
         throw 'Application did not become input-idle within 10 seconds.'
@@ -135,6 +135,23 @@ try {
     $initialTitle = $mainWindow.Current.Name
     if ($initialTitle -notmatch [regex]::Escape($expectedVersion)) {
         throw "Main window title does not contain version $expectedVersion`: $initialTitle"
+    }
+    $toolbarButtonIds = @(
+        'OpenProjectButton', 'SaveProjectButton', 'SaveProjectAsButton',
+        'AddAnimationsButton', 'ExportAnimationsButton', 'RemoveAnimationsButton', 'OutputFolderButton',
+        'EnableLeftIkButton', 'EnableRightIkButton', 'DisableLeftIkButton', 'DisableRightIkButton',
+        'AddPrefixButton', 'AddSuffixButton', 'SetLeftPoseButton', 'SetRightPoseButton',
+        'AddLayersButton', 'RemoveLayersButton', 'AddPartsButton', 'RemovePartsButton',
+        'SettingsButton', 'ExperimentalScriptsButton'
+    )
+    foreach ($toolbarButtonId in $toolbarButtonIds) {
+        $toolbarButton = Find-Control $mainWindow $toolbarButtonId
+        if ($null -eq $toolbarButton) {
+            throw "Toolbar button was not found: $toolbarButtonId"
+        }
+        if ([string]::IsNullOrWhiteSpace($toolbarButton.Current.Name)) {
+            throw "Toolbar button has no accessible name: $toolbarButtonId"
+        }
     }
     $animationList = Find-Control $mainWindow 'AnimationList'
     $listItemCondition = New-Object System.Windows.Automation.PropertyCondition(
@@ -212,7 +229,7 @@ try {
     $layerTextBox = $layerList.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $editCondition)
     Test-ContextMenu $process $layerTextBox 'ImportLayersContextMenuItem' 'ImportAnimationsContextMenuItem'
 
-    Write-Output "UI smoke passed: all context imports (including nested layer priority), $initialTitle -> $switchedTitle, and bilingual About content."
+    Write-Output "UI smoke passed: $($toolbarButtonIds.Count) accessible toolbar buttons, all context imports (including nested layer priority), $initialTitle -> $switchedTitle, and bilingual About content."
 }
 finally {
     Stop-TestProcess $process

@@ -1,9 +1,27 @@
+param(
+    [string]$PublishDirectory = '',
+    [string]$ArchivePath = ''
+)
+
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
-$publishDir = Join-Path $projectRoot 'release\Alchemy Stars'
-$zipPath = Join-Path $projectRoot 'release\AlchemyStars-win-x64.zip'
+$publishDir = if ([string]::IsNullOrWhiteSpace($PublishDirectory)) {
+    Join-Path $projectRoot 'release\Alchemy Stars'
+} elseif ([System.IO.Path]::IsPathRooted($PublishDirectory)) {
+    $PublishDirectory
+} else {
+    Join-Path $projectRoot $PublishDirectory
+}
+$zipPath = if ([string]::IsNullOrWhiteSpace($ArchivePath)) {
+    Join-Path $projectRoot 'release\AlchemyStars-win-x64.zip'
+} elseif ([System.IO.Path]::IsPathRooted($ArchivePath)) {
+    $ArchivePath
+} else {
+    Join-Path $projectRoot $ArchivePath
+}
 $releaseRoot = [System.IO.Path]::GetFullPath((Join-Path $projectRoot 'release'))
 $resolvedPublishDir = [System.IO.Path]::GetFullPath($publishDir)
+$resolvedZipPath = [System.IO.Path]::GetFullPath($zipPath)
 $uiProject = Join-Path $projectRoot 'fork\AlchemyStars\src\Alchemist.UI\Alchemist.UI.csproj'
 $exampleSourceDir = Join-Path $projectRoot 'fork\AlchemyStars\Example'
 $exampleManifestPath = Join-Path $exampleSourceDir 'manifest.json'
@@ -52,6 +70,9 @@ if ($exampleManifest.SchemaVersion -ne 1) {
 
 if (-not $resolvedPublishDir.StartsWith($releaseRoot + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)) {
     throw "Refusing to clear a publish directory outside the release folder: $resolvedPublishDir"
+}
+if (-not $resolvedZipPath.StartsWith($releaseRoot + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)) {
+    throw "Refusing to replace an archive outside the release folder: $resolvedZipPath"
 }
 
 if (Test-Path -LiteralPath $resolvedPublishDir) {
@@ -108,10 +129,10 @@ foreach ($standardExample in $exampleManifest.StandardExamples) {
     }
 }
 
-if (Test-Path -LiteralPath $zipPath) {
-    Remove-Item -LiteralPath $zipPath -Force
+if (Test-Path -LiteralPath $resolvedZipPath) {
+    Remove-Item -LiteralPath $resolvedZipPath -Force
 }
 
-Compress-Archive -Path (Join-Path $resolvedPublishDir '*') -DestinationPath $zipPath -CompressionLevel Optimal
+Compress-Archive -Path (Join-Path $resolvedPublishDir '*') -DestinationPath $resolvedZipPath -CompressionLevel Optimal
 Write-Output "Release: $resolvedPublishDir"
-Write-Output "Archive: $zipPath"
+Write-Output "Archive: $resolvedZipPath"

@@ -3,8 +3,21 @@ using Alchemist.UI;
 using Cast.NET;
 using Cast.NET.Nodes;
 using RedFox.Graphics3D.Skeletal;
+using System.IO;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.Windows;
+using System.Windows.Automation;
+using System.Windows.Controls;
+
+if (args.Contains("--drop-routing-only", StringComparer.OrdinalIgnoreCase))
+{
+    TestLayerDropTargetPriority();
+    Console.WriteLine("Animation-layer drop routing passed.");
+    return 0;
+}
 
 var outputDirectory = args.Length > 0
     ? Path.GetFullPath(args[0])
@@ -43,6 +56,7 @@ string? idleOutput = null;
 Run("Animation.Clone preserves all per-animation settings", () => TestAnimationClone(sprintTemplate));
 Run("Context animation import adds every selected animation", TestContextAnimationImport);
 Run("Context layer import targets only the requested animation", TestContextLayerImport);
+Run("External drop over animation layers prioritizes the hovered animation", TestLayerDropTargetPriority);
 Run("Context model import adds every selected model part", TestContextPartImport);
 Run("Sprint example restores layer and part ownership", () => TestExampleProject(sprintProject, expectedLayerCount: 2));
 Run("Idle example restores part ownership", () => TestExampleProject(idleProject, expectedLayerCount: 0));
@@ -197,6 +211,70 @@ static void TestContextPartImport()
     Assert(added == 2, "Both selected model files should be imported.");
     Assert(viewModel.Parts.Select(part => part.FilePath).SequenceEqual(["hands.cast", "weapon.cast"]), "Imported model parts are missing or out of order.");
     Assert(viewModel.Parts.All(part => ReferenceEquals(part.Owner, viewModel)), "Imported model part ownership was not assigned to the current project.");
+}
+
+static void TestLayerDropTargetPriority()
+{
+    Exception? failure = null;
+    var thread = new Thread(() =>
+    {
+        var previousViewModel = MainWindow.ViewModel;
+        try
+        {
+            var viewModel = new MainViewModel(_ => { }, string.Empty);
+            var target = new Animation("base.cast");
+            var selectedElsewhere = new Animation("other.cast");
+            viewModel.Animations.Add(target);
+            viewModel.Animations.Add(selectedElsewhere);
+            MainWindow.ViewModel = viewModel;
+
+            var outerAnimationList = new ListView { ItemsSource = viewModel.Animations };
+            outerAnimationList.SelectedItem = selectedElsewhere;
+            var hoveredLayerList = new ListBox { DataContext = target };
+            AutomationProperties.SetAutomationId(hoveredLayerList, "LayerList");
+            var data = new DataObject();
+            data.SetData(DataFormats.FileDrop, new[] { "offset.cast", "gesture.cast" });
+
+            var dragEventConstructor = typeof(DragEventArgs).GetConstructor(
+                BindingFlags.Instance | BindingFlags.NonPublic,
+                binder: null,
+                [typeof(IDataObject), typeof(DragDropKeyStates), typeof(DragDropEffects), typeof(DependencyObject), typeof(Point)],
+                modifiers: null)
+                ?? throw new InvalidOperationException("DragEventArgs constructor was not found.");
+            var dragEvent = (DragEventArgs)dragEventConstructor.Invoke(
+                [data, DragDropKeyStates.None, DragDropEffects.Copy, hoveredLayerList, new Point(4, 4)]);
+            dragEvent.RoutedEvent = DragDrop.DropEvent;
+            dragEvent.Source = hoveredLayerList;
+
+            var window = (MainWindow)RuntimeHelpers.GetUninitializedObject(typeof(MainWindow));
+            var dropHandler = typeof(MainWindow).GetMethod("ListViewDrop", BindingFlags.Instance | BindingFlags.NonPublic)
+                ?? throw new InvalidOperationException("Animation drop handler was not found.");
+            dropHandler.Invoke(window, [outerAnimationList, dragEvent]);
+
+            Assert(viewModel.Animations.Count == 2, "Files dropped over the animation-layer area were incorrectly added as main animations.");
+            Assert(target.Layers.Select(layer => layer.Name).SequenceEqual(["offset.cast", "gesture.cast"]), "Files dropped over the animation-layer area were not imported into the hovered animation.");
+            Assert(selectedElsewhere.Layers.Count == 0, "The outer animation selection incorrectly overrode the hovered animation-layer target.");
+            Assert(dragEvent.Handled, "The prioritized animation-layer drop was not marked handled.");
+        }
+        catch (TargetInvocationException ex) when (ex.InnerException is not null)
+        {
+            failure = ex.InnerException;
+        }
+        catch (Exception ex)
+        {
+            failure = ex;
+        }
+        finally
+        {
+            MainWindow.ViewModel = previousViewModel;
+        }
+    });
+    thread.SetApartmentState(ApartmentState.STA);
+    thread.Start();
+    thread.Join();
+
+    if (failure is not null)
+        throw new InvalidOperationException("Animation-layer drop routing failed.", failure);
 }
 
 static void TestMergedSkeleton(Skeleton skeleton)

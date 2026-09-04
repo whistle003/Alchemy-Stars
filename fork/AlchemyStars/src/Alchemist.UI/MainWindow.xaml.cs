@@ -297,16 +297,20 @@ namespace Alchemist.UI
                 }
                 else
                 {
+                    var hoveredSurface = FindImportSurface(e.OriginalSource as DependencyObject);
+                    if (hoveredSurface is not null
+                        && AutomationProperties.GetAutomationId(hoveredSurface) == "LayerList"
+                        && hoveredSurface.DataContext is Animation hoveredAnimation)
+                    {
+                        MainViewModel.AddLayerFiles([hoveredAnimation], files);
+                        e.Effects = DragDropEffects.Copy;
+                        e.Handled = true;
+                        return;
+                    }
+
                     if (sender is ListView listView && listView.SelectedItems.Count > 0)
                     {
-                        foreach (var animation in listView.SelectedItems.Cast<Animation>())
-                        {
-                            foreach (var file in files)
-                            {
-                                animation.Layers.Add(new(file, animation));
-                                //ViewModel.AnimationLayers.Add(layer);
-                            }
-                        }
+                        MainViewModel.AddLayerFiles(listView.SelectedItems.Cast<Animation>(), files);
                     }
                     else
                     {

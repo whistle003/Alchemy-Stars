@@ -1,6 +1,16 @@
+param(
+    [string]$ExecutablePath = ''
+)
+
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
-$executable = Join-Path $projectRoot 'release\Alchemy Stars\Alchemy Stars.exe'
+$executable = if ([string]::IsNullOrWhiteSpace($ExecutablePath)) {
+    Join-Path $projectRoot 'release\Alchemy Stars\Alchemy Stars.exe'
+} elseif ([System.IO.Path]::IsPathRooted($ExecutablePath)) {
+    [System.IO.Path]::GetFullPath($ExecutablePath)
+} else {
+    [System.IO.Path]::GetFullPath((Join-Path $projectRoot $ExecutablePath))
+}
 
 if (-not (Test-Path -LiteralPath $executable)) {
     throw "Published application not found: $executable"
@@ -121,7 +131,7 @@ function Stop-TestProcess([System.Diagnostics.Process]$process) {
 
 $process = Start-Process -FilePath $executable -PassThru -WindowStyle Hidden
 try {
-    $expectedVersion = '1.0.2'
+    $expectedVersion = '1.0.3'
 
     if (-not $process.WaitForInputIdle(10000)) {
         throw 'Application did not become input-idle within 10 seconds.'

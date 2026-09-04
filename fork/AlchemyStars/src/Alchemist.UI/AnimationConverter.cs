@@ -397,8 +397,9 @@ namespace Alchemist.UI
                 SaveAtomically(outputFull, temporaryPath =>
                 {
                     var stagingDirectory = Path.Combine(
-                        Path.GetDirectoryName(temporaryPath)!,
-                        $".alchemy-stars-fbx-{Guid.NewGuid():N}");
+                        Path.GetTempPath(),
+                        "AlchemyStarsFbx",
+                        Guid.NewGuid().ToString("N"));
                     var stagedFbx = Path.Combine(stagingDirectory, Path.GetFileName(outputFull));
                     var stagedCast = Path.ChangeExtension(stagedFbx, ".cast");
                     try
@@ -411,7 +412,16 @@ namespace Alchemist.UI
                     finally
                     {
                         if (Directory.Exists(stagingDirectory))
-                            Directory.Delete(stagingDirectory, recursive: true);
+                        {
+                            try
+                            {
+                                Directory.Delete(stagingDirectory, recursive: true);
+                            }
+                            catch (Exception ex)
+                            {
+                                Logging.Logger.Warn($"Failed to clean FBX staging directory: {stagingDirectory}", ex);
+                            }
+                        }
                     }
                 });
             }

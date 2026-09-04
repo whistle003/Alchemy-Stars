@@ -7,7 +7,9 @@ Usage:
 from __future__ import annotations
 
 import json
+import shutil
 import sys
+import tempfile
 from pathlib import Path
 
 
@@ -41,7 +43,12 @@ def main() -> int:
         cmds.loadPlugin("fbxmaya", quiet=True)
         cmds.currentUnit(time="ntsc")
         mel.eval("FBXImportFillTimeline -v true;")
-        mel.eval(f"FBXImport -f {json.dumps(fbx_path.as_posix())};")
+        with tempfile.TemporaryDirectory(prefix="alchemy-stars-fbx-verify-") as staging_directory:
+            import_path = fbx_path
+            if any(ord(character) > 127 for character in str(fbx_path)):
+                import_path = Path(staging_directory) / "input.fbx"
+                shutil.copy2(fbx_path, import_path)
+            mel.eval(f"FBXImport -f {json.dumps(import_path.as_posix())};")
 
         joints = cmds.ls(type="joint", long=True) or []
         meshes = cmds.ls(type="mesh", long=True, noIntermediate=True) or []

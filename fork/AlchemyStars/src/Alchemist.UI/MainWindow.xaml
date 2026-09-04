@@ -153,7 +153,7 @@
                                                         <TextBox Grid.Column="1" Margin="8,0,0,0" materialDesign:HintAssist.Hint="{DynamicResource OutputSuffix}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding OutputSuffix}"/>
                                                     </Grid>
                                                     <CheckBox Content="{DynamicResource MatchOldCod}" IsChecked="{Binding MatchOldCallOfDuty}" Margin="0,18,0,0"/>
-                                                    <Border Margin="0,18,0,0" Padding="12" Background="#160D8BF2" CornerRadius="4">
+                                                    <Border Margin="0,18,0,0" Padding="12" Background="{DynamicResource AlchemyMutedSurfaceBrush}" CornerRadius="4">
                                                         <TextBlock Text="{DynamicResource FbxMayaRequirement}" TextWrapping="Wrap"/>
                                                     </Border>
                                                 </StackPanel>

@@ -39,7 +39,15 @@ internal static class MayaFbxExporter
         var standardError = process.StandardError.ReadToEndAsync();
         if (!process.WaitForExit(ExportTimeoutMilliseconds))
         {
-            process.Kill(entireProcessTree: true);
+            try
+            {
+                process.Kill(entireProcessTree: true);
+                process.WaitForExit(30_000);
+            }
+            catch (Exception ex)
+            {
+                Logging.Logger.Warn("Failed to terminate the timed-out Maya FBX process cleanly.", ex);
+            }
             throw new TimeoutException(LocalizationManager.Get("FbxMayaTimedOut"));
         }
         Task.WaitAll(standardOutput, standardError);
@@ -48,10 +56,16 @@ internal static class MayaFbxExporter
             var details = string.Join(Environment.NewLine,
                 new[] { standardError.Result.Trim(), standardOutput.Result.Trim() }
                     .Where(value => !string.IsNullOrWhiteSpace(value)));
-            throw new InvalidOperationException(LocalizationManager.Format(
+            var message = LocalizationManager.Format(
                 "FbxMayaFailed",
                 process.ExitCode,
-                details));
+                details);
+            if (!string.IsNullOrWhiteSpace(details)
+                && !message.Contains(details, StringComparison.Ordinal))
+            {
+                message = $"{message}{Environment.NewLine}{details}";
+            }
+            throw new InvalidOperationException(message);
         }
     }
 
@@ -75,7 +89,8 @@ internal static class MayaFbxExporter
         if (!string.IsNullOrWhiteSpace(mayaLocation))
             yield return Path.Combine(mayaLocation, "bin", "mayapy.exe");
 
-        var years = Enumerable.Range(2020, 12).Reverse();
+        var years = new[] { 2025 }
+            .Concat(Enumerable.Range(2020, 12).Reverse().Where(year => year != 2025));
         var programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
         foreach (var year in years)
         {

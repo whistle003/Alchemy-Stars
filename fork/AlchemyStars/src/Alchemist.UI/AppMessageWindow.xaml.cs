@@ -15,12 +15,14 @@ public partial class AppMessageWindow : Window
     {
         DialogTitle = title;
         Message = message;
-        (IconKind, IconBrush) = image switch
+        var (iconKind, brushKey) = image switch
         {
-            MessageBoxImage.Error => (PackIconKind.AlertCircleOutline, Brushes.IndianRed),
-            MessageBoxImage.Warning => (PackIconKind.AlertOutline, Brushes.DarkOrange),
-            _ => (PackIconKind.InformationOutline, Brushes.DodgerBlue),
+            MessageBoxImage.Error => (PackIconKind.AlertCircleOutline, "AlchemyDestructiveBrush"),
+            MessageBoxImage.Warning => (PackIconKind.AlertOutline, "AlchemyAccentBrush"),
+            _ => (PackIconKind.InformationOutline, "AlchemyBorderBrush"),
         };
+        IconKind = iconKind;
+        IconBrush = Application.Current.TryFindResource(brushKey) as Brush ?? SystemColors.ControlTextBrush;
         InitializeComponent();
         DataContext = this;
     }

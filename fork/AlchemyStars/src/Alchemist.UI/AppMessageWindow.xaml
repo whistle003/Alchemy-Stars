@@ -20,7 +20,11 @@
             <materialDesign:PackIcon Kind="{Binding IconKind}" Width="32" Height="32" Foreground="{Binding IconBrush}" VerticalAlignment="Top"/>
             <StackPanel Grid.Column="1" Margin="12,0,0,0">
                 <TextBlock Text="{Binding DialogTitle}" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap"/>
-                <TextBlock Text="{Binding Message}" AutomationProperties.AutomationId="AppMessageText" Margin="0,10,0,0" TextWrapping="Wrap" MaxHeight="280"/>
+                <TextBox Text="{Binding Message, Mode=OneWay}" AutomationProperties.AutomationId="AppMessageText"
+                         Margin="0,10,0,0" Padding="0" TextWrapping="Wrap" MaxHeight="280"
+                         IsReadOnly="True" IsReadOnlyCaretVisible="True" BorderThickness="0"
+                         Background="Transparent" VerticalScrollBarVisibility="Auto"
+                         HorizontalScrollBarVisibility="Disabled"/>
             </StackPanel>
         </Grid>
         <Button Grid.Row="1" Content="{DynamicResource Close}" AutomationProperties.AutomationId="AppMessageCloseButton" MinWidth="80" Height="44" Margin="0,20,0,0" HorizontalAlignment="Right" IsDefault="True" IsCancel="True" Click="CloseClick" Style="{StaticResource MaterialDesignFlatButton}"/>

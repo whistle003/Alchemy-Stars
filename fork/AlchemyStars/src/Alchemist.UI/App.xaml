@@ -6,6 +6,10 @@
              StartupUri="MainWindow.xaml">
     <Application.Resources>
         <ResourceDictionary>
+            <SolidColorBrush x:Key="AlchemyAccentBrush" Color="#F97316" />
+            <SolidColorBrush x:Key="AlchemyBorderBrush" Color="#4338CA" />
+            <SolidColorBrush x:Key="AlchemyDestructiveBrush" Color="#EF4444" />
+            <SolidColorBrush x:Key="AlchemyMutedSurfaceBrush" Color="#3327273B" />
             <ResourceDictionary.MergedDictionaries>
                 <materialDesign:BundledTheme BaseTheme="Dark" PrimaryColor="Blue" SecondaryColor="Red" />
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />

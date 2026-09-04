@@ -127,8 +127,10 @@ function Test-ContextMenu([System.Diagnostics.Process]$process, $control, [strin
 
 function Stop-TestProcess([System.Diagnostics.Process]$process) {
     if ($null -ne $process -and -not $process.HasExited) {
-        $process.Kill()
-        $process.WaitForExit()
+        $process.Kill($true)
+        if (-not $process.WaitForExit(5000)) {
+            throw "UI smoke process did not exit after being terminated: $($process.Id)"
+        }
     }
 }
 

@@ -149,7 +149,7 @@ if (requiredFiles.All(File.Exists))
         Run("Hawk sprint exports an FBX through the local Maya", () =>
         {
             fbxProject.OutputFormat = ".fbx";
-            fbxProject.Animations.Single().OutputFolder = Path.Combine(outputDirectory, "fbx");
+            fbxProject.Animations.Single().OutputFolder = Path.Combine(outputDirectory, "fbx-中文路径");
             var outputs = fbxProject.ExportAnimations();
             Assert(outputs.Count == 1, "FBX export should create exactly one file.");
             fbxOutput = Path.GetFullPath(outputs.Single());

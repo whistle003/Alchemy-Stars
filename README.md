@@ -59,7 +59,7 @@ Alchemy Stars 保留原版批处理、动画层、IK 与 RedFox 转换管线，�
 
 `E:\Alchemy Stars\fork\AlchemyStars\output\sat_vm_ar_hawk_sprint_alchemy_stars.cast`
 
-发布目录和 ZIP 均包含完整的 `Example` 文件夹。根目录的 `MP5Base.aprj`、`MP5Grip.aprj` 是从原版 Alchemist `Example` 目录直接迁移、保持逐字节一致的标准示例；统一的 `manifest.json` 为验收与发布提供路径、结构和校验值。按标准示例改进的 Hawk 冲刺、Idle 与批处理项目集中在 `Example\Hawk`。详细步骤见 [示例使用说明](fork/AlchemyStars/Example/README.zh-CN.md)，英文简版见 [Example README](fork/AlchemyStars/Example/README.en-US.md)。
+发布目录和 ZIP 均包含完整的 `Example` 文件夹。根目录的 `MP5Base.aprj`、`MP5Grip.aprj` 是从原版 Alchemist `Example` 目录直接迁移、保持逐字节一致的标准示例；统一的 `manifest.json` 为验收与发布提供路径、结构和校验值。按标准示例改进的 Hawk 冲刺、Idle 与批处理项目集中在 `Example\Hawk`。发布包解压后直接打开 `Example\README.zh-CN.md`（英文为 `Example\README.en-US.md`）；仓库在线版本见 [中文示例说明](https://github.com/ez4cywa/Alchemy-Stars/blob/main/fork/AlchemyStars/Example/README.zh-CN.md) 和 [English example guide](https://github.com/ez4cywa/Alchemy-Stars/blob/main/fork/AlchemyStars/Example/README.en-US.md)。
 
 示例不会自动加载。`.aprj` 可从文件浏览器打开、拖进窗口或作为命令行参数载入。批处理中可以加入更多原项目支持的动画；程序会为每个条目分别输出一个文件，因此每个输出只对应一个已烘焙动画。项目文件保存绝对路径，换机器后应通过文件浏览器重新选择素材与输出目录，再使用“项目另存为”。
 

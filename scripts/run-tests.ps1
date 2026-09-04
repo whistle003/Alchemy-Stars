@@ -9,8 +9,33 @@ $solution = Join-Path $projectRoot 'fork\AlchemyStars\AlchemyStars.slnx'
 $acceptanceProject = Join-Path $projectRoot 'fork\AlchemyStars\tests\AlchemyStars.Acceptance\AlchemyStars.Acceptance.csproj'
 $output = Join-Path $projectRoot 'fork\AlchemyStars\output'
 $exampleDirectory = Join-Path $projectRoot 'fork\AlchemyStars\Example'
-$mayaPython = 'D:\Maya2025\bin\mayapy.exe'
 $acceptanceReport = Join-Path $output 'acceptance-report.json'
+
+function Find-Maya2025Python {
+    $candidates = [System.Collections.Generic.List[string]]::new()
+    if (-not [string]::IsNullOrWhiteSpace($env:ALCHEMY_STARS_MAYAPY)) {
+        $candidates.Add($env:ALCHEMY_STARS_MAYAPY)
+    }
+    if (-not [string]::IsNullOrWhiteSpace($env:MAYA_LOCATION)) {
+        $candidates.Add((Join-Path $env:MAYA_LOCATION 'bin\mayapy.exe'))
+    }
+    $programFiles = [Environment]::GetFolderPath([Environment+SpecialFolder]::ProgramFiles)
+    if (-not [string]::IsNullOrWhiteSpace($programFiles)) {
+        $candidates.Add((Join-Path $programFiles 'Autodesk\Maya2025\bin\mayapy.exe'))
+    }
+    foreach ($drive in [System.IO.DriveInfo]::GetDrives() | Where-Object IsReady) {
+        $candidates.Add((Join-Path $drive.RootDirectory.FullName 'Maya2025\bin\mayapy.exe'))
+    }
+
+    foreach ($candidate in $candidates | Select-Object -Unique) {
+        if (Test-Path -LiteralPath $candidate -PathType Leaf) {
+            return [System.IO.Path]::GetFullPath($candidate)
+        }
+    }
+    return $null
+}
+
+$mayaPython = Find-Maya2025Python
 
 function Resolve-AcceptanceArtifact([string]$path, [string]$label, [datetime]$startedUtc) {
     $resolvedPath = [System.IO.Path]::GetFullPath($path)
@@ -45,12 +70,26 @@ function Test-FbxInMaya([string]$fbxPath) {
     $artifactDirectory = Split-Path -Parent $fbxPath
     $mayaScene = Join-Path $artifactDirectory ($stem + '.ma')
     $mayaReport = Join-Path $artifactDirectory ($stem + '.maya2025.json')
-    & $mayaPython `
-        (Join-Path $projectRoot 'maya\verify_fbx_in_maya.py') `
-        $fbxPath `
-        $mayaScene `
-        $mayaReport
-    if ($LASTEXITCODE -ne 0) { throw "Maya 2025 FBX acceptance failed with exit code $LASTEXITCODE" }
+    $verificationDirectory = Join-Path ([System.IO.Path]::GetTempPath()) ('AlchemyStarsFbxVerify\' + [Guid]::NewGuid().ToString('N'))
+    $verificationFbx = Join-Path $verificationDirectory 'input.fbx'
+    $verificationScene = Join-Path $verificationDirectory 'verified.ma'
+    $verificationReport = Join-Path $verificationDirectory 'verified.json'
+    try {
+        New-Item -ItemType Directory -Path $verificationDirectory -Force | Out-Null
+        Copy-Item -LiteralPath $fbxPath -Destination $verificationFbx
+        & $mayaPython `
+            (Join-Path $projectRoot 'maya\verify_fbx_in_maya.py') `
+            $verificationFbx `
+            $verificationScene `
+            $verificationReport
+        if ($LASTEXITCODE -ne 0) { throw "Maya 2025 FBX acceptance failed with exit code $LASTEXITCODE" }
+        Copy-Item -LiteralPath $verificationScene -Destination $mayaScene -Force
+        Copy-Item -LiteralPath $verificationReport -Destination $mayaReport -Force
+    } finally {
+        if (Test-Path -LiteralPath $verificationDirectory) {
+            Remove-Item -LiteralPath $verificationDirectory -Recurse -Force
+        }
+    }
 }
 
 dotnet build $solution -c Release
@@ -65,11 +104,13 @@ $sprintCast = Resolve-AcceptanceArtifact ([string]$report.artifacts.sprintCast) 
 $weaponFirstSprintCast = Resolve-AcceptanceArtifact ([string]$report.artifacts.weaponFirstSprintCast) 'weapon-first sprint CAST' $acceptanceStartedUtc
 $sprintSmd = Resolve-AcceptanceArtifact ([string]$report.artifacts.sprintSmd) 'sprint SMD' $acceptanceStartedUtc
 
-if (Test-Path -LiteralPath $mayaPython) {
+if (-not [string]::IsNullOrWhiteSpace($mayaPython) -and (Test-Path -LiteralPath $mayaPython -PathType Leaf)) {
     Test-CastInMaya $sprintCast 'standard-order sprint'
     Test-CastInMaya $weaponFirstSprintCast 'weapon-first sprint'
     $sprintFbx = Resolve-AcceptanceArtifact ([string]$report.artifacts.sprintFbx) 'sprint FBX' $acceptanceStartedUtc
     Test-FbxInMaya $sprintFbx
+} else {
+    Write-Warning 'Maya 2025 was not found; CAST and FBX Maya verification was explicitly skipped.'
 }
 
 $releaseArguments = @{}

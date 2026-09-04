@@ -10,11 +10,6 @@ import json
 import sys
 from pathlib import Path
 
-
-def mel_string(value: Path) -> str:
-    return json.dumps(value.resolve().as_posix())
-
-
 def main() -> int:
     if len(sys.argv) != 5:
         raise SystemExit(
@@ -76,7 +71,7 @@ def main() -> int:
         mel.eval("FBXExportShapes -v true;")
         mel.eval("FBXExportAnimationOnly -v false;")
         mel.eval("FBXExportInputConnections -v true;")
-        mel.eval(f"FBXExport -f {mel_string(fbx_path)};")
+        mel.eval(f"FBXExport -f {json.dumps(fbx_path.as_posix())};")
 
         if not fbx_path.is_file() or fbx_path.stat().st_size == 0:
             raise RuntimeError(f"Maya did not create the FBX output: {fbx_path}")

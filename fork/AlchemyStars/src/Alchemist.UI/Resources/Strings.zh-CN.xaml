@@ -66,6 +66,7 @@
     <sys:String x:Key="FbxMayaNotFound">导出 FBX 需要本机安装 Autodesk Maya。未检测到 mayapy.exe；可安装 Maya 2025，或通过 ALCHEMY_STARS_MAYAPY 环境变量指定路径。</sys:String>
     <sys:String x:Key="FbxConverterMissing">缺少随软件发布的 FBX 转换脚本，请重新安装炼金之星。</sys:String>
     <sys:String x:Key="FbxCastPluginMissing">缺少随软件发布的 Maya CAST 插件，请重新安装炼金之星。</sys:String>
+    <sys:String x:Key="FbxAsciiWorkspaceUnavailable">没有可供 Maya FBX 转换使用的可写纯英文临时目录。</sys:String>
     <sys:String x:Key="FbxMayaStartFailed">无法启动本机 Maya FBX 转换进程。</sys:String>
     <sys:String x:Key="FbxMayaTimedOut">Maya FBX 转换超过 10 分钟，已取消。</sys:String>
     <sys:String x:Key="FbxMayaFailed">Maya FBX 转换失败（退出代码 {0}）。&#10;{1}</sys:String>

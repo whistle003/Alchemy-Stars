@@ -150,7 +150,23 @@ if (requiredFiles.All(File.Exists))
         {
             fbxProject.OutputFormat = ".fbx";
             fbxProject.Animations.Single().OutputFolder = Path.Combine(outputDirectory, "fbx-中文路径");
-            var outputs = fbxProject.ExportAnimations();
+            fbxProject.Animations.Single().OutputName = "hawk-冲刺动画";
+            var unicodeTemp = Path.Combine(outputDirectory, "临时目录");
+            Directory.CreateDirectory(unicodeTemp);
+            var previousTemp = Environment.GetEnvironmentVariable("TEMP");
+            var previousTmp = Environment.GetEnvironmentVariable("TMP");
+            IReadOnlyList<string> outputs;
+            try
+            {
+                Environment.SetEnvironmentVariable("TEMP", unicodeTemp);
+                Environment.SetEnvironmentVariable("TMP", unicodeTemp);
+                outputs = fbxProject.ExportAnimations();
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("TEMP", previousTemp);
+                Environment.SetEnvironmentVariable("TMP", previousTmp);
+            }
             Assert(outputs.Count == 1, "FBX export should create exactly one file.");
             fbxOutput = Path.GetFullPath(outputs.Single());
             Assert(File.Exists(fbxOutput) && new FileInfo(fbxOutput).Length > 0, "FBX output is missing or empty.");

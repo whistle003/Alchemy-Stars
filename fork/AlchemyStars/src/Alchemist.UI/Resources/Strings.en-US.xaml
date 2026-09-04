@@ -66,6 +66,7 @@
     <sys:String x:Key="FbxMayaNotFound">FBX export requires a local Autodesk Maya installation. mayapy.exe was not detected; install Maya 2025 or set ALCHEMY_STARS_MAYAPY to its path.</sys:String>
     <sys:String x:Key="FbxConverterMissing">The bundled FBX conversion script is missing. Reinstall Alchemy Stars.</sys:String>
     <sys:String x:Key="FbxCastPluginMissing">The bundled Maya CAST plug-in is missing. Reinstall Alchemy Stars.</sys:String>
+    <sys:String x:Key="FbxAsciiWorkspaceUnavailable">No writable ASCII-only temporary folder is available for Maya FBX conversion.</sys:String>
     <sys:String x:Key="FbxMayaStartFailed">The local Maya FBX conversion process could not be started.</sys:String>
     <sys:String x:Key="FbxMayaTimedOut">Maya FBX conversion exceeded 10 minutes and was cancelled.</sys:String>
     <sys:String x:Key="FbxMayaFailed">Maya FBX conversion failed (exit code {0}).&#10;{1}</sys:String>

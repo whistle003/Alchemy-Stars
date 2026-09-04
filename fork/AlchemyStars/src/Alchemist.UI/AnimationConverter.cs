@@ -400,8 +400,8 @@ namespace Alchemist.UI
                         Path.GetTempPath(),
                         "AlchemyStarsFbx",
                         Guid.NewGuid().ToString("N"));
-                    var stagedFbx = Path.Combine(stagingDirectory, Path.GetFileName(outputFull));
-                    var stagedCast = Path.ChangeExtension(stagedFbx, ".cast");
+                    var stagedFbx = Path.Combine(stagingDirectory, "output.fbx");
+                    var stagedCast = Path.Combine(stagingDirectory, "input.cast");
                     try
                     {
                         Directory.CreateDirectory(stagingDirectory);

@@ -2,25 +2,46 @@ using Alchemist.InverseKinematics;
 using Alchemist.UI;
 using Cast.NET;
 using RedFox.Graphics3D.Skeletal;
+using System.Security.Cryptography;
 using System.Text.Json;
 
 var outputDirectory = args.Length > 0
     ? Path.GetFullPath(args[0])
     : Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "output"));
+var exampleDirectory = args.Length > 1
+    ? Path.GetFullPath(args[1])
+    : Path.GetDirectoryName(FindFile("Example", "manifest.json"))!;
+var exampleManifest = LoadExampleManifest(exampleDirectory);
+var standardExamples = exampleManifest.StandardExamples.ToDictionary(example => example.Id, StringComparer.OrdinalIgnoreCase);
+var improvedExamples = exampleManifest.ImprovedExamples.ToDictionary(example => example.Id, StringComparer.OrdinalIgnoreCase);
 
 var checks = new List<object>();
 var failures = new List<string>();
-var sprintProject = LoadBundledProject("sat_vm_ar_hawk_sprint.aprj");
-var idleProject = LoadBundledProject("sat_vm_ar_hawk_idle.aprj");
+var sprintProject = LoadExampleProject(exampleDirectory, improvedExamples["hawk-sprint"].Path);
+var idleProject = LoadExampleProject(exampleDirectory, improvedExamples["hawk-idle"].Path);
+var batchProject = LoadExampleProject(exampleDirectory, improvedExamples["hawk-batch"].Path);
+var mp5BaseProject = LoadExampleProject(exampleDirectory, standardExamples["mp5-base"].Path);
+var mp5GripProject = LoadExampleProject(exampleDirectory, standardExamples["mp5-grip"].Path);
 var sprintTemplate = sprintProject.Animations.Single();
 var idleTemplate = idleProject.Animations.Single();
+string? sprintOutput = null;
+string? idleOutput = null;
 
 Run("Animation.Clone preserves all per-animation settings", () => TestAnimationClone(sprintTemplate));
 Run("Context animation import adds every selected animation", TestContextAnimationImport);
 Run("Context layer import targets only the requested animation", TestContextLayerImport);
 Run("Context model import adds every selected model part", TestContextPartImport);
-Run("Bundled sprint project restores layer and part ownership", () => TestBundledProject(sprintProject, expectedLayerCount: 1));
-Run("Bundled idle project restores part ownership", () => TestBundledProject(idleProject, expectedLayerCount: 0));
+Run("Sprint example restores layer and part ownership", () => TestExampleProject(sprintProject, expectedLayerCount: 2));
+Run("Idle example restores part ownership", () => TestExampleProject(idleProject, expectedLayerCount: 0));
+Run("Batch example matches the standalone projects", () => TestBatchExample(batchProject, sprintProject, idleProject));
+Run("Standard MP5 examples load in the current project format", () =>
+{
+    TestStandardExample(mp5BaseProject, standardExamples["mp5-base"]);
+    TestStandardExample(mp5GripProject, standardExamples["mp5-grip"]);
+});
+Run("Standard MP5 examples remain byte-identical to the source", () => TestStandardExampleHashes(exampleDirectory, exampleManifest.StandardExamples));
+Run("Hawk sprint follows the upstream idle-plus-two-additive-layers pattern", () => TestHawkSprintPattern(sprintProject, mp5BaseProject));
+Run("Example manifest is complete", () => TestExampleManifest(exampleDirectory, exampleManifest));
 
 var requiredFiles = sprintProject.Parts.Select(part => part.FilePath)
     .Concat(sprintProject.Animations.Select(animation => animation.Name))
@@ -37,22 +58,35 @@ if (requiredFiles.All(File.Exists))
     Run("View hands and weapon share one merged skeleton", () => TestMergedSkeleton(skeleton));
     Run("Unsafe right-hand IK target is rejected", () => TestRightHandIkCycle(skeleton));
 
-    var sprintAnimation = sprintTemplate.Clone();
-    sprintAnimation.OutputFolder = outputDirectory;
-    var sprintOutput = Path.Combine(outputDirectory, sprintAnimation.OutputName + ".cast");
     Run("Sprint and additive offset bake into one Maya CAST", () =>
     {
-        Bake(parts, skeleton, sprintAnimation);
+        sprintProject.Animations.Single().OutputFolder = outputDirectory;
+        var outputs = sprintProject.ExportAnimations();
+        Assert(outputs.Count == 1, "Sprint example should export exactly one file.");
+        sprintOutput = Path.GetFullPath(outputs.Single());
         ValidateMayaPackage(sprintOutput);
     });
 
-    var idleAnimation = idleTemplate.Clone();
-    idleAnimation.OutputFolder = outputDirectory;
-    var idleOutput = Path.Combine(outputDirectory, idleAnimation.OutputName + ".cast");
     Run("Idle bakes into a separate one-animation Maya CAST", () =>
     {
-        Bake(parts, skeleton, idleAnimation);
+        idleProject.Animations.Single().OutputFolder = outputDirectory;
+        var outputs = idleProject.ExportAnimations();
+        Assert(outputs.Count == 1, "Idle example should export exactly one file.");
+        idleOutput = Path.GetFullPath(outputs.Single());
         ValidateMayaPackage(idleOutput);
+    });
+
+    Run("Batch example exports two valid one-animation Maya CAST files", () =>
+    {
+        var batchOutputDirectory = Path.Combine(outputDirectory, "batch-example");
+        foreach (var animation in batchProject.Animations)
+            animation.OutputFolder = batchOutputDirectory;
+
+        var outputs = batchProject.ExportAnimations();
+        Assert(outputs.Count == 2, "Batch example should export exactly two files.");
+        Assert(outputs.Distinct(StringComparer.OrdinalIgnoreCase).Count() == 2, "Batch example output paths must be unique.");
+        foreach (var output in outputs)
+            ValidateMayaPackage(output);
     });
 }
 else
@@ -64,11 +98,15 @@ var report = new
 {
     generatedAtUtc = DateTimeOffset.UtcNow,
     outputDirectory,
+    artifacts = new { sprintCast = sprintOutput, idleCast = idleOutput },
     passed = failures.Count == 0,
     checks,
     failures,
 };
-Console.WriteLine(JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true }));
+var reportJson = JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true });
+Directory.CreateDirectory(outputDirectory);
+File.WriteAllText(Path.Combine(outputDirectory, "acceptance-report.json"), reportJson);
+Console.WriteLine(reportJson);
 return failures.Count == 0 ? 0 : 1;
 
 void Run(string name, Action test)
@@ -85,23 +123,6 @@ void Run(string name, Action test)
     }
 }
 
-static void Bake(IEnumerable<Part> parts, Skeleton skeleton, Animation animation)
-{
-    var output = AnimationConverter.Convert(
-        skeleton,
-        animation,
-        new IKSettings("j_shoulder_le", "j_elbow_le", "j_wrist_le", "tag_ik_loc_le"),
-        new IKSettings("j_shoulder_ri", "j_elbow_ri", "j_wrist_ri", "tag_ik_loc_ri"),
-        string.Empty,
-        string.Empty,
-        ".cast",
-        matchOldCallOfDuty: false,
-        parts);
-    Assert(
-        Path.GetFullPath(output) == Path.GetFullPath(Path.Combine(animation.OutputFolder, animation.OutputName + ".cast")),
-        "Unexpected output path.");
-}
-
 static void TestAnimationClone(Animation template)
 {
     var source = template.Clone();
@@ -109,12 +130,14 @@ static void TestAnimationClone(Animation template)
     source.EnableRightHandIK = true;
     source.LeftIKTargetBoneName = "left_override";
     source.RightIKTargetBoneName = "right_override";
-    source.Layers.Single().Offset = 7;
+    source.Layers[0].Offset = 7;
+    source.Layers[1].Offset = -2;
 
     var clone = source.Clone();
     Assert(!clone.EnableLeftHandIK && clone.EnableRightHandIK, "IK flags were not cloned independently.");
     Assert(clone.LeftIKTargetBoneName == "left_override" && clone.RightIKTargetBoneName == "right_override", "IK overrides were lost.");
-    Assert(clone.Layers.Single().Offset == 7 && ReferenceEquals(clone.Layers.Single().Owner, clone), "Layer offset or ownership was lost.");
+    Assert(clone.Layers.Count == 2 && clone.Layers[0].Offset == 7 && clone.Layers[1].Offset == -2, "Layer count, order, or offsets were lost.");
+    Assert(clone.Layers.All(layer => ReferenceEquals(layer.Owner, clone)), "Cloned layer ownership was not restored.");
 }
 
 static void TestContextLayerImport()
@@ -175,20 +198,161 @@ static void TestRightHandIkCycle(Skeleton skeleton)
     Assert(solver is null && player.Solvers.Count == 0, "Unsafe IK solver was added to the animation player.");
 }
 
-static void TestBundledProject(MainViewModel viewModel, int expectedLayerCount)
+static void TestExampleProject(MainViewModel viewModel, int expectedLayerCount)
 {
-    Assert(viewModel.Animations.Count == 1 && viewModel.Parts.Count == 2, "Bundled sprint preset has unexpected inputs.");
+    Assert(viewModel.Animations.Count == 1 && viewModel.Parts.Count == 2, "Example project has unexpected inputs.");
     var animation = viewModel.Animations.Single();
-    Assert(animation.Layers.Count == expectedLayerCount, "Bundled preset has an unexpected layer count.");
+    Assert(animation.Layers.Count == expectedLayerCount, "Example project has an unexpected layer count.");
     Assert(animation.Layers.All(layer => ReferenceEquals(layer.Owner, animation)), "Layer owner was not restored.");
     Assert(viewModel.Parts.All(part => ReferenceEquals(part.Owner, viewModel)), "Part owners were not restored.");
-    Assert(!animation.EnableRightHandIK, "Bundled preset must not enable cyclic right-hand IK.");
+    Assert(!animation.EnableRightHandIK, "Example project must not enable cyclic right-hand IK.");
 }
 
-static MainViewModel LoadBundledProject(string fileName)
+static void TestBatchExample(MainViewModel viewModel, MainViewModel sprintProject, MainViewModel idleProject)
+{
+    Assert(viewModel.Animations.Count == 2 && viewModel.Parts.Count == 2, "Batch example should share two model parts across two animations.");
+    Assert(viewModel.Animations.Select(animation => animation.OutputName).Distinct(StringComparer.OrdinalIgnoreCase).Count() == 2, "Batch outputs must have unique names.");
+    var sprint = viewModel.Animations.Single(animation => animation.OutputName.Contains("sprint", StringComparison.OrdinalIgnoreCase));
+    var idle = viewModel.Animations.Single(animation => animation.OutputName.Contains("idle", StringComparison.OrdinalIgnoreCase));
+    Assert(sprint.Layers.Count == 2 && sprint.Layers.All(layer => layer.Type == AnimationLayerType.Additive), "Batch sprint should contain two Additive layers.");
+    Assert(idle.Layers.Count == 0, "Batch idle should not contain animation layers.");
+    Assert(ProjectSettingsSignature(viewModel) == ProjectSettingsSignature(sprintProject), "Batch and sprint project settings have drifted.");
+    Assert(ProjectSettingsSignature(viewModel) == ProjectSettingsSignature(idleProject), "Batch and idle project settings have drifted.");
+    Assert(PartsSignature(viewModel) == PartsSignature(sprintProject), "Batch and sprint model parts have drifted.");
+    Assert(PartsSignature(viewModel) == PartsSignature(idleProject), "Batch and idle model parts have drifted.");
+    Assert(AnimationSignature(sprint) == AnimationSignature(sprintProject.Animations.Single()), "Batch and standalone sprint animations have drifted.");
+    Assert(AnimationSignature(idle) == AnimationSignature(idleProject.Animations.Single()), "Batch and standalone idle animations have drifted.");
+    Assert(viewModel.Animations.SelectMany(animation => animation.Layers).All(layer => layer.Owner is not null), "Batch layer ownership was not restored.");
+    Assert(viewModel.Parts.All(part => ReferenceEquals(part.Owner, viewModel)), "Batch part ownership was not restored.");
+}
+
+static string ProjectSettingsSignature(MainViewModel viewModel) => JsonSerializer.Serialize(new
+{
+    viewModel.EnableAnimationTrimming,
+    viewModel.LeftIKStartBoneName,
+    viewModel.LeftIKMidBoneName,
+    viewModel.LeftIKEndBoneName,
+    viewModel.LeftIKTargetBoneName,
+    viewModel.RightIKStartBoneName,
+    viewModel.RightIKMidBoneName,
+    viewModel.RightIKEndBoneName,
+    viewModel.RightIKTargetBoneName,
+    viewModel.OutputPrefix,
+    viewModel.OutputSuffix,
+    viewModel.OutputFormat,
+    viewModel.MatchOldCallOfDuty,
+});
+
+static string PartsSignature(MainViewModel viewModel) => JsonSerializer.Serialize(
+    viewModel.Parts.Select(part => new { part.FilePath, part.ParentBoneTag, part.Type }));
+
+static string AnimationSignature(Animation animation) => JsonSerializer.Serialize(new
+{
+    animation.OutputFramerate,
+    animation.Name,
+    animation.OutputName,
+    animation.OutputFolder,
+    animation.EnableLeftHandIK,
+    animation.EnableRightHandIK,
+    animation.UseExperimentalFeatures,
+    animation.LeftHandPoseFile,
+    animation.RightHandPoseFile,
+    animation.LeftIKTargetBoneName,
+    animation.RightIKTargetBoneName,
+    Layers = animation.Layers.Select(layer => new { layer.Name, layer.Offset, layer.Color, layer.Type }),
+});
+
+static void TestStandardExample(MainViewModel viewModel, StandardExampleDefinition definition)
+{
+    Assert(viewModel.Animations.Count == definition.AnimationCount, $"Standard project {definition.Path} has an unexpected animation count.");
+    Assert(viewModel.Parts.Count == definition.PartCount, $"Standard project {definition.Path} has an unexpected model part count.");
+    Assert(viewModel.OutputFormat == definition.OutputFormat, $"Standard project {definition.Path} output format changed.");
+    Assert(viewModel.Animations.Sum(animation => animation.Layers.Count) == definition.LayerCount, $"Standard project {definition.Path} animation layers changed.");
+    Assert(viewModel.Animations.SelectMany(animation => animation.Layers).All(layer => layer.Owner is not null), "Standard MP5 layer ownership was not restored.");
+    Assert(viewModel.Parts.All(part => ReferenceEquals(part.Owner, viewModel)), "Standard MP5 part ownership was not restored.");
+}
+
+static void TestStandardExampleHashes(string exampleDirectory, IEnumerable<StandardExampleDefinition> examples)
+{
+    foreach (var example in examples)
+    {
+        var path = ResolveExamplePath(exampleDirectory, example.Path);
+        var actualHash = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path)));
+        Assert(actualHash == example.Sha256, $"Standard source example changed: {example.Path}.");
+    }
+}
+
+static void TestHawkSprintPattern(MainViewModel hawkProject, MainViewModel mp5BaseProject)
+{
+    var sourceSprint = mp5BaseProject.Animations.Single(animation => animation.OutputName.EndsWith("sprint_loop", StringComparison.OrdinalIgnoreCase));
+    var hawkSprint = hawkProject.Animations.Single();
+    Assert(sourceSprint.Name.Contains("idle", StringComparison.OrdinalIgnoreCase), "Upstream sprint-loop pattern no longer uses an idle base.");
+    Assert(sourceSprint.Layers.Count == 2 && sourceSprint.Layers.All(layer => layer.Type == AnimationLayerType.Additive), "Upstream sprint-loop pattern should contain two Additive layers.");
+    Assert(hawkSprint.Name.Contains("idle", StringComparison.OrdinalIgnoreCase), "Hawk sprint should use the idle animation as its base.");
+    Assert(hawkSprint.Layers.Count == 2 && hawkSprint.Layers.All(layer => layer.Type == AnimationLayerType.Additive), "Hawk sprint should contain two Additive layers.");
+    Assert(Path.GetFileNameWithoutExtension(hawkSprint.Layers[0].Name).EndsWith("sprint_loop", StringComparison.OrdinalIgnoreCase), "The first Hawk sprint layer should be the sprint loop.");
+    Assert(Path.GetFileNameWithoutExtension(hawkSprint.Layers[1].Name).EndsWith("sprint_offset_additive", StringComparison.OrdinalIgnoreCase), "The second Hawk sprint layer should be the sprint offset.");
+    Assert(hawkSprint.Layers.All(layer => layer.Offset is null), "Hawk sprint layer offsets should remain unset like the upstream example.");
+}
+
+static void TestExampleManifest(string exampleDirectory, ExampleManifest manifest)
+{
+    Assert(manifest.SchemaVersion == 1, "Unsupported example manifest schema.");
+    Assert(manifest.StandardExamples.Select(example => example.Id).ToHashSet(StringComparer.OrdinalIgnoreCase)
+        .SetEquals(["mp5-base", "mp5-grip"]), "Manifest must declare both source projects as the standards.");
+    Assert(manifest.ImprovedExamples.Select(example => example.Id).ToHashSet(StringComparer.OrdinalIgnoreCase)
+        .SetEquals(["hawk-sprint", "hawk-idle", "hawk-batch"]), "Manifest must declare every improved Hawk project by role.");
+
+    var declaredFiles = manifest.StandardExamples.Select(example => example.Path)
+        .Concat(manifest.ImprovedExamples.Select(example => example.Path))
+        .Concat(manifest.Documentation)
+        .Append("manifest.json")
+        .Select(NormalizeExamplePath)
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+    foreach (var relativePath in declaredFiles)
+        Assert(File.Exists(ResolveExamplePath(exampleDirectory, relativePath)), $"Manifest example file is missing: {relativePath}.");
+
+    var actualFiles = Directory.EnumerateFiles(exampleDirectory, "*", SearchOption.AllDirectories)
+        .Select(path => NormalizeExamplePath(Path.GetRelativePath(exampleDirectory, path)))
+        .Where(path => !IsIgnoredExampleOutput(path))
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+    var unexpected = actualFiles.Except(declaredFiles, StringComparer.OrdinalIgnoreCase).ToArray();
+    Assert(unexpected.Length == 0, "Example directory contains undeclared files: " + string.Join(", ", unexpected));
+    var missing = declaredFiles.Except(actualFiles, StringComparer.OrdinalIgnoreCase).ToArray();
+    Assert(missing.Length == 0, "Example manifest declares missing files: " + string.Join(", ", missing));
+}
+
+static string NormalizeExamplePath(string path) => path.Replace('\\', '/');
+
+static bool IsIgnoredExampleOutput(string path) =>
+    path.StartsWith("Output/", StringComparison.OrdinalIgnoreCase) ||
+    path.StartsWith("Hawk/Output/", StringComparison.OrdinalIgnoreCase);
+
+static ExampleManifest LoadExampleManifest(string exampleDirectory)
+{
+    var path = Path.Combine(exampleDirectory, "manifest.json");
+    if (!File.Exists(path))
+        throw new FileNotFoundException("Example manifest is missing.", path);
+
+    return JsonSerializer.Deserialize<ExampleManifest>(File.ReadAllText(path))
+        ?? throw new InvalidDataException("Example manifest is empty.");
+}
+
+static string ResolveExamplePath(string exampleDirectory, string relativePath)
+{
+    var root = Path.GetFullPath(exampleDirectory);
+    var path = Path.GetFullPath(Path.Combine(root, relativePath.Replace('/', Path.DirectorySeparatorChar)));
+    Assert(path.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase), $"Example path escapes its root: {relativePath}.");
+    return path;
+}
+
+static MainViewModel LoadExampleProject(string exampleDirectory, string relativePath)
 {
     var viewModel = new MainViewModel(_ => { }, string.Empty);
-    viewModel.LoadProjectFile(FindFile("presets", fileName));
+    var projectFile = ResolveExamplePath(exampleDirectory, relativePath);
+    if (!File.Exists(projectFile))
+        throw new FileNotFoundException("Example project is missing.", projectFile);
+    viewModel.LoadProjectFile(projectFile);
     return viewModel;
 }
 
@@ -242,3 +406,20 @@ static void Assert(bool condition, string message)
         throw new InvalidDataException(message);
     }
 }
+
+sealed record ExampleManifest(
+    int SchemaVersion,
+    StandardExampleDefinition[] StandardExamples,
+    ExampleDefinition[] ImprovedExamples,
+    string[] Documentation);
+
+sealed record StandardExampleDefinition(
+    string Id,
+    string Path,
+    string Sha256,
+    int AnimationCount,
+    int LayerCount,
+    int PartCount,
+    string OutputFormat);
+
+sealed record ExampleDefinition(string Id, string Path);

@@ -177,7 +177,7 @@ try {
 
     Stop-TestProcess $process
 
-    $sprintProject = Join-Path $projectRoot 'fork\AlchemyStars\presets\sat_vm_ar_hawk_sprint.aprj'
+    $sprintProject = Join-Path $projectRoot 'fork\AlchemyStars\Example\Hawk\HawkSprint.aprj'
     $process = Start-Process -FilePath $executable -ArgumentList "`"$sprintProject`"" -PassThru -WindowStyle Hidden
     if (-not $process.WaitForInputIdle(10000)) {
         throw 'Project UI did not become input-idle within 10 seconds.'

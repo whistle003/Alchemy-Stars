@@ -15,9 +15,9 @@
   "Animations": [
     {
       "OutputFramerate": 30.0,
-      "Name": "D:\\_tiqu\\Saluki\\exported_files\\bo7\\animations\\sat_vm_ar_hawk_sprint_loop.cast",
+      "Name": "D:\\_tiqu\\Saluki\\exported_files\\bo7\\animations\\sat_vm_ar_hawk_idle.cast",
       "OutputName": "sat_vm_ar_hawk_sprint_alchemy_stars",
-      "OutputFolder": "E:\\Alchemy Stars\\fork\\AlchemyStars\\output",
+      "OutputFolder": "E:\\Alchemy Stars\\Example\\Output",
       "EnableLeftHandIK": true,
       "EnableRightHandIK": false,
       "UseExperimentalFeatures": true,
@@ -27,12 +27,32 @@
       "RightIKTargetBoneName": "",
       "Layers": [
         {
+          "Name": "D:\\_tiqu\\Saluki\\exported_files\\bo7\\animations\\sat_vm_ar_hawk_sprint_loop.cast",
+          "Offset": null,
+          "Color": 0,
+          "Type": 1
+        },
+        {
           "Name": "D:\\_tiqu\\Saluki\\exported_files\\bo7\\animations\\sat_vm_ar_hawk_sprint_offset_additive.cast",
-          "Offset": 0,
+          "Offset": null,
           "Color": 0,
           "Type": 1
         }
       ]
+    },
+    {
+      "OutputFramerate": 30.0,
+      "Name": "D:\\_tiqu\\Saluki\\exported_files\\bo7\\animations\\sat_vm_ar_hawk_idle.cast",
+      "OutputName": "sat_vm_ar_hawk_idle_alchemy_stars",
+      "OutputFolder": "E:\\Alchemy Stars\\Example\\Output",
+      "EnableLeftHandIK": false,
+      "EnableRightHandIK": false,
+      "UseExperimentalFeatures": true,
+      "LeftHandPoseFile": "",
+      "RightHandPoseFile": "",
+      "LeftIKTargetBoneName": "",
+      "RightIKTargetBoneName": "",
+      "Layers": []
     }
   ],
   "Parts": [

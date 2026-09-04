@@ -1,0 +1,41 @@
+{
+  "SchemaVersion": 1,
+  "StandardExamples": [
+    {
+      "Id": "mp5-base",
+      "Path": "MP5Base.aprj",
+      "Sha256": "7352B7F9D50CA0B238E3246556B5CF9187EF4A400DA9FD41C1B75BC5A7728995",
+      "AnimationCount": 26,
+      "LayerCount": 13,
+      "PartCount": 5,
+      "OutputFormat": ".cast"
+    },
+    {
+      "Id": "mp5-grip",
+      "Path": "MP5Grip.aprj",
+      "Sha256": "D127DB4B83F2DDB393064CECC746F248102AC7F3F3A35E4D92151D3ED08D5018",
+      "AnimationCount": 26,
+      "LayerCount": 13,
+      "PartCount": 6,
+      "OutputFormat": ".seanim"
+    }
+  ],
+  "ImprovedExamples": [
+    {
+      "Id": "hawk-sprint",
+      "Path": "Hawk/HawkSprint.aprj"
+    },
+    {
+      "Id": "hawk-idle",
+      "Path": "Hawk/HawkIdle.aprj"
+    },
+    {
+      "Id": "hawk-batch",
+      "Path": "Hawk/HawkBatch.aprj"
+    }
+  ],
+  "Documentation": [
+    "README.zh-CN.md",
+    "README.en-US.md"
+  ]
+}

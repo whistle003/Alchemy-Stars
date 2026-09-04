@@ -34,11 +34,9 @@ Alchemy Stars 是 [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist) 
 
 `E:\Alchemy Stars\fork\AlchemyStars\output\sat_vm_ar_hawk_sprint_alchemy_stars.cast`
 
-开发仓库仍保留用于自动化验收的冲刺和 Idle 项目夹具：
+发布目录和 ZIP 均包含完整的 `Example` 文件夹。根目录的 `MP5Base.aprj`、`MP5Grip.aprj` 是从原版 Alchemist `Example` 目录直接迁移、保持逐字节一致的标准示例；统一的 `manifest.json` 为验收与发布提供路径、结构和校验值。按标准示例改进的 Hawk 冲刺、Idle 与批处理项目集中在 `Example\Hawk`。详细步骤见 [示例使用说明](fork/AlchemyStars/Example/README.zh-CN.md)，英文简版见 [Example README](fork/AlchemyStars/Example/README.en-US.md)。
 
-`E:\Alchemy Stars\fork\AlchemyStars\presets\sat_vm_ar_hawk_idle.aprj`
-
-它们不会随程序发布，也不会自动加载。用户自己保存的 `.aprj` 可从文件浏览器打开、拖进窗口或作为命令行参数载入。批处理中可以加入更多原项目支持的动画；程序会为每个条目分别输出一个 CAST，所以每个文件始终只有一个动画。
+示例不会自动加载。`.aprj` 可从文件浏览器打开、拖进窗口或作为命令行参数载入。批处理中可以加入更多原项目支持的动画；程序会为每个条目分别输出一个 CAST，所以每个文件始终只有一个动画。项目文件保存绝对路径，换机器后应通过文件浏览器重新选择素材与输出目录，再使用“项目另存为”。
 
 ## Maya 2025
 
@@ -50,7 +48,7 @@ Alchemy Stars 是 [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist) 
 - 21 个网格全部导入且可见；
 - 1284 条平移/旋转曲线，每个关节每帧都有关键帧；
 - 30 FPS，播放范围 0–66；
-- 左手 IK 逐帧最大位置误差约 0.012；
+- 左手 IK 逐帧最大位置误差约 0.050；
 - 右手动画正常保留，循环依赖的右手 IK 被安全跳过。
 
 验证报告：`fork/AlchemyStars/output/sat_vm_ar_hawk_sprint_alchemy_stars.maya2025.json`。
@@ -64,7 +62,7 @@ Alchemy Stars 是 [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist) 
 .\scripts\build-release.ps1
 ```
 
-`run-tests.ps1` 会编译改进后的原项目、用真实资产重新生成冲刺与 Idle CAST，并在检测到 `D:\Maya2025\bin\mayapy.exe` 时执行 Maya 2025 验收。`build-release.ps1` 会生成不内置 .NET 运行环境的精简 Windows x64 单文件发布包和 ZIP。
+`run-tests.ps1` 会编译改进后的原项目，先验证两份标准 MP5 示例没有被改写，再以 `fork\AlchemyStars\Example\Hawk\HawkSprint.aprj` 作为 Hawk 冲刺验证的唯一配置来源，用项目自身的 `ExportAnimations()` 读取其中的 Idle 基础、两个有序 Additive 层、IK、模型部件、格式和命名设置，并把本轮实际输出路径交给 Maya 2025 验收。它还会验证 Idle 与批处理 CAST。`build-release.ps1` 会生成不内置 .NET 运行环境的精简 Windows x64 单文件发布包和 ZIP。
 
 ## 源码与许可
 

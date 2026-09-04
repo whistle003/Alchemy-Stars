@@ -17,7 +17,7 @@
       "OutputFramerate": 30.0,
       "Name": "D:\\_tiqu\\Saluki\\exported_files\\bo7\\animations\\sat_vm_ar_hawk_idle.cast",
       "OutputName": "sat_vm_ar_hawk_idle_alchemy_stars",
-      "OutputFolder": "E:\\Alchemy Stars\\fork\\AlchemyStars\\output",
+      "OutputFolder": "E:\\Alchemy Stars\\Example\\Output",
       "EnableLeftHandIK": false,
       "EnableRightHandIK": false,
       "UseExperimentalFeatures": true,

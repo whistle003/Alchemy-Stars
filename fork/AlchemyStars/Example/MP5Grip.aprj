@@ -1,0 +1,667 @@
+{
+  "$id": "1",
+  "EnableAnimationTrimming": false,
+  "LeftIKStartBoneName": "j_shoulder_le",
+  "LeftIKMidBoneName": "j_elbow_le",
+  "LeftIKEndBoneName": "j_wrist_le",
+  "LeftIKTargetBoneName": "tag_ik_loc_le_foregrip",
+  "RightIKStartBoneName": "j_shoulder_ri",
+  "RightIKMidBoneName": "j_elbow_ri",
+  "RightIKEndBoneName": "j_wrist_ri",
+  "RightIKTargetBoneName": "tag_ik_loc_ri",
+  "OutputPrefix": "",
+  "OutputSuffix": "_grip",
+  "OutputFormat": ".seanim",
+  "MatchOldCallOfDuty": false,
+  "Animations": {
+    "$id": "2",
+    "$values": [
+      {
+        "$id": "3",
+        "OutputFramerate": 30,
+        "Name": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_reload_xmag.cast",
+        "OutputName": "vm_sm_mpapa5_reload_xmag",
+        "OutputFolder": "C:\\AlchemistExample\\IW8-MP5\\XAnimOut",
+        "EnableLeftHandIK": true,
+        "EnableRightHandIK": true,
+        "UseExperimentalFeatures": true,
+        "LeftHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_gripvert.cast",
+        "RightHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_r.cast",
+        "LeftIKTargetBoneName": "",
+        "RightIKTargetBoneName": "",
+        "Layers": {
+          "$id": "4",
+          "$values": []
+        }
+      },
+      {
+        "$id": "5",
+        "OutputFramerate": 30,
+        "Name": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_ads_fire.cast",
+        "OutputName": "vm_sm_mpapa5_ads_fire",
+        "OutputFolder": "C:\\AlchemistExample\\IW8-MP5\\XAnimOut",
+        "EnableLeftHandIK": true,
+        "EnableRightHandIK": true,
+        "UseExperimentalFeatures": true,
+        "LeftHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_gripvert.cast",
+        "RightHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_r.cast",
+        "LeftIKTargetBoneName": "",
+        "RightIKTargetBoneName": "",
+        "Layers": {
+          "$id": "6",
+          "$values": []
+        }
+      },
+      {
+        "$id": "7",
+        "OutputFramerate": 30,
+        "Name": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_ads_fire_last.cast",
+        "OutputName": "vm_sm_mpapa5_ads_fire_last",
+        "OutputFolder": "C:\\AlchemistExample\\IW8-MP5\\XAnimOut",
+        "EnableLeftHandIK": true,
+        "EnableRightHandIK": true,
+        "UseExperimentalFeatures": true,
+        "LeftHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_gripvert.cast",
+        "RightHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_r.cast",
+        "LeftIKTargetBoneName": "",
+        "RightIKTargetBoneName": "",
+        "Layers": {
+          "$id": "8",
+          "$values": []
+        }
+      },
+      {
+        "$id": "9",
+        "OutputFramerate": 30,
+        "Name": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_drop.cast",
+        "OutputName": "vm_sm_mpapa5_drop",
+        "OutputFolder": "C:\\AlchemistExample\\IW8-MP5\\XAnimOut",
+        "EnableLeftHandIK": true,
+        "EnableRightHandIK": true,
+        "UseExperimentalFeatures": true,
+        "LeftHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_gripvert.cast",
+        "RightHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_r.cast",
+        "LeftIKTargetBoneName": "",
+        "RightIKTargetBoneName": "",
+        "Layers": {
+          "$id": "10",
+          "$values": []
+        }
+      },
+      {
+        "$id": "11",
+        "OutputFramerate": 30,
+        "Name": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_drop_quick.cast",
+        "OutputName": "vm_sm_mpapa5_drop_quick",
+        "OutputFolder": "C:\\AlchemistExample\\IW8-MP5\\XAnimOut",
+        "EnableLeftHandIK": true,
+        "EnableRightHandIK": true,
+        "UseExperimentalFeatures": true,
+        "LeftHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_gripvert.cast",
+        "RightHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_r.cast",
+        "LeftIKTargetBoneName": "",
+        "RightIKTargetBoneName": "",
+        "Layers": {
+          "$id": "12",
+          "$values": []
+        }
+      },
+      {
+        "$id": "13",
+        "OutputFramerate": 30,
+        "Name": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_fire.cast",
+        "OutputName": "vm_sm_mpapa5_fire",
+        "OutputFolder": "C:\\AlchemistExample\\IW8-MP5\\XAnimOut",
+        "EnableLeftHandIK": true,
+        "EnableRightHandIK": true,
+        "UseExperimentalFeatures": true,
+        "LeftHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_gripvert.cast",
+        "RightHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_r.cast",
+        "LeftIKTargetBoneName": "",
+        "RightIKTargetBoneName": "",
+        "Layers": {
+          "$id": "14",
+          "$values": []
+        }
+      },
+      {
+        "$id": "15",
+        "OutputFramerate": 30,
+        "Name": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_fire_last.cast",
+        "OutputName": "vm_sm_mpapa5_fire_last",
+        "OutputFolder": "C:\\AlchemistExample\\IW8-MP5\\XAnimOut",
+        "EnableLeftHandIK": true,
+        "EnableRightHandIK": true,
+        "UseExperimentalFeatures": true,
+        "LeftHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_gripvert.cast",
+        "RightHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_r.cast",
+        "LeftIKTargetBoneName": "",
+        "RightIKTargetBoneName": "",
+        "Layers": {
+          "$id": "16",
+          "$values": []
+        }
+      },
+      {
+        "$id": "17",
+        "OutputFramerate": 30,
+        "Name": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_idle.cast",
+        "OutputName": "vm_sm_mpapa5_idle",
+        "OutputFolder": "C:\\AlchemistExample\\IW8-MP5\\XAnimOut",
+        "EnableLeftHandIK": true,
+        "EnableRightHandIK": true,
+        "UseExperimentalFeatures": true,
+        "LeftHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_gripvert.cast",
+        "RightHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_r.cast",
+        "LeftIKTargetBoneName": "",
+        "RightIKTargetBoneName": "",
+        "Layers": {
+          "$id": "18",
+          "$values": []
+        }
+      },
+      {
+        "$id": "19",
+        "OutputFramerate": 30,
+        "Name": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_inspect.cast",
+        "OutputName": "vm_sm_mpapa5_inspect",
+        "OutputFolder": "C:\\AlchemistExample\\IW8-MP5\\XAnimOut",
+        "EnableLeftHandIK": true,
+        "EnableRightHandIK": true,
+        "UseExperimentalFeatures": true,
+        "LeftHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_gripvert.cast",
+        "RightHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_r.cast",
+        "LeftIKTargetBoneName": "",
+        "RightIKTargetBoneName": "",
+        "Layers": {
+          "$id": "20",
+          "$values": []
+        }
+      },
+      {
+        "$id": "21",
+        "OutputFramerate": 30,
+        "Name": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_raise.cast",
+        "OutputName": "vm_sm_mpapa5_raise",
+        "OutputFolder": "C:\\AlchemistExample\\IW8-MP5\\XAnimOut",
+        "EnableLeftHandIK": true,
+        "EnableRightHandIK": true,
+        "UseExperimentalFeatures": true,
+        "LeftHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_gripvert.cast",
+        "RightHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_r.cast",
+        "LeftIKTargetBoneName": "",
+        "RightIKTargetBoneName": "",
+        "Layers": {
+          "$id": "22",
+          "$values": []
+        }
+      },
+      {
+        "$id": "23",
+        "OutputFramerate": 30,
+        "Name": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_raise_first.cast",
+        "OutputName": "vm_sm_mpapa5_raise_first",
+        "OutputFolder": "C:\\AlchemistExample\\IW8-MP5\\XAnimOut",
+        "EnableLeftHandIK": true,
+        "EnableRightHandIK": true,
+        "UseExperimentalFeatures": true,
+        "LeftHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_gripvert.cast",
+        "RightHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_r.cast",
+        "LeftIKTargetBoneName": "",
+        "RightIKTargetBoneName": "",
+        "Layers": {
+          "$id": "24",
+          "$values": []
+        }
+      },
+      {
+        "$id": "25",
+        "OutputFramerate": 30,
+        "Name": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_raise_quick.cast",
+        "OutputName": "vm_sm_mpapa5_raise_quick",
+        "OutputFolder": "C:\\AlchemistExample\\IW8-MP5\\XAnimOut",
+        "EnableLeftHandIK": true,
+        "EnableRightHandIK": true,
+        "UseExperimentalFeatures": true,
+        "LeftHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_gripvert.cast",
+        "RightHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_r.cast",
+        "LeftIKTargetBoneName": "",
+        "RightIKTargetBoneName": "",
+        "Layers": {
+          "$id": "26",
+          "$values": []
+        }
+      },
+      {
+        "$id": "27",
+        "OutputFramerate": 30,
+        "Name": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_reload.cast",
+        "OutputName": "vm_sm_mpapa5_reload",
+        "OutputFolder": "C:\\AlchemistExample\\IW8-MP5\\XAnimOut",
+        "EnableLeftHandIK": true,
+        "EnableRightHandIK": true,
+        "UseExperimentalFeatures": true,
+        "LeftHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_gripvert.cast",
+        "RightHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_r.cast",
+        "LeftIKTargetBoneName": "",
+        "RightIKTargetBoneName": "",
+        "Layers": {
+          "$id": "28",
+          "$values": []
+        }
+      },
+      {
+        "$id": "29",
+        "OutputFramerate": 30,
+        "Name": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_reload_empty.cast",
+        "OutputName": "vm_sm_mpapa5_reload_empty",
+        "OutputFolder": "C:\\AlchemistExample\\IW8-MP5\\XAnimOut",
+        "EnableLeftHandIK": true,
+        "EnableRightHandIK": true,
+        "UseExperimentalFeatures": true,
+        "LeftHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_gripvert.cast",
+        "RightHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_r.cast",
+        "LeftIKTargetBoneName": "",
+        "RightIKTargetBoneName": "",
+        "Layers": {
+          "$id": "30",
+          "$values": []
+        }
+      },
+      {
+        "$id": "31",
+        "OutputFramerate": 30,
+        "Name": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_reload_empty_fast.cast",
+        "OutputName": "vm_sm_mpapa5_reload_empty_fast",
+        "OutputFolder": "C:\\AlchemistExample\\IW8-MP5\\XAnimOut",
+        "EnableLeftHandIK": true,
+        "EnableRightHandIK": true,
+        "UseExperimentalFeatures": true,
+        "LeftHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_gripvert.cast",
+        "RightHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_r.cast",
+        "LeftIKTargetBoneName": "",
+        "RightIKTargetBoneName": "",
+        "Layers": {
+          "$id": "32",
+          "$values": []
+        }
+      },
+      {
+        "$id": "33",
+        "OutputFramerate": 30,
+        "Name": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_reload_empty_fast_xmag.cast",
+        "OutputName": "vm_sm_mpapa5_reload_empty_fast_xmag",
+        "OutputFolder": "C:\\AlchemistExample\\IW8-MP5\\XAnimOut",
+        "EnableLeftHandIK": true,
+        "EnableRightHandIK": true,
+        "UseExperimentalFeatures": true,
+        "LeftHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_gripvert.cast",
+        "RightHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_r.cast",
+        "LeftIKTargetBoneName": "",
+        "RightIKTargetBoneName": "",
+        "Layers": {
+          "$id": "34",
+          "$values": []
+        }
+      },
+      {
+        "$id": "35",
+        "OutputFramerate": 30,
+        "Name": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_reload_empty_xmag.cast",
+        "OutputName": "vm_sm_mpapa5_reload_empty_xmag",
+        "OutputFolder": "C:\\AlchemistExample\\IW8-MP5\\XAnimOut",
+        "EnableLeftHandIK": true,
+        "EnableRightHandIK": true,
+        "UseExperimentalFeatures": true,
+        "LeftHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_gripvert.cast",
+        "RightHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_r.cast",
+        "LeftIKTargetBoneName": "",
+        "RightIKTargetBoneName": "",
+        "Layers": {
+          "$id": "36",
+          "$values": []
+        }
+      },
+      {
+        "$id": "37",
+        "OutputFramerate": 30,
+        "Name": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_reload_fast.cast",
+        "OutputName": "vm_sm_mpapa5_reload_fast",
+        "OutputFolder": "C:\\AlchemistExample\\IW8-MP5\\XAnimOut",
+        "EnableLeftHandIK": true,
+        "EnableRightHandIK": true,
+        "UseExperimentalFeatures": true,
+        "LeftHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_gripvert.cast",
+        "RightHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_r.cast",
+        "LeftIKTargetBoneName": "",
+        "RightIKTargetBoneName": "",
+        "Layers": {
+          "$id": "38",
+          "$values": []
+        }
+      },
+      {
+        "$id": "39",
+        "OutputFramerate": 30,
+        "Name": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_reload_fast_xmag.cast",
+        "OutputName": "vm_sm_mpapa5_reload_fast_xmag",
+        "OutputFolder": "C:\\AlchemistExample\\IW8-MP5\\XAnimOut",
+        "EnableLeftHandIK": true,
+        "EnableRightHandIK": true,
+        "UseExperimentalFeatures": true,
+        "LeftHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_gripvert.cast",
+        "RightHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_r.cast",
+        "LeftIKTargetBoneName": "",
+        "RightIKTargetBoneName": "",
+        "Layers": {
+          "$id": "40",
+          "$values": []
+        }
+      },
+      {
+        "$id": "41",
+        "OutputFramerate": 30,
+        "Name": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_idle.cast",
+        "OutputName": "vm_sm_mpapa5_sprint_in",
+        "OutputFolder": "C:\\AlchemistExample\\IW8-MP5\\XAnimOut",
+        "EnableLeftHandIK": true,
+        "EnableRightHandIK": true,
+        "UseExperimentalFeatures": true,
+        "LeftHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_gripvert.cast",
+        "RightHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_r.cast",
+        "LeftIKTargetBoneName": "",
+        "RightIKTargetBoneName": "",
+        "Layers": {
+          "$id": "42",
+          "$values": [
+            {
+              "$id": "43",
+              "Owner": {
+                "$ref": "41"
+              },
+              "Name": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_walk_to_sprint.cast",
+              "Offset": null,
+              "Color": 52671525,
+              "Type": 1
+            }
+          ]
+        }
+      },
+      {
+        "$id": "44",
+        "OutputFramerate": 30,
+        "Name": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_idle.cast",
+        "OutputName": "vm_sm_mpapa5_sprint_loop",
+        "OutputFolder": "C:\\AlchemistExample\\IW8-MP5\\XAnimOut",
+        "EnableLeftHandIK": true,
+        "EnableRightHandIK": true,
+        "UseExperimentalFeatures": true,
+        "LeftHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_gripvert.cast",
+        "RightHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_r.cast",
+        "LeftIKTargetBoneName": "",
+        "RightIKTargetBoneName": "",
+        "Layers": {
+          "$id": "45",
+          "$values": [
+            {
+              "$id": "46",
+              "Owner": {
+                "$ref": "44"
+              },
+              "Name": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_sprint_loop.cast",
+              "Offset": null,
+              "Color": 4281684,
+              "Type": 1
+            },
+            {
+              "$id": "47",
+              "Owner": {
+                "$ref": "44"
+              },
+              "Name": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_sprint_offset_additive.cast",
+              "Offset": null,
+              "Color": 38535158,
+              "Type": 1
+            }
+          ]
+        }
+      },
+      {
+        "$id": "48",
+        "OutputFramerate": 30,
+        "Name": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_idle.cast",
+        "OutputName": "vm_sm_mpapa5_sprint_out",
+        "OutputFolder": "C:\\AlchemistExample\\IW8-MP5\\XAnimOut",
+        "EnableLeftHandIK": true,
+        "EnableRightHandIK": true,
+        "UseExperimentalFeatures": true,
+        "LeftHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_gripvert.cast",
+        "RightHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_r.cast",
+        "LeftIKTargetBoneName": "",
+        "RightIKTargetBoneName": "",
+        "Layers": {
+          "$id": "49",
+          "$values": [
+            {
+              "$id": "50",
+              "Owner": {
+                "$ref": "48"
+              },
+              "Name": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_sprint_to_walk.cast",
+              "Offset": null,
+              "Color": 11272110,
+              "Type": 1
+            }
+          ]
+        }
+      },
+      {
+        "$id": "51",
+        "OutputFramerate": 30,
+        "Name": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_idle.cast",
+        "OutputName": "vm_sm_mpapa5_slide_in",
+        "OutputFolder": "C:\\AlchemistExample\\IW8-MP5\\XAnimOut",
+        "EnableLeftHandIK": true,
+        "EnableRightHandIK": true,
+        "UseExperimentalFeatures": true,
+        "LeftHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_gripvert.cast",
+        "RightHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_r.cast",
+        "LeftIKTargetBoneName": "",
+        "RightIKTargetBoneName": "",
+        "Layers": {
+          "$id": "52",
+          "$values": [
+            {
+              "$id": "53",
+              "Owner": {
+                "$ref": "51"
+              },
+              "Name": "C:\\AlchemistExample\\Default\\vm_gesture_default_slide_in.seanim",
+              "Offset": null,
+              "Color": 34340132,
+              "Type": 2
+            },
+            {
+              "$id": "54",
+              "Owner": {
+                "$ref": "51"
+              },
+              "Name": "C:\\AlchemistExample\\Default\\vm_gesture_default_slide_in_rhand.seanim",
+              "Offset": null,
+              "Color": 40625737,
+              "Type": 3
+            }
+          ]
+        }
+      },
+      {
+        "$id": "55",
+        "OutputFramerate": 30,
+        "Name": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_idle.cast",
+        "OutputName": "vm_sm_mpapa5_slide_loop",
+        "OutputFolder": "C:\\AlchemistExample\\IW8-MP5\\XAnimOut",
+        "EnableLeftHandIK": false,
+        "EnableRightHandIK": true,
+        "UseExperimentalFeatures": true,
+        "LeftHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_gripvert.cast",
+        "RightHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_r.cast",
+        "LeftIKTargetBoneName": "",
+        "RightIKTargetBoneName": "",
+        "Layers": {
+          "$id": "56",
+          "$values": [
+            {
+              "$id": "57",
+              "Owner": {
+                "$ref": "55"
+              },
+              "Name": "C:\\AlchemistExample\\Default\\vm_gesture_default_slide_loop.seanim",
+              "Offset": null,
+              "Color": 30087318,
+              "Type": 2
+            },
+            {
+              "$id": "58",
+              "Owner": {
+                "$ref": "55"
+              },
+              "Name": "C:\\AlchemistExample\\Default\\vm_gesture_default_slide_loop_rhand.seanim",
+              "Offset": null,
+              "Color": 2350413,
+              "Type": 3
+            }
+          ]
+        }
+      },
+      {
+        "$id": "59",
+        "OutputFramerate": 30,
+        "Name": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_idle.cast",
+        "OutputName": "vm_sm_mpapa5_slide_out",
+        "OutputFolder": "C:\\AlchemistExample\\IW8-MP5\\XAnimOut",
+        "EnableLeftHandIK": true,
+        "EnableRightHandIK": true,
+        "UseExperimentalFeatures": true,
+        "LeftHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_gripvert.cast",
+        "RightHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_r.cast",
+        "LeftIKTargetBoneName": "",
+        "RightIKTargetBoneName": "",
+        "Layers": {
+          "$id": "60",
+          "$values": [
+            {
+              "$id": "61",
+              "Owner": {
+                "$ref": "59"
+              },
+              "Name": "C:\\AlchemistExample\\Default\\vm_gesture_default_slide_out.seanim",
+              "Offset": null,
+              "Color": 21153717,
+              "Type": 2
+            },
+            {
+              "$id": "62",
+              "Owner": {
+                "$ref": "59"
+              },
+              "Name": "C:\\AlchemistExample\\Default\\vm_gesture_default_slide_out_rhand.seanim",
+              "Offset": null,
+              "Color": 56165728,
+              "Type": 3
+            }
+          ]
+        }
+      },
+      {
+        "$id": "63",
+        "OutputFramerate": 30,
+        "Name": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_idle.cast",
+        "OutputName": "vm_sm_mpapa5_slide_in_sprint",
+        "OutputFolder": "C:\\AlchemistExample\\IW8-MP5\\XAnimOut",
+        "EnableLeftHandIK": true,
+        "EnableRightHandIK": true,
+        "UseExperimentalFeatures": true,
+        "LeftHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_gripvert.cast",
+        "RightHandPoseFile": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_pose_r.cast",
+        "LeftIKTargetBoneName": "",
+        "RightIKTargetBoneName": "",
+        "Layers": {
+          "$id": "64",
+          "$values": [
+            {
+              "$id": "65",
+              "Owner": {
+                "$ref": "63"
+              },
+              "Name": "C:\\AlchemistExample\\IW8-MP5\\XAnim\\vm_sm_mpapa5_sprint_to_walk.cast",
+              "Offset": null,
+              "Color": 35729512,
+              "Type": 1
+            },
+            {
+              "$id": "66",
+              "Owner": {
+                "$ref": "63"
+              },
+              "Name": "C:\\AlchemistExample\\Default\\vm_gesture_default_slide_in.seanim",
+              "Offset": null,
+              "Color": 53130157,
+              "Type": 2
+            },
+            {
+              "$id": "67",
+              "Owner": {
+                "$ref": "63"
+              },
+              "Name": "C:\\AlchemistExample\\Default\\vm_gesture_default_slide_in_rhand.seanim",
+              "Offset": null,
+              "Color": 8409368,
+              "Type": 3
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "Parts": {
+    "$id": "68",
+    "$values": [
+      {
+        "$id": "69",
+        "FilePath": "D:\\Tools\\CordyCap\\Greyhound\\exported_files\\modern_warfare_4\\xmodels\\mp_western_vm_arms_t9west_17_1\\mp_western_vm_arms_t9west_17_1_LOD0.cast",
+        "ParentBoneTag": "",
+        "Type": 0
+      },
+      {
+        "$id": "70",
+        "FilePath": "D:\\Tools\\CordyCap\\Greyhound\\exported_files\\modern_warfare_4\\xmodels\\attachment_vm_sm_mpapa5_receiver_mp\\attachment_vm_sm_mpapa5_receiver_mp_LOD0.cast",
+        "ParentBoneTag": "tag_weapon",
+        "Type": 2
+      },
+      {
+        "$id": "71",
+        "FilePath": "D:\\Tools\\CordyCap\\Greyhound\\exported_files\\modern_warfare_4\\xmodels\\attachment_vm_sm_mpapa5_stock\\attachment_vm_sm_mpapa5_stock_LOD0.cast",
+        "ParentBoneTag": "",
+        "Type": 2
+      },
+      {
+        "$id": "72",
+        "FilePath": "D:\\Tools\\CordyCap\\Greyhound\\exported_files\\modern_warfare_4\\xmodels\\attachment_vm_sm_mpapa5_mag\\attachment_vm_sm_mpapa5_mag_LOD0.cast",
+        "ParentBoneTag": "",
+        "Type": 2
+      },
+      {
+        "$id": "73",
+        "FilePath": "D:\\Tools\\CordyCap\\Greyhound\\exported_files\\modern_warfare_4\\xmodels\\attachment_vm_sm_mpapa5_barrel\\attachment_vm_sm_mpapa5_barrel_LOD0.cast",
+        "ParentBoneTag": "",
+        "Type": 2
+      },
+      {
+        "$id": "74",
+        "FilePath": "D:\\Tools\\CordyCap\\Greyhound\\exported_files\\modern_warfare_4\\xmodels\\attachment_vm_vertgrip02\\attachment_vm_vertgrip02_LOD0.cast",
+        "ParentBoneTag": "",
+        "Type": 2
+      }
+    ]
+  }
+}

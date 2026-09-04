@@ -18,9 +18,6 @@ public static class UiSmokeMouse
     public static extern void mouse_event(uint flags, uint x, uint y, uint data, System.UIntPtr extraInfo);
 }
 '@
-$logPath = Join-Path (Split-Path -Parent $executable) 'Alchemy-Stars-Log.log'
-$logStartLineCount = if (Test-Path -LiteralPath $logPath) { @(Get-Content -LiteralPath $logPath).Count } else { 0 }
-
 function Find-Window([int]$processId, [string]$automationId) {
     for ($attempt = 0; $attempt -lt 20; $attempt++) {
         $condition = New-Object System.Windows.Automation.PropertyCondition(
@@ -165,15 +162,23 @@ try {
     }
 
     Invoke-Control (Find-Control $mainWindow 'AboutButton') 'AboutButton'
-    $aboutWasShown = $false
-    for ($attempt = 0; $attempt -lt 20 -and -not $aboutWasShown; $attempt++) {
+    $aboutValidation = $null
+    for ($attempt = 0; $attempt -lt 20 -and $null -eq $aboutValidation; $attempt++) {
         Start-Sleep -Milliseconds 250
-        $newLogLines = @(Get-Content -LiteralPath $logPath | Select-Object -Skip $logStartLineCount)
-        $aboutWasShown = $newLogLines -match 'About window shown: True'
+        $aboutValidation = Find-ProcessControl $process.Id 'AboutValidation'
     }
-    if (-not $aboutWasShown) {
-        throw 'About button did not create and show the About window.'
+    if ($null -eq $aboutValidation -or $aboutValidation.Current.Name -notmatch 'Maya 2025') {
+        throw 'About window was not shown with the current Maya 2025 validation information.'
     }
+    $initialAboutValidation = $aboutValidation.Current.Name
+    Invoke-Control $languageButton 'LanguageButton'
+    for ($attempt = 0; $attempt -lt 20 -and $aboutValidation.Current.Name -eq $initialAboutValidation; $attempt++) {
+        Start-Sleep -Milliseconds 100
+    }
+    if ($aboutValidation.Current.Name -eq $initialAboutValidation -or $aboutValidation.Current.Name -notmatch 'Maya 2025') {
+        throw 'About window did not update its validation information after switching languages.'
+    }
+    Invoke-Control $languageButton 'LanguageButton'
 
     Stop-TestProcess $process
 
@@ -195,7 +200,7 @@ try {
     $layerTextBox = $layerList.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $editCondition)
     Test-ContextMenu $process $layerTextBox 'ImportLayersContextMenuItem' 'ImportAnimationsContextMenuItem'
 
-    Write-Output "UI smoke passed: all context imports (including nested layer priority), $initialTitle -> $switchedTitle, and About window."
+    Write-Output "UI smoke passed: all context imports (including nested layer priority), $initialTitle -> $switchedTitle, and bilingual About content."
 }
 finally {
     Stop-TestProcess $process

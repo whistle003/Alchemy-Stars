@@ -8,7 +8,8 @@
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         ShowInTaskbar="False"
-        Width="620" Height="650">
+        AutomationProperties.AutomationId="AboutWindow"
+        Width="660" Height="650">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -24,22 +25,27 @@
                 </Grid.ColumnDefinitions>
                 <Border Width="56" Height="56" CornerRadius="12" Background="#26000000">
                     <Image Source="pack://application:,,,/Assets/AlchemyStarsIcon.png"
-                           Width="50" Height="50" Stretch="Uniform"/>
+                           Width="50" Height="50" Stretch="Uniform"
+                           AutomationProperties.Name="{DynamicResource AboutLogoDescription}"/>
                 </Border>
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                    <TextBlock Text="{DynamicResource AppDisplayName}" FontSize="26" FontWeight="SemiBold" Foreground="White"/>
+                    <TextBlock Text="{DynamicResource AppDisplayName}" FontSize="26" FontWeight="SemiBold" Foreground="White"
+                               AutomationProperties.HeadingLevel="Level1"/>
                     <TextBlock Text="{DynamicResource AboutSubtitle}" Margin="0,5,0,0"
                                TextWrapping="Wrap" Foreground="#E8FFFFFF"/>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel Margin="28,22">
-                <TextBlock Text="{DynamicResource AboutOverviewTitle}" FontSize="17" FontWeight="SemiBold"/>
-                <TextBlock Text="{DynamicResource AboutOverview}" Margin="0,8,0,0" TextWrapping="Wrap" LineHeight="21"/>
+                <TextBlock Text="{DynamicResource AboutOverviewTitle}" FontSize="17" FontWeight="SemiBold"
+                           AutomationProperties.HeadingLevel="Level2"/>
+                <TextBlock Text="{DynamicResource AboutOverview}" Margin="0,8,0,0" TextWrapping="Wrap" LineHeight="21"
+                           AutomationProperties.AutomationId="AboutOverview"/>
 
-                <TextBlock Text="{DynamicResource AboutFeaturesTitle}" Margin="0,22,0,8" FontSize="17" FontWeight="SemiBold"/>
+                <TextBlock Text="{DynamicResource AboutFeaturesTitle}" Margin="0,22,0,8" FontSize="17" FontWeight="SemiBold"
+                           AutomationProperties.HeadingLevel="Level2"/>
                 <Grid Margin="0,2">
                     <Grid.ColumnDefinitions><ColumnDefinition Width="30"/><ColumnDefinition/></Grid.ColumnDefinitions>
                     <materialDesign:PackIcon Kind="FolderSearchOutline" Width="20" Height="20" VerticalAlignment="Center"/>
@@ -52,30 +58,49 @@
                 </Grid>
                 <Grid Margin="0,7,0,2">
                     <Grid.ColumnDefinitions><ColumnDefinition Width="30"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                    <materialDesign:PackIcon Kind="SourceMerge" Width="20" Height="20" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="1" Text="{DynamicResource AboutFeatureModels}" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                </Grid>
+                <Grid Margin="0,7,0,2">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="30"/><ColumnDefinition/></Grid.ColumnDefinitions>
                     <materialDesign:PackIcon Kind="AxisArrowInfo" Width="20" Height="20" VerticalAlignment="Center"/>
                     <TextBlock Grid.Column="1" Text="{DynamicResource AboutFeatureMaya}" VerticalAlignment="Center" TextWrapping="Wrap"/>
                 </Grid>
 
-                <TextBlock Text="{DynamicResource AboutBuildTitle}" Margin="0,22,0,9" FontSize="17" FontWeight="SemiBold"/>
+                <TextBlock Text="{DynamicResource AboutValidationTitle}" Margin="0,22,0,9" FontSize="17" FontWeight="SemiBold"
+                           AutomationProperties.HeadingLevel="Level2"/>
+                <Border Padding="12" CornerRadius="6"
+                        Background="{DynamicResource MaterialDesignCardBackground}"
+                        BorderBrush="{DynamicResource MaterialDesignDivider}" BorderThickness="1">
+                    <TextBlock Text="{DynamicResource AboutValidation}" TextWrapping="Wrap" LineHeight="20"
+                               AutomationProperties.AutomationId="AboutValidation"/>
+                </Border>
+
+                <TextBlock Text="{DynamicResource AboutBuildTitle}" Margin="0,22,0,9" FontSize="17" FontWeight="SemiBold"
+                           AutomationProperties.HeadingLevel="Level2"/>
                 <Grid>
                     <Grid.ColumnDefinitions><ColumnDefinition Width="150"/><ColumnDefinition/></Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <TextBlock Text="{DynamicResource AboutVersion}" Margin="0,3" Opacity="0.7"/>
                     <TextBlock Grid.Column="1" Text="{Binding AppVersion}" Margin="0,3"/>
                     <TextBlock Grid.Row="1" Text="{DynamicResource AboutRuntime}" Margin="0,3" Opacity="0.7"/>
                     <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding RuntimeVersion}" Margin="0,3"/>
-                    <TextBlock Grid.Row="2" Text="{DynamicResource AboutOperatingSystem}" Margin="0,3" Opacity="0.7"/>
-                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding OperatingSystem}" Margin="0,3" TextWrapping="Wrap"/>
-                    <TextBlock Grid.Row="3" Text="{DynamicResource AboutLicense}" Margin="0,3" Opacity="0.7"/>
-                    <TextBlock Grid.Row="3" Grid.Column="1" Text="GPL-3.0" Margin="0,3"/>
-                    <TextBlock Grid.Row="4" Text="{DynamicResource AboutUpstream}" Margin="0,3" Opacity="0.7"/>
-                    <TextBlock Grid.Row="4" Grid.Column="1" Text="Scobalula/Alchemist" Margin="0,3"/>
+                    <TextBlock Grid.Row="2" Text="{DynamicResource AboutDistribution}" Margin="0,3" Opacity="0.7"/>
+                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{DynamicResource AboutDistributionValue}" Margin="0,3" TextWrapping="Wrap"/>
+                    <TextBlock Grid.Row="3" Text="{DynamicResource AboutOperatingSystem}" Margin="0,3" Opacity="0.7"/>
+                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding OperatingSystem}" Margin="0,3" TextWrapping="Wrap"/>
+                    <TextBlock Grid.Row="4" Text="{DynamicResource AboutLicense}" Margin="0,3" Opacity="0.7"/>
+                    <TextBlock Grid.Row="4" Grid.Column="1" Text="GPL-3.0" Margin="0,3"/>
+                    <TextBlock Grid.Row="5" Text="{DynamicResource AboutUpstream}" Margin="0,3" Opacity="0.7"/>
+                    <TextBlock Grid.Row="5" Grid.Column="1" Text="Scobalula/Alchemist" Margin="0,3"/>
                 </Grid>
 
-                <Border Margin="0,18,0,0" Padding="12" CornerRadius="6" Background="#1803A9F4">
+                <Border Margin="0,18,0,0" Padding="12" CornerRadius="6"
+                        Background="{DynamicResource MaterialDesignCardBackground}"
+                        BorderBrush="{DynamicResource MaterialDesignDivider}" BorderThickness="1">
                     <TextBlock Text="{DynamicResource AboutRuntimeRequirement}" TextWrapping="Wrap" LineHeight="20"/>
                 </Border>
                 <TextBlock Text="{DynamicResource AboutCopyright}" Margin="0,16,0,0" Opacity="0.65" FontSize="12" TextWrapping="Wrap"/>
@@ -85,9 +110,11 @@
         <Border Grid.Row="2" BorderBrush="#25FFFFFF" BorderThickness="0,1,0,0" Padding="20,12">
             <Grid>
                 <Button Content="{DynamicResource AboutOpenUpstream}" Click="OpenUpstreamClick"
-                        HorizontalAlignment="Left" Style="{StaticResource MaterialDesignFlatButton}"/>
+                        HorizontalAlignment="Left" Style="{StaticResource MaterialDesignFlatButton}"
+                        AutomationProperties.Name="{DynamicResource AboutOpenUpstream}"/>
                 <Button Content="{DynamicResource Close}" Click="CloseClick" IsDefault="True" IsCancel="True"
-                        HorizontalAlignment="Right" MinWidth="88" Style="{StaticResource MaterialDesignRaisedButton}"/>
+                        HorizontalAlignment="Right" MinWidth="88" Style="{StaticResource MaterialDesignRaisedButton}"
+                        AutomationProperties.Name="{DynamicResource Close}"/>
             </Grid>
         </Border>
     </Grid>

@@ -1,14 +1,24 @@
 # Third-party notices
 
-## Cast
+## Alchemist
+
+Alchemy Stars is based on [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist),
+which is licensed under GPL-3.0. The full source and license are provided in
+`fork/AlchemyStars`.
+
+## RedFox and Cast.NET
+
+The original Alchemist pipeline depends on Scobalula/RedFox and Cast.NET. Their
+pinned source trees and license files are retained in the `fork/RedFox` Git
+submodule.
+
+## Maya CAST plugin
 
 Alchemy Stars redistributes the Python CAST format library and Autodesk Maya
 file translator from [dtzxporter/cast](https://github.com/dtzxporter/cast).
 Those files are licensed under the MIT License; the original license text is
 stored at `third_party/cast/LICENSE`.
 
-The bundled `castplugin.py` is modified only to enable `importMerge` by
-default. Alchemy Stars output contains viewhands and weapon as separate model
-roots sharing `j_gun`; enabling this option makes a single file import merge
-them into one Maya skeleton before applying the baked animation.
-
+Alchemy Stars output contains viewhands and weapon model roots sharing `j_gun`.
+The acceptance runner enables the plugin's `importMerge` option so a single
+file import creates one Maya skeleton before applying the baked animation.

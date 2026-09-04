@@ -1,0 +1,50 @@
+{
+  "EnableAnimationTrimming": false,
+  "LeftIKStartBoneName": "j_shoulder_le",
+  "LeftIKMidBoneName": "j_elbow_le",
+  "LeftIKEndBoneName": "j_wrist_le",
+  "LeftIKTargetBoneName": "tag_ik_loc_le",
+  "RightIKStartBoneName": "j_shoulder_ri",
+  "RightIKMidBoneName": "j_elbow_ri",
+  "RightIKEndBoneName": "j_wrist_ri",
+  "RightIKTargetBoneName": "tag_ik_loc_ri",
+  "OutputPrefix": "",
+  "OutputSuffix": "",
+  "OutputFormat": ".cast",
+  "MatchOldCallOfDuty": false,
+  "Animations": [
+    {
+      "OutputFramerate": 30.0,
+      "Name": "D:\\_tiqu\\Saluki\\exported_files\\bo7\\animations\\sat_vm_ar_hawk_sprint_loop.cast",
+      "OutputName": "sat_vm_ar_hawk_sprint_alchemy_stars",
+      "OutputFolder": "E:\\Alchemy Stars\\fork\\AlchemyStars\\output",
+      "EnableLeftHandIK": true,
+      "EnableRightHandIK": false,
+      "UseExperimentalFeatures": true,
+      "LeftHandPoseFile": "",
+      "RightHandPoseFile": "",
+      "LeftIKTargetBoneName": "",
+      "RightIKTargetBoneName": "",
+      "Layers": [
+        {
+          "Name": "D:\\_tiqu\\Saluki\\exported_files\\bo7\\animations\\sat_vm_ar_hawk_sprint_offset_additive.cast",
+          "Offset": 0,
+          "Color": 0,
+          "Type": 1
+        }
+      ]
+    }
+  ],
+  "Parts": [
+    {
+      "FilePath": "D:\\_tiqu\\Files\\viewhands_mp_base_iw8_LOD0.cast",
+      "ParentBoneTag": "",
+      "Type": 0
+    },
+    {
+      "FilePath": "D:\\_tiqu\\Saluki\\exported_files\\Merged Models\\sat_vm_ar_hawk_rec_LOD0.cast",
+      "ParentBoneTag": "j_gun",
+      "Type": 1
+    }
+  ]
+}

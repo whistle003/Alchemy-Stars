@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <AssemblyName>AlchemyStars.Core</AssemblyName>
+    <Product>Alchemy Stars</Product>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="log4net" Version="3.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\RedFox\src\cs\RedFox.Graphics3D.Translation\RedFox.Graphics3D.Translation.csproj" />
+    <ProjectReference Include="..\..\..\RedFox\src\cs\RedFox.Graphics3D\RedFox.Graphics3D.csproj" />
+    <ProjectReference Include="..\..\..\RedFox\src\cs\RedFox.UI\RedFox.UI.csproj" />
+    <ProjectReference Include="..\..\..\RedFox\src\cs\RedFox.Zenith\RedFox.Zenith.csproj" />
+  </ItemGroup>
+
+</Project>

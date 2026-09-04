@@ -1,0 +1,3 @@
+[submodule "fork/RedFox"]
+	path = fork/RedFox
+	url = https://github.com/Scobalula/RedFox.git

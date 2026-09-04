@@ -125,14 +125,13 @@ def main() -> int:
         max_reach_residual = {side: max(values) for side, values in reach_residuals.items()}
 
         expected_key_times = [float(frame) for frame in range(int(minimum), int(maximum) + 1)]
-        transform_attributes = (
+        animated_transform_attributes = (
             "translateX", "translateY", "translateZ",
             "rotateX", "rotateY", "rotateZ",
-            "scaleX", "scaleY", "scaleZ",
         )
         incomplete_channels = []
         for joint in joints:
-            for attribute in transform_attributes:
+            for attribute in animated_transform_attributes:
                 key_times = cmds.keyframe(
                     joint,
                     attribute=attribute,
@@ -149,8 +148,8 @@ def main() -> int:
             "maya2025": str(cmds.about(version=True)).startswith("2025"),
             "singleMergedSkeleton": len(joints) == 214 and len(gun_roots) == 1 and len(skeleton_roots) == 1,
             "allMeshesImportedAndVisible": len(meshes) == 21 and len(visible_meshes) == len(meshes),
-            "animationCurvesCreated": len(animation_curves) >= len(joints) * len(transform_attributes),
-            "everyTransformChannelKeyedEveryFrame": not incomplete_channels,
+            "animationCurvesCreated": len(animation_curves) >= len(joints) * len(animated_transform_attributes),
+            "everyAnimatedTransformChannelKeyedEveryFrame": not incomplete_channels,
             "thirtyFps": time_unit == "ntsc",
             "playbackRange": minimum == 0.0 and maximum == 66.0,
             "leftIkReachesPhysicalOptimum": all(

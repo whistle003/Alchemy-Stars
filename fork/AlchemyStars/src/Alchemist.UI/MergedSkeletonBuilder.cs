@@ -16,7 +16,7 @@ internal static class MergedSkeletonBuilder
         var skeleton = new Skeleton("Alchemy Stars Merged Skeleton");
         var bonesByName = new Dictionary<string, SkeletonBone>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var part in parts)
+        foreach (var part in PartOrdering.ForSkeletonMerge(parts))
         {
             if (string.IsNullOrWhiteSpace(part.FilePath) || !File.Exists(part.FilePath))
                 throw new FileNotFoundException("Model part could not be found.", part.FilePath);

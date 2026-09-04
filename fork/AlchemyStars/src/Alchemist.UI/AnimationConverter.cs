@@ -380,7 +380,7 @@ namespace Alchemist.UI
             {
                 MayaCastPackage.Save(
                     outputFull,
-                    sourceParts.Select(static x => x.FilePath),
+                    sourceParts,
                     newAnim,
                     TranslatorFactory);
             }

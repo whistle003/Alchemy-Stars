@@ -14,7 +14,7 @@ internal static class MayaCastPackage
 
     public static void Save(
         string outputPath,
-        IEnumerable<string> modelPaths,
+        IEnumerable<Part> parts,
         SkeletonAnimation animation,
         Graphics3DTranslatorFactory translatorFactory)
     {
@@ -23,8 +23,9 @@ internal static class MayaCastPackage
             ?? throw new InvalidOperationException("Output path has no directory.");
         Directory.CreateDirectory(directory);
 
-        var sources = modelPaths
-            .Where(static x => !string.IsNullOrWhiteSpace(x))
+        var sources = PartOrdering.ForSkeletonMerge(parts)
+            .Select(static part => part.FilePath)
+            .Where(static path => !string.IsNullOrWhiteSpace(path))
             .Select(Path.GetFullPath)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();

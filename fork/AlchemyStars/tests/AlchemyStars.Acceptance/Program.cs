@@ -18,6 +18,17 @@ var improvedExamples = exampleManifest.ImprovedExamples.ToDictionary(example => 
 var checks = new List<object>();
 var failures = new List<string>();
 var sprintProject = LoadExampleProject(exampleDirectory, improvedExamples["hawk-sprint"].Path);
+var weaponFirstSprintProject = LoadExampleProject(exampleDirectory, improvedExamples["hawk-sprint"].Path);
+var weaponFirstParts = weaponFirstSprintProject.Parts
+    .OrderBy(part => part.Type == PartType.ViewHands ? 1 : 0)
+    .ToArray();
+weaponFirstSprintProject.Parts.Clear();
+foreach (var part in weaponFirstParts)
+{
+    if (part.Type == PartType.Weapon)
+        part.ParentBoneTag = string.Empty;
+    weaponFirstSprintProject.Parts.Add(part);
+}
 var idleProject = LoadExampleProject(exampleDirectory, improvedExamples["hawk-idle"].Path);
 var batchProject = LoadExampleProject(exampleDirectory, improvedExamples["hawk-batch"].Path);
 var mp5BaseProject = LoadExampleProject(exampleDirectory, standardExamples["mp5-base"].Path);
@@ -25,6 +36,7 @@ var mp5GripProject = LoadExampleProject(exampleDirectory, standardExamples["mp5-
 var sprintTemplate = sprintProject.Animations.Single();
 var idleTemplate = idleProject.Animations.Single();
 string? sprintOutput = null;
+string? weaponFirstSprintOutput = null;
 string? idleOutput = null;
 
 Run("Animation.Clone preserves all per-animation settings", () => TestAnimationClone(sprintTemplate));
@@ -67,6 +79,16 @@ if (requiredFiles.All(File.Exists))
         ValidateMayaPackage(sprintOutput);
     });
 
+    Run("Weapon-first part order exports one CAST for Maya validation", () =>
+    {
+        var weaponFirstOutputDirectory = Path.Combine(outputDirectory, "weapon-first");
+        weaponFirstSprintProject.Animations.Single().OutputFolder = weaponFirstOutputDirectory;
+        var outputs = weaponFirstSprintProject.ExportAnimations();
+        Assert(outputs.Count == 1, "Weapon-first sprint example should export exactly one file.");
+        weaponFirstSprintOutput = Path.GetFullPath(outputs.Single());
+        ValidateMayaPackage(weaponFirstSprintOutput);
+    });
+
     Run("Idle bakes into a separate one-animation Maya CAST", () =>
     {
         idleProject.Animations.Single().OutputFolder = outputDirectory;
@@ -98,7 +120,12 @@ var report = new
 {
     generatedAtUtc = DateTimeOffset.UtcNow,
     outputDirectory,
-    artifacts = new { sprintCast = sprintOutput, idleCast = idleOutput },
+    artifacts = new
+    {
+        sprintCast = sprintOutput,
+        weaponFirstSprintCast = weaponFirstSprintOutput,
+        idleCast = idleOutput,
+    },
     passed = failures.Count == 0,
     checks,
     failures,

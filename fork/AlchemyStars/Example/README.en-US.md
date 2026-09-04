@@ -23,7 +23,7 @@ Each exported Hawk CAST includes the shared view-hands and weapon model data and
 
 ## Using the projects
 
-Open a project with the leftmost **Load project** button, drag it onto the window, or pass its path to `Alchemy Stars.exe`. Verify all paths and select an output directory before exporting. The Animation list, nested Animation Layers area, and Model Parts list all support right-click imports on items and empty space; `Shift+F10` works after focusing a list.
+Open a project with the leftmost **Load project** button, drag it onto the window, or pass its path to `Alchemy Stars.exe`. Verify all paths and select an output directory before exporting. The Animation list, nested Animation Layers area, and Model Parts list all support right-click imports on items and empty space; `Shift+F10` works after focusing a list. Export canonicalizes model merge order as ViewHands, Weapon, then Attachment, so a weapon listed before the hands no longer creates a second Maya skeleton.
 
 The published `MayaPlugin` folder contains `cast.py` and `castplugin.py`. Add both to Maya's script/plugin path, load `castplugin.py`, and import the generated CAST through File → Import. The verified Hawk sprint result uses 30 FPS, frames 0–66, 214 joints, 21 visible meshes, 1,284 curves, one skeleton root, and one `j_gun`.
 

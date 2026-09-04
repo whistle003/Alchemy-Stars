@@ -28,7 +28,7 @@ namespace Alchemist.UI
 {
     public class MainViewModel : LoggableMVVMObject
     {
-        public string FileVersion { get; } = typeof(MainViewModel).Assembly.GetName().Version?.ToString(3) ?? "1.1.0";
+        public string FileVersion { get; } = typeof(MainViewModel).Assembly.GetName().Version?.ToString(3) ?? "1.1.6";
         public AnimationConverter Converter { get; set; } = new();
         public MVVMItemList<Animation> Animations { get; set; } = [];
         public MVVMItemList<Part> Parts { get; set; } = [];
@@ -110,6 +110,22 @@ namespace Alchemist.UI
 
         public string OutputFormat { get => GetValue(LocalizationManager.DefaultOutputFormat); set => SetValue(OutputFormatCatalog.Normalize(value)); }
 
+        public bool CastAnimationOnly { get => GetValue(AppPreferences.DefaultCastAnimationOnly); set => SetValue(value); }
+
+        public bool BakeRelevantBonesOnly { get => GetValue(AppPreferences.DefaultBakeRelevantBonesOnly); set => SetValue(value); }
+
+        [JsonIgnore]
+        public bool IsCastOutput => string.Equals(OutputFormat, ".cast", StringComparison.OrdinalIgnoreCase);
+
+        [JsonIgnore]
+        public bool IsFbxOutput => string.Equals(OutputFormat, ".fbx", StringComparison.OrdinalIgnoreCase);
+
+        [JsonIgnore]
+        public bool IsSmdOutput => string.Equals(OutputFormat, ".smd", StringComparison.OrdinalIgnoreCase);
+
+        [JsonIgnore]
+        public bool IsSeanimOutput => string.Equals(OutputFormat, ".seanim", StringComparison.OrdinalIgnoreCase);
+
         public string[] OutputFormats { get; } = OutputFormatCatalog.All;
 
         public Visibility IsVisible { get => GetValue(Visibility.Visible); set => SetValue(value); }
@@ -126,6 +142,10 @@ namespace Alchemist.UI
             AddBinds(nameof(CurrentProjectFile), nameof(Title));
             AddBinds(nameof(LocalizationRevision), nameof(Title));
             AddBinds(nameof(LocalizationRevision), nameof(LanguageModeLabel));
+            AddBinds(nameof(OutputFormat), nameof(IsCastOutput));
+            AddBinds(nameof(OutputFormat), nameof(IsFbxOutput));
+            AddBinds(nameof(OutputFormat), nameof(IsSmdOutput));
+            AddBinds(nameof(OutputFormat), nameof(IsSeanimOutput));
             RefreshLocalization();
             // Callbacks
             OnCommandFailure = onCommandFailure;
@@ -363,6 +383,8 @@ namespace Alchemist.UI
                     OutputPrefix,
                     OutputSuffix,
                     OutputFormat,
+                    CastAnimationOnly,
+                    BakeRelevantBonesOnly,
                     MatchOldCallOfDuty,
                     Parts));
             }
@@ -383,6 +405,18 @@ namespace Alchemist.UI
         {
             OutputFormat = OutputFormatCatalog.Normalize(format);
             LocalizationManager.SetDefaultOutputFormat(OutputFormat);
+        }
+
+        public void SetDefaultCastAnimationOnly(bool enabled)
+        {
+            CastAnimationOnly = enabled;
+            AppPreferences.DefaultCastAnimationOnly = enabled;
+        }
+
+        public void SetDefaultBakeRelevantBonesOnly(bool enabled)
+        {
+            BakeRelevantBonesOnly = enabled;
+            AppPreferences.DefaultBakeRelevantBonesOnly = enabled;
         }
 
         public static int AddLayerFiles(IEnumerable<Animation> animations, IEnumerable<string> filePaths)
@@ -463,6 +497,8 @@ namespace Alchemist.UI
             OutputPrefix            = prjFile.OutputPrefix;
             OutputSuffix            = prjFile.OutputSuffix;
             OutputFormat            = OutputFormatCatalog.Normalize(prjFile.OutputFormat);
+            CastAnimationOnly       = prjFile.CastAnimationOnly;
+            BakeRelevantBonesOnly   = prjFile.BakeRelevantBonesOnly;
             MatchOldCallOfDuty      = prjFile.MatchOldCallOfDuty;
 
             CurrentProjectFile = filePath;
@@ -548,6 +584,8 @@ namespace Alchemist.UI
                 OutputPrefix = viewModel.OutputPrefix,
                 OutputSuffix = viewModel.OutputSuffix,
                 OutputFormat = viewModel.OutputFormat,
+                CastAnimationOnly = viewModel.CastAnimationOnly,
+                BakeRelevantBonesOnly = viewModel.BakeRelevantBonesOnly,
                 MatchOldCallOfDuty = viewModel.MatchOldCallOfDuty,
                 Animations = [.. viewModel.Animations],
                 Parts = [.. viewModel.Parts]

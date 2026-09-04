@@ -72,6 +72,8 @@ namespace Alchemist.UI
             string prefix,
             string suffix,
             string format,
+            bool castAnimationOnly,
+            bool bakeRelevantBonesOnly,
             bool matchOldCallOfDuty,
             IEnumerable<Part>? sourceParts = null)
         {
@@ -95,6 +97,7 @@ namespace Alchemist.UI
             AnimationSamplerSolver? rSolver = null;
 
             var mainAnimation = TranslatorFactory.Load<SkeletonAnimation>(animation.Name);
+            var contributingAnimations = new List<SkeletonAnimation> { mainAnimation };
 
             if (matchOldCallOfDuty)
             {
@@ -108,7 +111,9 @@ namespace Alchemist.UI
             if (!string.IsNullOrWhiteSpace(animation.LeftHandPoseFile))
             {
                 Logging.Logger.Info($"Loading left hand pose: {animation.LeftHandPoseFile}");
-                plSampler = new SkeletonAnimationSampler("PLLayer", TranslatorFactory.Load<SkeletonAnimation>(animation.LeftHandPoseFile), skeleton, player);
+                var leftHandPose = TranslatorFactory.Load<SkeletonAnimation>(animation.LeftHandPoseFile);
+                contributingAnimations.Add(leftHandPose);
+                plSampler = new SkeletonAnimationSampler("PLLayer", leftHandPose, skeleton, player);
                 Logging.Logger.Info($"Loaded left hand pose: {animation.LeftHandPoseFile}");
             }
             else
@@ -119,7 +124,9 @@ namespace Alchemist.UI
             if (!string.IsNullOrWhiteSpace(animation.RightHandPoseFile))
             {
                 Logging.Logger.Info($"Loading right hand pose: {animation.RightHandPoseFile}");
-                prSampler = new SkeletonAnimationSampler("PRLayer", TranslatorFactory.Load<SkeletonAnimation>(animation.RightHandPoseFile), skeleton, player);
+                var rightHandPose = TranslatorFactory.Load<SkeletonAnimation>(animation.RightHandPoseFile);
+                contributingAnimations.Add(rightHandPose);
+                prSampler = new SkeletonAnimationSampler("PRLayer", rightHandPose, skeleton, player);
                 Logging.Logger.Info($"Loaded right hand pose: {animation.RightHandPoseFile}");
             }
             else
@@ -141,6 +148,7 @@ namespace Alchemist.UI
             {
                 Logging.Logger.Info($"Loading layer: {layer.Name} of type: {layer.Type}");
                 var anim = TranslatorFactory.Load<SkeletonAnimation>(layer.Name);
+                contributingAnimations.Add(anim);
 
                 switch(layer.Type)
                 {
@@ -294,7 +302,10 @@ namespace Alchemist.UI
             //    }
             //}
 
-            Logging.Logger.Info($"Generating output animation with {player.FrameCount} frames and {skeleton.Bones.Count} bones");
+            var bakeBoneIndices = bakeRelevantBonesOnly
+                ? FindRelevantBoneIndices(skeleton, contributingAnimations, player.Solvers).ToHashSet()
+                : Enumerable.Range(0, skeleton.Bones.Count).ToHashSet();
+            Logging.Logger.Info($"Generating output animation with {player.FrameCount} frames and {bakeBoneIndices.Count} initially selected of {skeleton.Bones.Count} bones");
 
             var newAnim = new SkeletonAnimation(animation.OutputName, skeleton)
             {
@@ -309,11 +320,38 @@ namespace Alchemist.UI
                 skeleton.InitializeAnimationTransforms();
                 player.Update(i, AnimationSampleType.AbsoluteFrameTime);
 
-                for (int k = 0; k < skeleton.Bones.Count; k++)
+                if (bakeRelevantBonesOnly)
                 {
+                    for (var k = 0; k < skeleton.Bones.Count; k++)
+                    {
+                        if (bakeBoneIndices.Contains(k) || !TransformDiffersFromBindPose(skeleton.Bones[k]))
+                            continue;
+
+                        bakeBoneIndices.Add(k);
+                        for (var earlierFrame = 0; earlierFrame < i; earlierFrame++)
+                        {
+                            newAnim.Targets[k].AddTranslationFrame(earlierFrame, skeleton.Bones[k].BaseLocalTranslation);
+                            newAnim.Targets[k].AddRotationFrame(earlierFrame, skeleton.Bones[k].BaseLocalRotation);
+                        }
+                    }
+                }
+
+                for (var k = 0; k < skeleton.Bones.Count; k++)
+                {
+                    if (!bakeBoneIndices.Contains(k))
+                        continue;
                     newAnim.Targets[k].AddTranslationFrame(i, skeleton!.Bones[k].LocalTranslation);
                     newAnim.Targets[k].AddRotationFrame(i, skeleton!.Bones[k].LocalRotation);
                 }
+            }
+
+            if (bakeRelevantBonesOnly)
+            {
+                newAnim.Targets.RemoveAll(target =>
+                    target.TranslationFrameCount == 0
+                    && target.RotationFrameCount == 0
+                    && target.ScaleFrameCount == 0);
+                Logging.Logger.Info($"Relevant-bone bake retained {newAnim.Targets.Count} of {skeleton.Bones.Count} bones");
             }
 
             Logging.Logger.Info($"Generated frames");
@@ -378,13 +416,18 @@ namespace Alchemist.UI
             Directory.CreateDirectory(animation.OutputFolder);
 
             if (string.Equals(format, ".cast", StringComparison.OrdinalIgnoreCase)
-                && sourceParts is not null)
+                && sourceParts is not null
+                && !castAnimationOnly)
             {
                 MayaCastPackage.Save(
                     outputFull,
                     sourceParts,
                     newAnim,
                     TranslatorFactory);
+            }
+            else if (string.Equals(format, ".cast", StringComparison.OrdinalIgnoreCase))
+            {
+                SaveAtomically(outputFull, temporaryPath => TranslatorFactory.Save(temporaryPath, newAnim));
             }
             else if (string.Equals(format, ".smd", StringComparison.OrdinalIgnoreCase))
             {
@@ -432,6 +475,55 @@ namespace Alchemist.UI
 
             Logging.Logger.Info($"Saved animation to: {outputFull}");
             return outputFull;
+        }
+
+        internal static IReadOnlyList<int> FindRelevantBoneIndices(
+            Skeleton skeleton,
+            IEnumerable<SkeletonAnimation> animations,
+            IEnumerable<AnimationSamplerSolver> solvers)
+        {
+            var relevantBoneNames = animations
+                .SelectMany(animation => animation.Targets)
+                .Where(target =>
+                    target.TranslationFrameCount > 0
+                    || target.RotationFrameCount > 0
+                    || target.ScaleFrameCount > 0)
+                .Select(target => target.BoneName)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var solver in solvers)
+            {
+                if (solver is not IKTwoBoneSolver twoBoneSolver)
+                {
+                    Logging.Logger.Warn($"Selective baking does not recognize solver '{solver.GetType().Name}'; baking every bone for safety.");
+                    return Enumerable.Range(0, skeleton.Bones.Count).ToArray();
+                }
+
+                AddBoneName(twoBoneSolver.StartBone.Name);
+                AddBoneName(twoBoneSolver.MiddleBone.Name);
+                AddBoneName(twoBoneSolver.EndBone.Name);
+            }
+
+            return skeleton.Bones
+                .Select((bone, index) => (bone, index))
+                .Where(item => item.bone.Name is not null && relevantBoneNames.Contains(item.bone.Name))
+                .Select(item => item.index)
+                .ToArray();
+
+            void AddBoneName(string? name)
+            {
+                if (!string.IsNullOrWhiteSpace(name))
+                    relevantBoneNames.Add(name);
+            }
+        }
+
+        private static bool TransformDiffersFromBindPose(SkeletonBone bone)
+        {
+            if (Vector3.DistanceSquared(bone.LocalTranslation, bone.BaseLocalTranslation) > 0.000001f)
+                return true;
+
+            var rotationDot = MathF.Abs(Quaternion.Dot(bone.LocalRotation, bone.BaseLocalRotation));
+            return !float.IsFinite(rotationDot) || 1f - MathF.Min(rotationDot, 1f) > 0.0001f;
         }
 
         /// <summary>

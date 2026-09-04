@@ -52,16 +52,19 @@ function Resolve-AcceptanceArtifact([string]$path, [string]$label, [datetime]$st
     return $resolvedPath
 }
 
-function Test-CastInMaya([string]$castPath, [string]$label) {
+function Test-CastInMaya([string]$castPath, [string]$label, [switch]$Selective) {
     $stem = [System.IO.Path]::GetFileNameWithoutExtension($castPath)
     $artifactDirectory = Split-Path -Parent $castPath
     $mayaScene = Join-Path $artifactDirectory ($stem + '.ma')
     $mayaReport = Join-Path $artifactDirectory ($stem + '.maya2025.json')
-    & $mayaPython `
-        (Join-Path $projectRoot 'maya\verify_cast_in_maya.py') `
-        $castPath `
-        $mayaScene `
+    $mayaArguments = @(
+        (Join-Path $projectRoot 'maya\verify_cast_in_maya.py'),
+        $castPath,
+        $mayaScene,
         $mayaReport
+    )
+    if ($Selective) { $mayaArguments += '--selective' }
+    & $mayaPython @mayaArguments
     if ($LASTEXITCODE -ne 0) { throw "Maya 2025 $label acceptance failed with exit code $LASTEXITCODE" }
 }
 
@@ -101,11 +104,23 @@ if (-not (Test-Path -LiteralPath $acceptanceReport)) { throw "Acceptance report 
 
 $report = Get-Content -LiteralPath $acceptanceReport -Raw | ConvertFrom-Json
 $sprintCast = Resolve-AcceptanceArtifact ([string]$report.artifacts.sprintCast) 'sprint CAST' $acceptanceStartedUtc
+$selectiveBakeCast = Resolve-AcceptanceArtifact ([string]$report.artifacts.selectiveBakeCast) 'selective-bake CAST' $acceptanceStartedUtc
 $weaponFirstSprintCast = Resolve-AcceptanceArtifact ([string]$report.artifacts.weaponFirstSprintCast) 'weapon-first sprint CAST' $acceptanceStartedUtc
 $sprintSmd = Resolve-AcceptanceArtifact ([string]$report.artifacts.sprintSmd) 'sprint SMD' $acceptanceStartedUtc
 
 if (-not [string]::IsNullOrWhiteSpace($mayaPython) -and (Test-Path -LiteralPath $mayaPython -PathType Leaf)) {
     Test-CastInMaya $sprintCast 'standard-order sprint'
+    Test-CastInMaya $selectiveBakeCast 'selective-bake sprint' -Selective
+    $fullMayaReportPath = [System.IO.Path]::ChangeExtension($sprintCast, '.maya2025.json')
+    $selectiveMayaReportPath = [System.IO.Path]::ChangeExtension($selectiveBakeCast, '.maya2025.json')
+    $fullMayaReport = Get-Content -LiteralPath $fullMayaReportPath -Raw | ConvertFrom-Json
+    $selectiveMayaReport = Get-Content -LiteralPath $selectiveMayaReportPath -Raw | ConvertFrom-Json
+    if ($fullMayaReport.jointWorldAnimationDigest4dp -ne $selectiveMayaReport.jointWorldAnimationDigest4dp) {
+        throw 'Selective-bake Maya joint animation differs from the full bake at four-decimal precision.'
+    }
+    if ([int]$selectiveMayaReport.animationCurveCount -ge [int]$fullMayaReport.animationCurveCount) {
+        throw 'Selective-bake Maya validation did not reduce the animation-curve count.'
+    }
     Test-CastInMaya $weaponFirstSprintCast 'weapon-first sprint'
     $sprintFbx = Resolve-AcceptanceArtifact ([string]$report.artifacts.sprintFbx) 'sprint FBX' $acceptanceStartedUtc
     Test-FbxInMaya $sprintFbx

@@ -33,6 +33,18 @@ internal static class AppPreferences
         set => Update(settings => settings.DefaultOutputFormat = value);
     }
 
+    public static bool DefaultCastAnimationOnly
+    {
+        get => Read().DefaultCastAnimationOnly;
+        set => Update(settings => settings.DefaultCastAnimationOnly = value);
+    }
+
+    public static bool DefaultBakeRelevantBonesOnly
+    {
+        get => Read().DefaultBakeRelevantBonesOnly;
+        set => Update(settings => settings.DefaultBakeRelevantBonesOnly = value);
+    }
+
     public static string? GetLastDirectory(string scope)
     {
         var settings = Read();
@@ -114,6 +126,8 @@ internal static class AppPreferences
     {
         public string Language { get; set; } = LocalizationManager.SystemLanguage;
         public string DefaultOutputFormat { get; set; } = OutputFormatCatalog.Default;
+        public bool DefaultCastAnimationOnly { get; set; }
+        public bool DefaultBakeRelevantBonesOnly { get; set; }
         public Dictionary<string, string> LastDirectories { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     }
 }

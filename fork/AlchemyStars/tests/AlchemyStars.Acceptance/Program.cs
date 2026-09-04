@@ -34,6 +34,8 @@ var improvedExamples = exampleManifest.ImprovedExamples.ToDictionary(example => 
 var checks = new List<object>();
 var failures = new List<string>();
 var sprintProject = LoadExampleProject(exampleDirectory, improvedExamples["hawk-sprint"].Path);
+var animationOnlyProject = LoadExampleProject(exampleDirectory, improvedExamples["hawk-sprint"].Path);
+var selectiveBakeProject = LoadExampleProject(exampleDirectory, improvedExamples["hawk-sprint"].Path);
 var weaponFirstSprintProject = LoadExampleProject(exampleDirectory, improvedExamples["hawk-sprint"].Path);
 var weaponFirstParts = weaponFirstSprintProject.Parts
     .OrderBy(part => part.Type == PartType.ViewHands ? 1 : 0)
@@ -54,6 +56,8 @@ var mp5GripProject = LoadExampleProject(exampleDirectory, standardExamples["mp5-
 var sprintTemplate = sprintProject.Animations.Single();
 var idleTemplate = idleProject.Animations.Single();
 string? sprintOutput = null;
+string? animationOnlyCastOutput = null;
+string? selectiveBakeCastOutput = null;
 string? weaponFirstSprintOutput = null;
 string? idleOutput = null;
 string? smdOutput = null;
@@ -78,6 +82,32 @@ Run("System language detection and explicit language choices resolve predictably
 Run("Context animation import adds every selected animation", TestContextAnimationImport);
 Run("Context layer import targets only the requested animation", TestContextLayerImport);
 Run("External drop over animation layers prioritizes the hovered animation", TestLayerDropTargetPriority);
+Run("Path inputs accept pasted and directly dropped paths", () =>
+{
+    var temporaryDirectory = Directory.CreateTempSubdirectory("alchemy-stars-path-input-");
+    try
+    {
+        var castPath = Path.Combine(temporaryDirectory.FullName, "dropped animation.cast");
+        var textPath = Path.Combine(temporaryDirectory.FullName, "not-an-animation.txt");
+        File.WriteAllText(castPath, string.Empty);
+        File.WriteAllText(textPath, string.Empty);
+
+        Assert(MainWindow.NormalizePastedPath($"  \"{castPath}\"  ") == castPath,
+            "Quoted paths copied from Explorer should be normalized.");
+        Assert(MainWindow.TryResolveDroppedPath("AnimationPathTextBox", [castPath], out var resolvedCast) && resolvedCast == castPath,
+            "A CAST file dropped on a source path should be accepted.");
+        Assert(!MainWindow.TryResolveDroppedPath("AnimationPathTextBox", [textPath], out _),
+            "A non-CAST file dropped on a source path should be rejected.");
+        Assert(MainWindow.TryResolveDroppedPath("OutputFolderTextBox", [castPath], out var resolvedFolder) && resolvedFolder == temporaryDirectory.FullName,
+            "A file dropped on the output-folder field should resolve to its containing folder.");
+        Assert(MainWindow.TryResolveDroppedPath("OutputFolderTextBox", [temporaryDirectory.FullName], out resolvedFolder) && resolvedFolder == temporaryDirectory.FullName,
+            "A folder dropped on the output-folder field should be accepted directly.");
+    }
+    finally
+    {
+        temporaryDirectory.Delete(recursive: true);
+    }
+});
 Run("Context model import adds every selected model part", TestContextPartImport);
 Run("Sprint example restores layer and part ownership", () => TestExampleProject(sprintProject, expectedLayerCount: 2));
 Run("Idle example restores part ownership", () => TestExampleProject(idleProject, expectedLayerCount: 0));
@@ -113,6 +143,48 @@ if (requiredFiles.All(File.Exists))
         Assert(outputs.Count == 1, "Sprint example should export exactly one file.");
         sprintOutput = Path.GetFullPath(outputs.Single());
         ValidateMayaPackage(sprintOutput, sprintProject.Parts);
+    });
+
+    Run("Selective baking preserves models and every source animation target", () =>
+    {
+        selectiveBakeProject.OutputFormat = ".cast";
+        selectiveBakeProject.CastAnimationOnly = false;
+        selectiveBakeProject.BakeRelevantBonesOnly = true;
+        selectiveBakeProject.Animations.Single().OutputFolder = Path.Combine(outputDirectory, "relevant-bones-only");
+        var outputs = selectiveBakeProject.ExportAnimations();
+        Assert(outputs.Count == 1, "Selective baking should create exactly one full-scene CAST.");
+        selectiveBakeCastOutput = Path.GetFullPath(outputs.Single());
+        ValidateMayaPackage(selectiveBakeCastOutput, selectiveBakeProject.Parts);
+        ValidateRelevantBoneBake(
+            selectiveBakeCastOutput,
+            skeleton.Bones.Count,
+            LoadSourceAnimationTargetNames(selectiveBakeProject.Animations.Single()));
+        ValidateSelectiveBakeMatchesFull(sprintOutput!, selectiveBakeCastOutput, skeleton);
+    });
+
+    Run("Hawk sprint can export an animation-only CAST", () =>
+    {
+        animationOnlyProject.OutputFormat = ".cast";
+        animationOnlyProject.CastAnimationOnly = true;
+        animationOnlyProject.BakeRelevantBonesOnly = true;
+        animationOnlyProject.Animations.Single().OutputFolder = Path.Combine(outputDirectory, "animation-only-cast");
+        var outputs = animationOnlyProject.ExportAnimations();
+        Assert(outputs.Count == 1, "Animation-only CAST should create exactly one file.");
+        animationOnlyCastOutput = Path.GetFullPath(outputs.Single());
+        ValidateAnimationOnlyCast(
+            animationOnlyCastOutput,
+            skeleton.Bones.Count,
+            LoadSourceAnimationTargetNames(animationOnlyProject.Animations.Single()));
+    });
+
+    Run("Selective bake and animation-only CAST settings survive project save and load", () =>
+    {
+        var projectPath = Path.Combine(outputDirectory, "output-options-roundtrip.aprj");
+        MainViewModel.SaveProject(animationOnlyProject, projectPath);
+        var reloaded = new MainViewModel(_ => { }, string.Empty);
+        reloaded.LoadProjectFile(projectPath);
+        Assert(reloaded.CastAnimationOnly, "Project reload lost the animation-only CAST setting.");
+        Assert(reloaded.BakeRelevantBonesOnly, "Project reload lost the selective-bake setting.");
     });
 
     Run("Weapon-first part order exports one CAST for Maya validation", () =>
@@ -198,6 +270,8 @@ var report = new
     artifacts = new
     {
         sprintCast = sprintOutput,
+        animationOnlyCast = animationOnlyCastOutput,
+        selectiveBakeCast = selectiveBakeCastOutput,
         weaponFirstSprintCast = weaponFirstSprintOutput,
         idleCast = idleOutput,
         sprintSmd = smdOutput,
@@ -408,6 +482,8 @@ static string ProjectSettingsSignature(MainViewModel viewModel) => JsonSerialize
     viewModel.OutputPrefix,
     viewModel.OutputSuffix,
     viewModel.OutputFormat,
+    viewModel.CastAnimationOnly,
+    viewModel.BakeRelevantBonesOnly,
     viewModel.MatchOldCallOfDuty,
 });
 
@@ -591,6 +667,132 @@ static void ValidateMayaPackage(string path, IEnumerable<Part> sourceParts)
         }
     }
     Assert(nodes.Select(x => x.Hash).Distinct().Count() == nodes.Length, "CAST package contains duplicate hashes.");
+}
+
+static void ValidateAnimationOnlyCast(
+    string path,
+    int mergedSkeletonBoneCount,
+    IReadOnlySet<string> expectedSourceTargets)
+{
+    Assert(File.Exists(path), "Animation-only CAST was not created.");
+    var cast = CastReader.Load(path);
+    var nodes = cast.RootNodes.SelectMany(DescendantsAndSelf).ToArray();
+    Assert(nodes.All(node => node.Identifier != CastNodeIdentifier.Model),
+        "Animation-only CAST must not contain a model node.");
+    Assert(nodes.All(node => node.Identifier != CastNodeIdentifier.Mesh),
+        "Animation-only CAST must not contain mesh geometry.");
+    Assert(nodes.Count(node => node.Identifier == CastNodeIdentifier.Animation) == 1,
+        "Animation-only CAST must contain exactly one baked animation.");
+    var curves = nodes.OfType<CurveNode>().ToArray();
+    Assert(curves.Length > 0, "Animation-only CAST contains no animation curves.");
+    ValidateRelevantBoneCurves(curves, mergedSkeletonBoneCount, expectedSourceTargets);
+    Assert(curves.Count(curve => string.Equals(curve.NodeName, "j_gun", StringComparison.OrdinalIgnoreCase)) == 4,
+        "Animation-only CAST must retain all j_gun transform curves.");
+}
+
+static void ValidateRelevantBoneBake(
+    string path,
+    int mergedSkeletonBoneCount,
+    IReadOnlySet<string> expectedSourceTargets)
+{
+    var curves = CastReader.Load(path).RootNodes
+        .SelectMany(DescendantsAndSelf)
+        .OfType<CurveNode>()
+        .ToArray();
+    ValidateRelevantBoneCurves(curves, mergedSkeletonBoneCount, expectedSourceTargets);
+}
+
+static void ValidateRelevantBoneCurves(
+    IEnumerable<CurveNode> curves,
+    int mergedSkeletonBoneCount,
+    IReadOnlySet<string> expectedSourceTargets)
+{
+    var curveTargets = curves
+        .Select(curve => curve.NodeName)
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+    Assert(curveTargets.Count < mergedSkeletonBoneCount,
+        "Relevant-bone baking should not emit curves for every merged-skeleton bone.");
+    var missingTargets = expectedSourceTargets.Where(target => !curveTargets.Contains(target)).ToArray();
+    Assert(missingTargets.Length == 0,
+        "Relevant-bone baking dropped source animation targets: " + string.Join(", ", missingTargets.Take(8)));
+}
+
+static IReadOnlySet<string> LoadSourceAnimationTargetNames(Animation animation)
+{
+    var paths = new[] { animation.Name, animation.LeftHandPoseFile, animation.RightHandPoseFile }
+        .Concat(animation.Layers.Select(layer => layer.Name))
+        .Where(path => !string.IsNullOrWhiteSpace(path));
+    return paths
+        .Select(path => AnimationConverter.TranslatorFactory.Load<SkeletonAnimation>(path))
+        .SelectMany(source => source.Targets)
+        .Where(target => target.TranslationFrameCount > 0 || target.RotationFrameCount > 0)
+        .Select(target => target.BoneName)
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+}
+
+static void ValidateSelectiveBakeMatchesFull(
+    string fullBakePath,
+    string selectiveBakePath,
+    Skeleton skeleton)
+{
+    var full = AnimationConverter.TranslatorFactory.Load<SkeletonAnimation>(fullBakePath);
+    var selective = AnimationConverter.TranslatorFactory.Load<SkeletonAnimation>(selectiveBakePath);
+    var fullTargets = full.Targets.ToDictionary(target => target.BoneName, StringComparer.OrdinalIgnoreCase);
+    Assert(Math.Abs(full.Framerate - selective.Framerate) < 0.001f,
+        "Selective baking changed the animation frame rate.");
+    foreach (var selectiveTarget in selective.Targets)
+    {
+        Assert(fullTargets.TryGetValue(selectiveTarget.BoneName, out var fullTarget),
+            $"Full bake is missing selective target {selectiveTarget.BoneName}.");
+        AssertFramesEqual(
+            fullTarget!.TranslationFrames,
+            selectiveTarget.TranslationFrames,
+            Vector3.DistanceSquared,
+            $"translation curve for {selectiveTarget.BoneName}",
+            0.000001f);
+        AssertFramesEqual(
+            fullTarget.RotationFrames,
+            selectiveTarget.RotationFrames,
+            (left, right) => 1f - Math.Abs(Quaternion.Dot(left, right)),
+            $"rotation curve for {selectiveTarget.BoneName}",
+            0.0001f);
+    }
+
+
+    var selectiveNames = selective.Targets
+        .Select(target => target.BoneName)
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+    foreach (var omittedTarget in full.Targets.Where(target => !selectiveNames.Contains(target.BoneName)))
+    {
+        Assert(skeleton.TryGetBone(omittedTarget.BoneName, out var bone),
+            $"Full bake contains an unknown target {omittedTarget.BoneName}.");
+        Assert((omittedTarget.TranslationFrames ?? [])
+                .All(frame => Vector3.DistanceSquared(frame.Value, bone!.BaseLocalTranslation) < 0.000001f),
+            $"Selective baking omitted moving translation target {omittedTarget.BoneName}.");
+        Assert((omittedTarget.RotationFrames ?? [])
+                .All(frame => 1f - MathF.Min(MathF.Abs(Quaternion.Dot(frame.Value, bone!.BaseLocalRotation)), 1f) < 0.0001f),
+            $"Selective baking omitted moving rotation target {omittedTarget.BoneName}.");
+    }
+
+    static void AssertFramesEqual<T>(
+        IReadOnlyList<RedFox.Graphics3D.AnimationKeyFrame<float, T>>? expected,
+        IReadOnlyList<RedFox.Graphics3D.AnimationKeyFrame<float, T>>? actual,
+        Func<T, T, float> difference,
+        string label,
+        float tolerance)
+    {
+        expected ??= [];
+        actual ??= [];
+        Assert(expected.Count == actual.Count, $"Selective baking changed the keyframe count of the {label}.");
+        for (var index = 0; index < expected.Count; index++)
+        {
+            Assert(Math.Abs(expected[index].Frame - actual[index].Frame) < 0.001f,
+                $"Selective baking changed a keyframe time in the {label} at index {index}.");
+            var delta = difference(expected[index].Value, actual[index].Value);
+            Assert(float.IsFinite(delta) && delta < tolerance,
+                $"Selective baking changed a keyframe value in the {label} at index {index} (delta {delta}).");
+        }
+    }
 }
 
 static void ValidateSmdAnimation(string path, int expectedBoneCount, int expectedFrameCount)

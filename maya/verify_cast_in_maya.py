@@ -1,11 +1,12 @@
 """Headless Maya 2025 acceptance test for an Alchemy Stars CAST package.
 
 Usage:
-    mayapy.exe maya/verify_cast_in_maya.py output.cast [scene.ma] [report.json]
+    mayapy.exe maya/verify_cast_in_maya.py output.cast [scene.ma] [report.json] [--selective]
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import sys
@@ -35,11 +36,12 @@ def top_joint(cmds, joint: str) -> str:
 
 def main() -> int:
     if len(sys.argv) < 2:
-        raise SystemExit("Usage: mayapy verify_cast_in_maya.py <output.cast> [scene.ma] [report.json]")
+        raise SystemExit("Usage: mayapy verify_cast_in_maya.py <output.cast> [scene.ma] [report.json] [--selective]")
 
     cast_path = Path(sys.argv[1]).resolve()
     scene_path = Path(sys.argv[2]).resolve() if len(sys.argv) > 2 else None
     report_path = Path(sys.argv[3]).resolve() if len(sys.argv) > 3 else cast_path.with_suffix(".maya2025.json")
+    selective_bake = "--selective" in sys.argv[4:]
     project_root = Path(__file__).resolve().parents[1]
     plugin_dir = project_root / "third_party" / "cast" / "maya"
     plugin_path = plugin_dir / "castplugin.py"
@@ -95,8 +97,15 @@ def main() -> int:
         chain_samples = {}
         gun_reference_matrix = None
         gun_matrix_deltas = []
+        world_animation_digest = hashlib.sha256()
         for frame in range(int(minimum), int(maximum) + 1):
             cmds.currentTime(frame, edit=True)
+            for joint in sorted(joints):
+                world_matrix = cmds.xform(joint, query=True, worldSpace=True, matrix=True)
+                sample = f"{frame}|{joint}|" + ",".join(
+                    f"{float(value):.4f}" for value in world_matrix
+                ) + "\n"
+                world_animation_digest.update(sample.encode("utf-8"))
             if len(gun_roots) == 1:
                 gun_matrix = [
                     float(value)
@@ -152,6 +161,7 @@ def main() -> int:
             )
         maximum_gun_matrix_delta = max(gun_matrix_deltas, default=0.0)
         incomplete_channels = []
+        partially_keyed_channels = []
         for joint in joints:
             for attribute in animated_transform_attributes:
                 key_times = cmds.keyframe(
@@ -162,16 +172,27 @@ def main() -> int:
                 ) or []
                 if [float(value) for value in key_times] != expected_key_times:
                     incomplete_channels.append(f"{joint}.{attribute}")
+                    if key_times:
+                        partially_keyed_channels.append(f"{joint}.{attribute}")
 
         skeleton_roots = sorted({top_joint(cmds, joint) for joint in joints})
         time_unit = cmds.currentUnit(query=True, time=True)
 
+        full_curve_count = len(joints) * len(animated_transform_attributes)
         checks = {
             "maya2025": str(cmds.about(version=True)).startswith("2025"),
             "singleMergedSkeleton": len(joints) == 214 and len(gun_roots) == 1 and len(skeleton_roots) == 1,
             "allMeshesImportedAndVisible": len(meshes) == 21 and len(visible_meshes) == len(meshes),
-            "animationCurvesCreated": len(animation_curves) >= len(joints) * len(animated_transform_attributes),
-            "everyAnimatedTransformChannelKeyedEveryFrame": not incomplete_channels,
+            "animationCurvesCreated": (
+                0 < len(animation_curves) < full_curve_count
+                if selective_bake
+                else len(animation_curves) >= full_curve_count
+            ),
+            "everyRetainedTransformChannelKeyedEveryFrame": (
+                not partially_keyed_channels
+                if selective_bake
+                else not incomplete_channels
+            ),
             "thirtyFps": time_unit == "ntsc",
             "playbackRange": minimum == 0.0 and maximum == 66.0,
             "leftIkReachesPhysicalOptimum": all(
@@ -189,6 +210,7 @@ def main() -> int:
         }
         report = {
             "mayaVersion": cmds.about(version=True),
+            "validationMode": "selective" if selective_bake else "full",
             "cast": str(cast_path),
             "jointCount": len(joints),
             "meshCount": len(meshes),
@@ -201,6 +223,8 @@ def main() -> int:
             "leftWristRotateXKeys": int(wrist_keys),
             "incompleteTransformChannelCount": len(incomplete_channels),
             "incompleteTransformChannelExamples": incomplete_channels[:10],
+            "partiallyKeyedTransformChannelCount": len(partially_keyed_channels),
+            "jointWorldAnimationDigest4dp": world_animation_digest.hexdigest().upper(),
             "maximumIkPositionError": max_ik_error,
             "maximumTheoreticalReachResidual": max_reach_residual,
             "frameZeroChains": chain_samples,

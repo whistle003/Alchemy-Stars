@@ -116,10 +116,22 @@ namespace Alchemist.UI
                 LocalizationManager.SetLanguagePreference(preference);
         }
 
-        private void OutputFormatSelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void OutputFormatOptionChecked(object sender, RoutedEventArgs e)
         {
-            if (sender is ComboBox { IsLoaded: true, SelectedItem: string format })
+            if (sender is RadioButton { IsLoaded: true, Tag: string format })
                 ViewModel.SetDefaultOutputFormat(format);
+        }
+
+        private void CastAnimationOnlyChanged(object sender, RoutedEventArgs e)
+        {
+            if (sender is CheckBox { IsLoaded: true } checkBox)
+                ViewModel.SetDefaultCastAnimationOnly(checkBox.IsChecked == true);
+        }
+
+        private void BakeRelevantBonesOnlyChanged(object sender, RoutedEventArgs e)
+        {
+            if (sender is CheckBox { IsLoaded: true } checkBox)
+                ViewModel.SetDefaultBakeRelevantBonesOnly(checkBox.IsChecked == true);
         }
 
         private void OpenAboutClick(object sender, RoutedEventArgs e)
@@ -135,6 +147,103 @@ namespace Alchemist.UI
             aboutWindow.Closed += (_, _) => aboutWindow = null;
             aboutWindow.Show();
             Logging.Logger.Info($"About window shown: {aboutWindow.IsVisible}.");
+        }
+
+        private void PathTextBoxLostFocus(object sender, RoutedEventArgs e)
+        {
+            if (sender is not TextBox textBox)
+                return;
+
+            var normalized = NormalizePastedPath(textBox.Text);
+            if (!string.Equals(textBox.Text, normalized, StringComparison.Ordinal))
+                textBox.Text = normalized;
+            textBox.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
+            RememberDroppedPath(textBox, normalized);
+        }
+
+        private void PathTextBoxPreviewDragOver(object sender, DragEventArgs e)
+        {
+            if (sender is TextBox textBox && TryGetDroppedPath(textBox, e.Data, out _))
+            {
+                e.Effects = DragDropEffects.Copy;
+                e.Handled = true;
+            }
+        }
+
+        private void PathTextBoxPreviewDrop(object sender, DragEventArgs e)
+        {
+            if (sender is not TextBox textBox || !TryGetDroppedPath(textBox, e.Data, out var path))
+                return;
+
+            textBox.Text = path;
+            textBox.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
+            RememberDroppedPath(textBox, path);
+            e.Effects = DragDropEffects.Copy;
+            e.Handled = true;
+        }
+
+        private static bool TryGetDroppedPath(TextBox textBox, IDataObject data, out string path)
+        {
+            path = string.Empty;
+            if (!data.GetDataPresent(DataFormats.FileDrop) ||
+                data.GetData(DataFormats.FileDrop) is not string[] { Length: > 0 } droppedPaths)
+            {
+                return false;
+            }
+
+            return TryResolveDroppedPath(AutomationProperties.GetAutomationId(textBox), droppedPaths, out path);
+        }
+
+        internal static bool TryResolveDroppedPath(string automationId, IReadOnlyList<string> droppedPaths, out string path)
+        {
+            path = string.Empty;
+            if (droppedPaths.Count == 0)
+                return false;
+
+            var candidate = droppedPaths[0];
+            var isOutputFolder = automationId == "OutputFolderTextBox";
+            if (isOutputFolder)
+            {
+                path = Directory.Exists(candidate)
+                    ? Path.GetFullPath(candidate)
+                    : Path.GetDirectoryName(candidate) ?? string.Empty;
+                return Directory.Exists(path);
+            }
+
+            if (!File.Exists(candidate) || !string.Equals(Path.GetExtension(candidate), ".cast", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            path = Path.GetFullPath(candidate);
+            return true;
+        }
+
+        private static void RememberDroppedPath(TextBox textBox, string path)
+        {
+            var scope = AutomationProperties.GetAutomationId(textBox) switch
+            {
+                "AnimationPathTextBox" => "cast:DialogAddAnimation",
+                "LeftPosePathTextBox" => "cast:DialogLeftPose",
+                "RightPosePathTextBox" => "cast:DialogRightPose",
+                "LayerPathTextBox" => "cast:DialogAddLayer",
+                "ModelPathTextBox" => "cast:DialogAddPart",
+                "OutputFolderTextBox" => "output",
+                _ => string.Empty,
+            };
+            if (scope.Length > 0)
+                AppPreferences.SetLastDirectory(scope, path);
+        }
+
+        internal static string NormalizePastedPath(string? value)
+        {
+            var normalized = value?.Trim() ?? string.Empty;
+            if (normalized.Length >= 2 &&
+                ((normalized[0] == '"' && normalized[^1] == '"') ||
+                 (normalized[0] == '\'' && normalized[^1] == '\'')))
+            {
+                normalized = normalized[1..^1].Trim();
+            }
+
+            return normalized;
         }
 
         private void BrowseAnimationClick(object sender, RoutedEventArgs e)
@@ -421,6 +530,8 @@ namespace Alchemist.UI
                         break;
                     case "CloseSettings":
                         ViewModel.SetDefaultOutputFormat(ViewModel.OutputFormat);
+                        ViewModel.SetDefaultCastAnimationOnly(ViewModel.CastAnimationOnly);
+                        ViewModel.SetDefaultBakeRelevantBonesOnly(ViewModel.BakeRelevantBonesOnly);
                         break;
                     default:
                         break;

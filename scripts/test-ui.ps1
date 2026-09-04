@@ -1,5 +1,6 @@
 param(
-    [string]$ExecutablePath = ''
+    [string]$ExecutablePath = '',
+    [string]$CaptureSettingsPath = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -77,6 +78,55 @@ function Select-Control($control, [string]$name) {
     $pattern.Select()
 }
 
+function Show-Control($control, [string]$name) {
+    if ($null -eq $control) {
+        throw "UI control not found: $name"
+    }
+
+    if ($control.Current.IsOffscreen) {
+        $pattern = $control.GetCurrentPattern([System.Windows.Automation.ScrollItemPattern]::Pattern)
+        $pattern.ScrollIntoView()
+        Start-Sleep -Milliseconds 150
+    }
+}
+
+function Test-SettingsLabelAndField([int]$processId, [string]$labelId, [string]$fieldId) {
+    $label = Find-ProcessControl $processId $labelId
+    $field = Find-ProcessControl $processId $fieldId
+    if ($null -eq $label -or $null -eq $field) {
+        throw "Settings label or input is missing: $labelId / $fieldId"
+    }
+    if ([string]::IsNullOrWhiteSpace($label.Current.Name) -or [string]::IsNullOrWhiteSpace($field.Current.Name)) {
+        throw "Settings label or input has no accessible name: $labelId / $fieldId"
+    }
+    if (-not $field.Current.IsKeyboardFocusable) {
+        throw "Settings input is not keyboard focusable: $fieldId"
+    }
+    $labelBounds = $label.Current.BoundingRectangle
+    $fieldBounds = $field.Current.BoundingRectangle
+    if ($labelBounds.Width -le 0 -or $labelBounds.Height -le 0 -or $fieldBounds.Height -lt 40) {
+        throw "Settings label or input is clipped: $labelId / $fieldId"
+    }
+    if ($labelBounds.Bottom -gt $fieldBounds.Top + 1) {
+        throw "Settings label overlaps its input: $labelId / $fieldId"
+    }
+}
+
+function Get-EditablePathPattern([int]$processId, [string]$fieldId) {
+    $field = Find-ProcessControl $processId $fieldId
+    if ($null -eq $field -or [string]::IsNullOrWhiteSpace($field.Current.Name)) {
+        throw "Editable path input is missing or has no accessible name: $fieldId"
+    }
+    if (-not $field.Current.IsKeyboardFocusable) {
+        throw "Editable path input is not keyboard focusable: $fieldId"
+    }
+    $pattern = $field.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern)
+    if ($pattern.Current.IsReadOnly) {
+        throw "Path input does not accept typed or pasted text: $fieldId"
+    }
+    return $pattern
+}
+
 function Find-ProcessControl([int]$processId, [string]$automationId) {
     $processCondition = New-Object System.Windows.Automation.PropertyCondition(
         [System.Windows.Automation.AutomationElement]::ProcessIdProperty,
@@ -84,10 +134,19 @@ function Find-ProcessControl([int]$processId, [string]$automationId) {
     $idCondition = New-Object System.Windows.Automation.PropertyCondition(
         [System.Windows.Automation.AutomationElement]::AutomationIdProperty,
         $automationId)
-    $condition = New-Object System.Windows.Automation.AndCondition($processCondition, $idCondition)
-    return [System.Windows.Automation.AutomationElement]::RootElement.FindFirst(
-        [System.Windows.Automation.TreeScope]::Descendants,
-        $condition)
+    $windows = [System.Windows.Automation.AutomationElement]::RootElement.FindAll(
+        [System.Windows.Automation.TreeScope]::Children,
+        $processCondition)
+    foreach ($window in $windows) {
+        if ($window.Current.AutomationId -eq $automationId) {
+            return $window
+        }
+        $control = $window.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $idCondition)
+        if ($null -ne $control) {
+            return $control
+        }
+    }
+    return $null
 }
 
 function Test-ContextMenu([System.Diagnostics.Process]$process, $control, [string]$menuItemId, [string]$unexpectedMenuItemId = '') {
@@ -134,6 +193,33 @@ function Stop-TestProcess([System.Diagnostics.Process]$process) {
     }
 }
 
+function Save-WindowCapture($window, [string]$path) {
+    if ([string]::IsNullOrWhiteSpace($path)) {
+        return
+    }
+    $absolutePath = if ([System.IO.Path]::IsPathRooted($path)) {
+        [System.IO.Path]::GetFullPath($path)
+    } else {
+        [System.IO.Path]::GetFullPath((Join-Path $projectRoot $path))
+    }
+    $parent = Split-Path -Parent $absolutePath
+    if (-not (Test-Path -LiteralPath $parent)) {
+        [void](New-Item -ItemType Directory -Path $parent)
+    }
+    $bounds = $window.Current.BoundingRectangle
+    $bitmap = New-Object System.Drawing.Bitmap([int]$bounds.Width, [int]$bounds.Height)
+    $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+    try {
+        $graphics.CopyFromScreen([int]$bounds.Left, [int]$bounds.Top, 0, 0, $bitmap.Size)
+        $bitmap.Save($absolutePath, [System.Drawing.Imaging.ImageFormat]::Png)
+    }
+    finally {
+        $graphics.Dispose()
+        $bitmap.Dispose()
+    }
+    Write-Output "UI smoke: settings capture saved to $absolutePath"
+}
+
 function Select-Language([System.Diagnostics.Process]$process, $button, [string]$menuItemId) {
     Invoke-Control $button 'LanguageButton'
     $menuItem = $null
@@ -150,7 +236,7 @@ $testSettingsPath = Join-Path ([System.IO.Path]::GetTempPath()) ("alchemy-stars-
 $env:ALCHEMY_STARS_SETTINGS_PATH = $testSettingsPath
 $process = Start-Process -FilePath $executable -PassThru -WindowStyle Hidden
 try {
-    $expectedVersion = '1.1.0'
+$expectedVersion = '1.1.6'
 
     if (-not $process.WaitForInputIdle(10000)) {
         throw 'Application did not become input-idle within 10 seconds.'
@@ -165,6 +251,7 @@ try {
     if ($initialTitle -notmatch [regex]::Escape($expectedVersion)) {
         throw "Main window title does not contain version $expectedVersion`: $initialTitle"
     }
+    Write-Output 'UI smoke: main window and version detected.'
     $toolbarButtonIds = @(
         'OpenProjectButton', 'SaveProjectButton', 'SaveProjectAsButton',
         'AddAnimationsButton', 'ExportAnimationsButton', 'RemoveAnimationsButton', 'OutputFolderButton',
@@ -210,6 +297,7 @@ try {
     }
     Invoke-Control $messageCloseButton 'AppMessageCloseButton'
     Start-Sleep -Milliseconds 150
+    Write-Output 'UI smoke: owner-centered application message verified.'
 
     [void][UiSmokeMouse]::MoveWindow($process.MainWindowHandle, 40, 40, 900, 520, $true)
     Start-Sleep -Milliseconds 300
@@ -236,36 +324,73 @@ try {
     if ($null -eq $settingsDialog) {
         throw 'Redesigned settings dialog was not shown.'
     }
+    Write-Output 'UI smoke: settings dialog opened.'
     $settingsBounds = $settingsDialog.Current.BoundingRectangle
     if ($settingsBounds.Width -le 0 -or $settingsBounds.Height -le 0 -or
         $settingsBounds.Left -lt $windowBounds.Left -or $settingsBounds.Right -gt $windowBounds.Right -or
         $settingsBounds.Top -lt $windowBounds.Top -or $settingsBounds.Bottom -gt $windowBounds.Bottom) {
         throw 'Settings dialog is clipped by the application window.'
     }
-    $formatCombo = Find-ProcessControl $process.Id 'OutputFormatComboBox'
-    if ($null -eq $formatCombo) {
-        throw 'Default output format selector was not found.'
-    }
-    $expandPattern = $formatCombo.GetCurrentPattern([System.Windows.Automation.ExpandCollapsePattern]::Pattern)
-    $expandPattern.Expand()
-    Start-Sleep -Milliseconds 200
-    $processCondition = New-Object System.Windows.Automation.PropertyCondition(
-        [System.Windows.Automation.AutomationElement]::ProcessIdProperty,
-        $process.Id)
-    $listItemCondition = New-Object System.Windows.Automation.PropertyCondition(
-        [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
-        [System.Windows.Automation.ControlType]::ListItem)
-    $formatCondition = New-Object System.Windows.Automation.AndCondition($processCondition, $listItemCondition)
-    $formatNames = @([System.Windows.Automation.AutomationElement]::RootElement.FindAll(
-        [System.Windows.Automation.TreeScope]::Descendants,
-        $formatCondition) | ForEach-Object { $_.Current.Name })
-    foreach ($format in @('.cast', '.fbx', '.smd', '.seanim')) {
-        if ($formatNames -notcontains $format) {
-            throw "Output format is missing from settings: $format"
+    Write-Output 'UI smoke: settings dialog bounds verified.'
+    $formatOptionIds = @(
+        'CastOutputFormatRadioButton', 'FbxOutputFormatRadioButton',
+        'SmdOutputFormatRadioButton', 'SeanimOutputFormatRadioButton'
+    )
+    foreach ($formatOptionId in $formatOptionIds) {
+        $formatOption = Find-Control $settingsDialog $formatOptionId
+        if ($null -eq $formatOption -or [string]::IsNullOrWhiteSpace($formatOption.Current.Name)) {
+            throw "Accessible output format option was not found: $formatOptionId"
+        }
+        if (-not $formatOption.Current.IsKeyboardFocusable -or
+            $formatOption.Current.BoundingRectangle.Width -le 0 -or
+            $formatOption.Current.BoundingRectangle.Height -le 0) {
+            throw "Output format option is clipped or not keyboard focusable: $formatOptionId (focusable=$($formatOption.Current.IsKeyboardFocusable), bounds=$($formatOption.Current.BoundingRectangle))"
         }
     }
-    $expandPattern.Collapse()
-    [System.Windows.Forms.SendKeys]::SendWait('{ESC}')
+    $castFormatOption = Find-Control $settingsDialog 'CastOutputFormatRadioButton'
+    $castFormatSelection = $castFormatOption.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern)
+    if (-not $castFormatSelection.Current.IsSelected) {
+        throw 'The default .cast output format option is not selected.'
+    }
+    Write-Output 'UI smoke: four direct output format choices verified.'
+    $castAnimationOnly = Find-Control $settingsDialog 'CastAnimationOnlyCheckBox'
+    if ($null -eq $castAnimationOnly -or [string]::IsNullOrWhiteSpace($castAnimationOnly.Current.Name)) {
+        throw 'Animation-only CAST setting is missing its accessible checkbox label.'
+    }
+    if (-not $castAnimationOnly.Current.IsEnabled) {
+        throw 'Animation-only CAST setting should be enabled for the default .cast format.'
+    }
+    Show-Control $castAnimationOnly 'CastAnimationOnlyCheckBox'
+    $castAnimationOnlyToggle = $castAnimationOnly.GetCurrentPattern([System.Windows.Automation.TogglePattern]::Pattern)
+    $castAnimationOnlyToggle.Toggle()
+    if ($castAnimationOnlyToggle.Current.ToggleState -ne [System.Windows.Automation.ToggleState]::On) {
+        throw 'Animation-only CAST setting did not toggle on.'
+    }
+    $relevantBonesOnly = Find-Control $settingsDialog 'BakeRelevantBonesOnlyCheckBox'
+    if ($null -eq $relevantBonesOnly -or [string]::IsNullOrWhiteSpace($relevantBonesOnly.Current.Name)) {
+        throw 'Relevant-bones-only setting is missing its accessible checkbox label.'
+    }
+    Show-Control $relevantBonesOnly 'BakeRelevantBonesOnlyCheckBox'
+    $relevantBonesToggle = $relevantBonesOnly.GetCurrentPattern([System.Windows.Automation.TogglePattern]::Pattern)
+    $relevantBonesToggle.Toggle()
+    if ($relevantBonesToggle.Current.ToggleState -ne [System.Windows.Automation.ToggleState]::On) {
+        throw 'Relevant-bones-only setting did not toggle on.'
+    }
+    Save-WindowCapture $mainWindow $CaptureSettingsPath
+    Select-Control (Find-Control $settingsDialog 'IkSettingsTab') 'IkSettingsTab'
+    Start-Sleep -Milliseconds 250
+    foreach ($side in @('Left', 'Right')) {
+        foreach ($role in @('Start', 'Middle', 'End', 'Target')) {
+            Test-SettingsLabelAndField $process.Id "${side}Ik${role}Label" "${side}Ik${role}TextBox"
+        }
+    }
+    $leftCardField = Find-ProcessControl $process.Id 'LeftIkStartTextBox'
+    $rightCardField = Find-ProcessControl $process.Id 'RightIkStartTextBox'
+    if ($leftCardField.Current.BoundingRectangle.Right -ge $rightCardField.Current.BoundingRectangle.Left) {
+        throw 'Left and right IK setting cards overlap.'
+    }
+    Write-Output 'UI smoke: output options and IK settings verified.'
+    Invoke-Control (Find-ProcessControl $process.Id 'SettingsCloseButton') 'SettingsCloseButton'
     Start-Sleep -Milliseconds 200
     $animationList = Find-Control $mainWindow 'AnimationList'
     $listItemCondition = New-Object System.Windows.Automation.PropertyCondition(
@@ -282,6 +407,7 @@ try {
     Test-ContextMenu $process (Find-Control $mainWindow 'ModelPartsList') 'ImportPartsContextMenuItem'
     Select-Control (Find-Control $mainWindow 'AnimationsTab') 'AnimationsTab'
     Start-Sleep -Milliseconds 250
+    Write-Output 'UI smoke: animation and model-part context menus verified.'
 
     $languageButton = Find-Control $mainWindow 'LanguageButton'
     $explicitLanguage = if ($initialTitle -match '炼金之星') { 'EnglishLanguageMenuItem' } else { 'ChineseLanguageMenuItem' }
@@ -321,6 +447,7 @@ try {
         throw 'About window did not update its validation information after switching languages.'
     }
     Select-Language $process $languageButton 'SystemLanguageMenuItem'
+    Write-Output 'UI smoke: language modes and About content verified.'
 
     Stop-TestProcess $process
 
@@ -335,6 +462,28 @@ try {
         throw 'Project window was not found.'
     }
 
+    $animationPath = Find-ProcessControl $process.Id 'AnimationPathTextBox'
+    $animationPathPattern = Get-EditablePathPattern $process.Id 'AnimationPathTextBox'
+    $leftPosePath = Find-ProcessControl $process.Id 'LeftPosePathTextBox'
+    [void](Get-EditablePathPattern $process.Id 'LeftPosePathTextBox')
+    [void](Get-EditablePathPattern $process.Id 'RightPosePathTextBox')
+    [void](Get-EditablePathPattern $process.Id 'OutputFolderTextBox')
+    [void](Get-EditablePathPattern $process.Id 'LayerPathTextBox')
+    $animationPath.SetFocus()
+    $animationPathPattern.SetValue('"D:\Temporary\pasted animation.cast"')
+    $leftPosePath.SetFocus()
+    Start-Sleep -Milliseconds 150
+    if ($animationPathPattern.Current.Value -ne 'D:\Temporary\pasted animation.cast') {
+        throw 'Pasted path quotes and surrounding whitespace were not normalized.'
+    }
+
+    Select-Control (Find-Control $projectWindow 'PartsTab') 'PartsTab'
+    Start-Sleep -Milliseconds 150
+    [void](Get-EditablePathPattern $process.Id 'ModelPathTextBox')
+    Select-Control (Find-Control $projectWindow 'AnimationsTab') 'AnimationsTab'
+    Start-Sleep -Milliseconds 150
+    Write-Output 'UI smoke: animation, pose, layer, output-folder, and model paths accept pasted text.'
+
     $layerList = Find-Control $projectWindow 'LayerList'
     $editCondition = New-Object System.Windows.Automation.PropertyCondition(
         [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
@@ -342,7 +491,7 @@ try {
     $layerTextBox = $layerList.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $editCondition)
     Test-ContextMenu $process $layerTextBox 'ImportLayersContextMenuItem' 'ImportAnimationsContextMenuItem'
 
-    Write-Output "UI smoke passed: owner-centered messages, protected language/About layout, unclipped settings with four formats, system-language mode, $($toolbarButtonIds.Count) accessible toolbar buttons, context imports, and bilingual About content."
+    Write-Output "UI smoke passed: owner-centered messages, protected language/About layout, responsive grouped settings with eight accessible non-overlapping IK fields and four direct formats, editable pasted paths, output-option toggles, system-language mode, $($toolbarButtonIds.Count) accessible toolbar buttons, context imports, and bilingual About content."
 }
 finally {
     Stop-TestProcess $process

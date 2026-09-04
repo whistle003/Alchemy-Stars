@@ -8,12 +8,12 @@ The maintained source lives in `fork/AlchemyStars` and pins the matching RedFox 
 
 ## Improvements over upstream Alchemist
 
-| Area | Upstream Alchemist | Alchemy Stars 1.1.0 |
+| Area | Upstream Alchemist | Alchemy Stars 1.1.6 |
 | --- | --- | --- |
 | Maya model and animation | Import behavior can leave duplicate skeletons or lose weapon motion | Physically merges parts, same-name bones, skin weights, and emits one baked animation per file |
 | Output formats | Primarily CAST / SEAnim | Adds real FBX and native SMD while retaining CAST / SEAnim |
 | FBX workflow | Not provided | Detects the local Maya installation and uses the official `fbxmaya` plug-in without bundling a large conversion runtime |
-| Asset import | Primarily the original UI controls | System file dialogs, drag-and-drop, blank-area context menus, and `Shift+F10`; drops over animation layers are routed there first |
+| Asset import | Primarily the original UI controls | System file dialogs, editable/pasteable path fields, targeted path drops, blank-area context menus, and `Shift+F10`; drops over animation layers are routed there first |
 | Localization | Original UI capability | Follows the system language by default, can be pinned to Simplified Chinese or English, and refreshes open About content |
 | Continuity | Project files retain absolute paths | Also remembers recent animation, layer, model, project, and output folders by category |
 | UI and distribution | Original settings layout and icons | Purpose-specific icons, unclipped tabbed settings, protected language/About controls, and a compact framework-dependent package |
@@ -30,7 +30,9 @@ Alchemy Stars keeps the upstream animation-layer concepts intact. Attribution an
 - Rejects cyclic IK targets and fixes two-bone IK and animation-clone state loss.
 - Restores layer and part ownership after project loading so reorder, remove, and drag operations remain usable.
 - Supports `.cast`, `.fbx`, `.smd`, and `.seanim`; SMD contains the full skeleton and per-frame local transforms, while FBX preserves models, skinning, and animation through Maya.
-- Uses system file dialogs for animation, pose-layer, model, project, and output paths and remembers the most recent folder for each category.
+- Optionally writes a true animation-only CAST with no model, mesh, material, or skin data; full-scene CAST remains the default.
+- Optionally bakes only bones referenced by the base animation, poses, layers, or IK, while automatically retaining any indirectly changed bone and falling back to all bones for unknown solvers.
+- Uses system file dialogs for animation, pose-layer, model, project, and output paths; each path box also accepts typed, pasted, or directly dropped paths and remembers the most recent folder for its category.
 - Offers Follow System, Simplified Chinese, and English interface modes.
 - Keeps all completion, warning, and error dialogs centered over the application; long diagnostics are scrollable and copyable.
 - Uses a redesigned alchemy-flask-and-star application icon and function-specific toolbar icons.
@@ -41,9 +43,11 @@ Download the latest ZIP from [GitHub Releases](https://github.com/ez4cywa/Alchem
 
 `Alchemy Stars.exe`
 
-The app starts with an empty batch. Use the toolbar buttons, the folder buttons beside path fields, or the context menus to select assets with the system file browser.
+The app starts with an empty batch. Use the toolbar buttons, the folder buttons beside path fields, or the context menus to select assets with the system file browser. Existing path boxes remain editable: type or paste a path, or drop a CAST file directly on its intended field. Dropping a file on an output-folder field uses that file's containing directory.
 
-Open **Settings → Output** to choose `.cast`, `.fbx`, `.smd`, or `.seanim` as the default output format. The selection applies immediately and becomes the default for new tasks; a saved project keeps its own format. FBX requires a locally installed Maya, with Maya 2025 preferred. SMD does not require Maya.
+Open **Settings → Output** to choose `.cast`, `.fbx`, `.smd`, or `.seanim` as the default output format. For `.cast`, **Animation-only CAST** omits the complete model scene. **Bake relevant bones only** reduces baked curves to source-animation, pose, layer, IK, and indirectly changed bones. Both options apply immediately, are remembered globally, and are stored in project files.
+
+Relevant-bone baking is off by default for maximum compatibility. It is safe for a full-scene export when the retained curves pass validation. When importing an animation-only CAST onto an existing rig, use the exact matching skeleton in a clean bind pose; otherwise leave this option off. SMD must still write a complete pose on every frame. FBX requires a locally installed Maya, with Maya 2025 preferred.
 
 On the Animation page, right-click anywhere in the main list—including blank space—and choose **Import animations…**. The animation-layer area has its own **Import animation layers…** menu. When an external file is dropped over an animation-layer area, that hovered animation takes priority over the outer selection. The Model Parts list offers the same blank-area right-click workflow. All lists also support `Shift+F10`.
 
@@ -72,6 +76,8 @@ The Hawk sprint release artifact has been tested headlessly in Maya 2025 with:
 - maximum left-hand IK positional error of about 0.050;
 - preserved right-hand and weapon motion, while unsafe cyclic right-hand IK is skipped.
 
+The relevant-bone Hawk variant retains 121 of 214 bones. Every retained transform curve is compared with the full bake, every omitted target is confirmed to remain at bind pose, and the reduced full-scene CAST is imported separately in Maya 2025.
+
 The generated report is `fork/AlchemyStars/output/sat_vm_ar_hawk_sprint_alchemy_stars.maya2025.json`.
 
 ## Build and validation
@@ -83,7 +89,9 @@ Development requires the .NET 9 SDK. The compact Windows x64 release is framewor
 .\scripts\build-release.ps1
 ```
 
-`run-tests.ps1` builds the improved upstream project, verifies that the standard MP5 examples were not modified, generates actual Hawk CAST/SMD/FBX outputs, and reimports CAST and FBX into Maya 2025 when available. It checks the skeleton, meshes, skinning, frame range, IK, and weapon animation, including weapon-first model ordering and Chinese TEMP/output paths and names. The UI smoke suite checks centered dialogs, the protected language/About layout, settings clipping, four format choices, three language modes, accessible toolbar controls, and context imports.
+`run-tests.ps1` builds the improved upstream project, verifies that the standard MP5 examples were not modified, generates actual Hawk CAST/SMD/FBX outputs, and reimports full and relevant-bone CAST plus FBX into Maya 2025 when available. It checks the skeleton, meshes, skinning, frame range, IK, weapon animation, animation-only CAST contents, retained-curve equivalence, weapon-first model ordering, and Chinese TEMP/output paths and names. The UI smoke suite checks centered dialogs, the protected language/About layout, settings clipping, four format choices, output-option accessibility, three language modes, toolbar controls, and context imports.
+
+Every functional release change increments at least the patch version; this release is `1.1.6`.
 
 ## Source and licenses
 

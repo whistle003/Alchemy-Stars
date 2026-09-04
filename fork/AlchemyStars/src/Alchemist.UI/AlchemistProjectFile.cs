@@ -20,6 +20,8 @@ namespace Alchemist.UI
         public required string OutputPrefix { get; set; }
         public required string OutputSuffix { get; set; }
         public required string OutputFormat { get; set; }
+        public bool CastAnimationOnly { get; set; }
+        public bool BakeRelevantBonesOnly { get; set; }
         public bool MatchOldCallOfDuty { get; set; }
         public List<Animation>? Animations { get; set; }
         public List<Part>? Parts { get; set; }

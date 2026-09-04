@@ -1,100 +1,94 @@
-# Alchemy Stars（炼金之星）
+[**English**](README.md) | [简体中文](README.zh-CN.md)
 
-Alchemy Stars 是 [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist) 的可用化改进版，面向 Windows、CAST 第一人称武器资产与 Autodesk Maya 2025。项目保留原版 Alchemist 的 WPF 批处理界面和 RedFox 动画管线，并补齐了原仓库尚未完成的模型/动画一体化导出。
+# Alchemy Stars
 
-主源码位于 `fork/AlchemyStars`，固定使用与原项目同期的 RedFox 提交，避免上游变动破坏构建。先前的独立重写已保存在 Git 分支 `independent-rewrite-v1`，不再是当前实现。
+Alchemy Stars (炼金之星) is a production-focused improvement of [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist) for Windows, first-person CAST weapon assets, and Autodesk Maya 2025. It retains Alchemist's WPF batch interface and RedFox animation pipeline while completing a reliable model-and-animation export workflow.
 
-## 相比原版 Alchemist 的改进
+The maintained source lives in `fork/AlchemyStars` and pins the matching RedFox revision to keep builds reproducible. The earlier standalone rewrite remains preserved on the `independent-rewrite-v1` branch and is no longer the active implementation.
 
-Alchemy Stars 保留原版批处理、动画层、IK 与 RedFox 转换管线，在此基础上补齐面向实际 Maya 生产流程的闭环：
+## Improvements over upstream Alchemist
 
-| 对比项 | 原版 Alchemist | Alchemy Stars 1.1.0 |
+| Area | Upstream Alchemist | Alchemy Stars 1.1.0 |
 | --- | --- | --- |
-| Maya 模型与动画 | 模型部件和动画的组合依赖导入行为，可能出现重复骨架或武器动画丢失 | 导出前物理合并模型、同名骨骼与蒙皮权重；每个文件只有一个已烘焙动画 |
-| 输出格式 | 主要为 CAST / SEAnim 管线 | 新增真实 FBX 与原生 SMD，并保留 CAST / SEAnim |
-| FBX 工作流 | 未提供 | 自动检测本机 Maya，调用官方 `fbxmaya`，不捆绑大型转换运行环境 |
-| 素材导入 | 以原界面操作为主 | 文件浏览器、拖放、列表空白处右键、`Shift+F10`；动画层悬停区域优先路由 |
-| 本地化 | 原版界面能力 | 自动检测系统语言，可固定简体中文或 English，并即时刷新 About 等窗口 |
-| 使用连续性 | 项目保存绝对路径 | 额外按动画、层、模型、项目与输出类别记忆最近目录 |
-| UI 与发布 | 原版设置布局和图标 | 重做功能图标、无截断设置页、受保护的语言/About 区、精简无内置 .NET 运行时发布 |
-| 回归验证 | 上游示例 | 原版 MP5 示例逐字节保留，并以 Hawk 实际素材验证 CAST、FBX、SMD、IK、蒙皮和武器运动 |
+| Maya model and animation | Import behavior can leave duplicate skeletons or lose weapon motion | Physically merges parts, same-name bones, skin weights, and emits one baked animation per file |
+| Output formats | Primarily CAST / SEAnim | Adds real FBX and native SMD while retaining CAST / SEAnim |
+| FBX workflow | Not provided | Detects the local Maya installation and uses the official `fbxmaya` plug-in without bundling a large conversion runtime |
+| Asset import | Primarily the original UI controls | System file dialogs, drag-and-drop, blank-area context menus, and `Shift+F10`; drops over animation layers are routed there first |
+| Localization | Original UI capability | Follows the system language by default, can be pinned to Simplified Chinese or English, and refreshes open About content |
+| Continuity | Project files retain absolute paths | Also remembers recent animation, layer, model, project, and output folders by category |
+| UI and distribution | Original settings layout and icons | Purpose-specific icons, unclipped tabbed settings, protected language/About controls, and a compact framework-dependent package |
+| Regression validation | Upstream examples | Preserves the original MP5 examples byte-for-byte and validates CAST, FBX, SMD, IK, skinning, and weapon motion with real Hawk assets |
 
-这些改进没有替换上游核心的动画混合思想；标准 MP5 项目仍作为兼容基准，原项目、RedFox 与 CAST 组件的署名和许可证均随发布包保留。
+Alchemy Stars keeps the upstream animation-layer concepts intact. Attribution and licenses for Alchemist, RedFox, and the CAST components are included in every release package.
 
-## 已完成的改进
+## Highlights
 
-- 手臂和武器按同名骨骼合并，避免共享 `j_gun` 被改名或生成两套骨架。
-- 导出时按 ViewHands → Weapon → Attachment 规范化模型顺序，并把全部部件物理合并成一个 Model；即使工程把武器放在手臂之前、Maya 未启用 Import Merge，也只会生成一套骨架。
-- 每个输出 CAST 保留全部模型网格、材质和重映射后的蒙皮权重，但只包含当前选中的一个烘焙动画。
-- Additive、Gesture、GesturePose、普通层以及正负帧偏移继续走原版 RedFox 采样流程，最终转为绝对动画曲线。
-- 修复原版双骨 IK 算法；循环目标会被拒绝，防止右手腕通过 `j_gun` 反向依赖自身。
-- 修复动画复制时右手 IK、目标覆盖与层偏移丢失的问题。
-- 项目载入后恢复层和部件的 UI 所有权，拖动、删除与排序命令可继续使用。
-- 外部文件拖入动画行的“动画层”区域时，悬停动画优先于外层选择，文件只会加入该动画的层列表。
-- CAST 写入采用临时文件替换，并在写入前后验证模型数、唯一动画和节点哈希。
-- 输出格式扩展为 `.cast`、`.fbx`、`.smd`、`.seanim`；SMD 直接写出完整骨骼层级与逐帧局部变换，FBX 通过本机 Maya 官方插件保留模型、蒙皮和动画。
-- 工具与产品名改为 Alchemy Stars；移除未使用的 Supabase 依赖，并将 `log4net` 更新至 3.4.0。
-- 所有动画、姿势层、模型和输出目录均通过系统文件浏览器选择；软件按类别记忆上一次目录，重启后继续生效。
-- 主界面、对话框和 About 窗口支持“跟随系统 / 简体中文 / English”，首次启动自动检测系统语言并记忆手动选择。
-- 设置窗口按“输出 / IK 骨骼”重新分区，在最小窗口尺寸下仍可滚动使用；语言与 About 固定在受保护的右侧区域，不再被工具栏遮挡。
-- 使用“炼金术瓶 + 星芒”主题的新应用图标。
+- Merges view hands and weapons by same-name bones so the shared `j_gun` is not renamed or split into a second skeleton.
+- Normalizes model order as ViewHands → Weapon → Attachment and physically combines all parts before export.
+- Keeps every mesh, material, and remapped skin weight in each CAST while including exactly one selected baked animation.
+- Preserves Normal, Additive, Gesture, GesturePose, positive offsets, and negative offsets through the RedFox sampling pipeline.
+- Rejects cyclic IK targets and fixes two-bone IK and animation-clone state loss.
+- Restores layer and part ownership after project loading so reorder, remove, and drag operations remain usable.
+- Supports `.cast`, `.fbx`, `.smd`, and `.seanim`; SMD contains the full skeleton and per-frame local transforms, while FBX preserves models, skinning, and animation through Maya.
+- Uses system file dialogs for animation, pose-layer, model, project, and output paths and remembers the most recent folder for each category.
+- Offers Follow System, Simplified Chinese, and English interface modes.
+- Keeps all completion, warning, and error dialogs centered over the application; long diagnostics are scrollable and copyable.
+- Uses a redesigned alchemy-flask-and-star application icon and function-specific toolbar icons.
 
-## 直接使用
+## Download and use
 
-从 [GitHub Releases](https://github.com/ez4cywa/Alchemy-Stars/releases) 下载最新版 ZIP，解压后运行：
+Download the latest ZIP from [GitHub Releases](https://github.com/ez4cywa/Alchemy-Stars/releases), extract it, and run:
 
 `Alchemy Stars.exe`
 
-程序以空白批处理启动。点击工具栏的动画与模型按钮，或使用每个路径字段右侧的文件夹按钮，通过系统文件浏览器选择文件；可选姿势文件旁的清除按钮可恢复为空。
+The app starts with an empty batch. Use the toolbar buttons, the folder buttons beside path fields, or the context menus to select assets with the system file browser.
 
-打开“设置 → 输出”可在 `.cast`、`.fbx`、`.smd`、`.seanim` 中选择默认格式；选择立即应用于当前任务，并作为以后新任务的默认值。项目文件会继续保存自己的输出格式。FBX 需要本机 Maya（优先自动检测 Maya 2025），但发布包不内置 Maya 或额外运行环境；SMD 不依赖 Maya。
+Open **Settings → Output** to choose `.cast`, `.fbx`, `.smd`, or `.seanim` as the default output format. The selection applies immediately and becomes the default for new tasks; a saved project keeps its own format. FBX requires a locally installed Maya, with Maya 2025 preferred. SMD does not require Maya.
 
-在“动画”页的主列表区域（包括空白处）右键，选择“导入动画…”可一次加入一个或多个 `.cast`。动画行内的“动画层”子区域（包括空白处）有独立的“导入动画层…”右键菜单，不会混淆导入目标。
+On the Animation page, right-click anywhere in the main list—including blank space—and choose **Import animations…**. The animation-layer area has its own **Import animation layers…** menu. When an external file is dropped over an animation-layer area, that hovered animation takes priority over the outer selection. The Model Parts list offers the same blank-area right-click workflow. All lists also support `Shift+F10`.
 
-也可以从资源管理器直接拖入动画文件：落在动画层子区域时会优先加入鼠标所在动画的层列表，即使外层选中了其他动画也不会导错；落在主列表其他区域时才按主动画处理。
+Each batch entry produces a separate file containing one baked animation. Project files store absolute paths; after moving to another computer, reselect the assets and output directory, then use **Save Project As**.
 
-在“模型部件”页的列表区域（包括空白处）右键，选择“导入模型部件…”可一次加入一个或多个 `.cast`。上述列表均可聚焦后按 `Shift+F10` 打开对应菜单。
+## Standard examples
 
-选择手臂、武器、基础动画和需要的动画层后，点击工具栏中的“保存动画”按钮即可生成所选格式，例如：
+The release directory and ZIP include the complete `Example` folder. `MP5Base.aprj` and `MP5Grip.aprj` are migrated directly from upstream Alchemist and remain byte-identical. `manifest.json` records the required files, structure, and checksums. Improved Hawk sprint, idle, and batch projects live under `Example/Hawk`.
 
-`E:\Alchemy Stars\fork\AlchemyStars\output\sat_vm_ar_hawk_sprint_alchemy_stars.cast`
+After extracting a release, open `Example/README.en-US.md`; the Chinese guide is `Example/README.zh-CN.md`. Online copies are available in the [English example guide](https://github.com/ez4cywa/Alchemy-Stars/blob/main/fork/AlchemyStars/Example/README.en-US.md) and [Chinese example guide](https://github.com/ez4cywa/Alchemy-Stars/blob/main/fork/AlchemyStars/Example/README.zh-CN.md).
 
-发布目录和 ZIP 均包含完整的 `Example` 文件夹。根目录的 `MP5Base.aprj`、`MP5Grip.aprj` 是从原版 Alchemist `Example` 目录直接迁移、保持逐字节一致的标准示例；统一的 `manifest.json` 为验收与发布提供路径、结构和校验值。按标准示例改进的 Hawk 冲刺、Idle 与批处理项目集中在 `Example\Hawk`。发布包解压后直接打开 `Example\README.zh-CN.md`（英文为 `Example\README.en-US.md`）；仓库在线版本见 [中文示例说明](https://github.com/ez4cywa/Alchemy-Stars/blob/main/fork/AlchemyStars/Example/README.zh-CN.md) 和 [English example guide](https://github.com/ez4cywa/Alchemy-Stars/blob/main/fork/AlchemyStars/Example/README.en-US.md)。
-
-示例不会自动加载。`.aprj` 可从文件浏览器打开、拖进窗口或作为命令行参数载入。批处理中可以加入更多原项目支持的动画；程序会为每个条目分别输出一个文件，因此每个输出只对应一个已烘焙动画。项目文件保存绝对路径，换机器后应通过文件浏览器重新选择素材与输出目录，再使用“项目另存为”。
+Examples are not loaded automatically. Open or drop an `.aprj` file, or pass it as a command-line argument. Future Hawk sprint checks use `Example/Hawk/HawkSprint.aprj` as the single source of truth: idle base animation, two ordered additive layers, IK, model parts, format, and output naming all come from that project.
 
 ## Maya 2025
 
-发布目录的 `MayaPlugin` 文件夹包含官方 CAST 导入插件。将其中的 `cast.py` 和 `castplugin.py` 放入 Maya 脚本/插件路径，在 Plug-in Manager 中载入 `castplugin.py`，然后用 File → Import 导入输出 CAST。
+The release `MayaPlugin` directory contains the CAST importer. Copy `cast.py` and `castplugin.py` into a Maya script or plug-in path, load `castplugin.py` in Plug-in Manager, and import the generated CAST through **File → Import**.
 
-选择 FBX 时，炼金之星会自动查找本机 Maya 并调用 `fbxmaya` 生成二进制 FBX。可用环境变量 `ALCHEMY_STARS_MAYAPY` 指定其他 `mayapy.exe`。FBX 在 Maya 中导入时启用 **Fill Timeline** 可自动把播放范围设为动画范围。
+For FBX, Alchemy Stars locates the local Maya installation and invokes `fbxmaya`. Set `ALCHEMY_STARS_MAYAPY` to select a particular `mayapy.exe`. Conversion is isolated in an ASCII-only temporary workspace, so Chinese Windows user names, output folders, and output file names remain supported despite the Maya 2025 FBX plug-in's path limitation. Enable **Fill Timeline** when manually importing FBX into Maya.
 
-当前冲刺产物已在本机 Maya 2025 中完成无界面实测：
+The Hawk sprint release artifact has been tested headlessly in Maya 2025 with:
 
-- 214 个关节，只有一个骨架根和一个 `j_gun`；
-- 21 个网格全部导入且可见；
-- 1284 条平移/旋转曲线，每个关节每帧都有关键帧；
-- 30 FPS，播放范围 0–66；
-- 左手 IK 逐帧最大位置误差约 0.050；
-- 右手动画正常保留，循环依赖的右手 IK 被安全跳过。
+- 214 joints, one skeleton root, and one `j_gun`;
+- 21 imported and visible skinned meshes;
+- 1,284 translation/rotation curves with every transform channel keyed on every frame;
+- 30 FPS and a 0–66 playback range;
+- maximum left-hand IK positional error of about 0.050;
+- preserved right-hand and weapon motion, while unsafe cyclic right-hand IK is skipped.
 
-验证报告：`fork/AlchemyStars/output/sat_vm_ar_hawk_sprint_alchemy_stars.maya2025.json`。
+The generated report is `fork/AlchemyStars/output/sat_vm_ar_hawk_sprint_alchemy_stars.maya2025.json`.
 
-## 构建与验证
+## Build and validation
 
-开发构建需要 .NET 9 SDK；运行发布版需要本机安装 [.NET 9 Desktop Runtime (x64)](https://dotnet.microsoft.com/download/dotnet/9.0)：
+Development requires the .NET 9 SDK. The compact Windows x64 release is framework-dependent and requires the [.NET 9 Desktop Runtime (x64)](https://dotnet.microsoft.com/download/dotnet/9.0); it does not bundle .NET or Maya.
 
 ```powershell
 .\scripts\run-tests.ps1
 .\scripts\build-release.ps1
 ```
 
-`run-tests.ps1` 会编译改进后的原项目，先验证两份标准 MP5 示例没有被改写，再以 `fork\AlchemyStars\Example\Hawk\HawkSprint.aprj` 作为 Hawk 冲刺验证的唯一配置来源，用项目自身的 `ExportAnimations()` 读取其中的 Idle 基础、两个有序 Additive 层、IK、模型部件、格式和命名设置。验收会实际生成 CAST、SMD 和 FBX，并把 CAST/FBX 重新导入 Maya 2025 检查骨架、网格、蒙皮、帧范围及武器动画；同时覆盖 Idle、批处理和“武器排在手臂之前”的回归。`build-release.ps1` 会生成不内置 .NET 运行环境的精简 Windows x64 单文件发布包和 ZIP。
+`run-tests.ps1` builds the improved upstream project, verifies that the standard MP5 examples were not modified, generates actual Hawk CAST/SMD/FBX outputs, and reimports CAST and FBX into Maya 2025 when available. It checks the skeleton, meshes, skinning, frame range, IK, and weapon animation, including weapon-first model ordering and Chinese TEMP/output paths and names. The UI smoke suite checks centered dialogs, the protected language/About layout, settings clipping, four format choices, three language modes, accessible toolbar controls, and context imports.
 
-## 源码与许可
+## Source and licenses
 
-- 改进后的 Alchemist：`fork/AlchemyStars`，GPL-3.0，详见 `fork/AlchemyStars/LICENSE`。
-- 固定版本 RedFox：`fork/RedFox` Git 子模块。
-- Maya CAST 插件：`third_party/cast`，MIT，详见 `THIRD_PARTY_NOTICES.md`。
+- Improved Alchemist source: `fork/AlchemyStars`, GPL-3.0; see `fork/AlchemyStars/LICENSE`.
+- Pinned RedFox revision: `fork/RedFox` Git submodule.
+- Maya CAST plug-in: `third_party/cast`, MIT; see `THIRD_PARTY_NOTICES.md`.
 
-上游基线：Alchemist `d86da66536ed3bf304a5cb7142d360fb934f73fb`；RedFox `7031da79614d1d979b1f17cae9d4bda2c699fd53`。
+Upstream baseline: Alchemist `d86da66536ed3bf304a5cb7142d360fb934f73fb`; RedFox `7031da79614d1d979b1f17cae9d4bda2c699fd53`.

@@ -26,6 +26,9 @@ public static class UiSmokeMouse
 {
     [DllImport("user32.dll")]
     public static extern void mouse_event(uint flags, uint x, uint y, uint data, System.UIntPtr extraInfo);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern bool MoveWindow(System.IntPtr hWnd, int x, int y, int width, int height, bool repaint);
 }
 '@
 function Find-Window([int]$processId, [string]$automationId) {
@@ -129,9 +132,23 @@ function Stop-TestProcess([System.Diagnostics.Process]$process) {
     }
 }
 
+function Select-Language([System.Diagnostics.Process]$process, $button, [string]$menuItemId) {
+    Invoke-Control $button 'LanguageButton'
+    $menuItem = $null
+    for ($attempt = 0; $attempt -lt 20 -and $null -eq $menuItem; $attempt++) {
+        Start-Sleep -Milliseconds 100
+        $menuItem = Find-ProcessControl $process.Id $menuItemId
+    }
+    Invoke-Control $menuItem $menuItemId
+    Start-Sleep -Milliseconds 300
+}
+
+$previousSettingsPath = $env:ALCHEMY_STARS_SETTINGS_PATH
+$testSettingsPath = Join-Path ([System.IO.Path]::GetTempPath()) ("alchemy-stars-ui-smoke-" + [Guid]::NewGuid().ToString('N') + '.json')
+$env:ALCHEMY_STARS_SETTINGS_PATH = $testSettingsPath
 $process = Start-Process -FilePath $executable -PassThru -WindowStyle Hidden
 try {
-    $expectedVersion = '1.0.3'
+    $expectedVersion = '1.1.0'
 
     if (-not $process.WaitForInputIdle(10000)) {
         throw 'Application did not become input-idle within 10 seconds.'
@@ -163,6 +180,91 @@ try {
             throw "Toolbar button has no accessible name: $toolbarButtonId"
         }
     }
+    Invoke-Control (Find-Control $mainWindow 'ExportAnimationsButton') 'ExportAnimationsButton'
+    $messageCloseButton = $null
+    for ($attempt = 0; $attempt -lt 20 -and $null -eq $messageCloseButton; $attempt++) {
+        Start-Sleep -Milliseconds 100
+        $messageCloseButton = Find-ProcessControl $process.Id 'AppMessageCloseButton'
+    }
+    if ($null -eq $messageCloseButton) {
+        throw 'Owner-centered application message window was not shown.'
+    }
+    $messageWindow = $messageCloseButton
+    $treeWalker = [System.Windows.Automation.TreeWalker]::ControlViewWalker
+    while ($null -ne $messageWindow -and $messageWindow.Current.ControlType -ne [System.Windows.Automation.ControlType]::Window) {
+        $messageWindow = $treeWalker.GetParent($messageWindow)
+    }
+    if ($null -eq $messageWindow) {
+        throw 'Application message owner window could not be resolved.'
+    }
+    $mainBounds = $mainWindow.Current.BoundingRectangle
+    $messageBounds = $messageWindow.Current.BoundingRectangle
+    $mainCenterX = $mainBounds.Left + ($mainBounds.Width / 2)
+    $mainCenterY = $mainBounds.Top + ($mainBounds.Height / 2)
+    $messageCenterX = $messageBounds.Left + ($messageBounds.Width / 2)
+    $messageCenterY = $messageBounds.Top + ($messageBounds.Height / 2)
+    if ([Math]::Abs($mainCenterX - $messageCenterX) -gt 4 -or [Math]::Abs($mainCenterY - $messageCenterY) -gt 4) {
+        throw 'Application message window is not centered over its owner.'
+    }
+    Invoke-Control $messageCloseButton 'AppMessageCloseButton'
+    Start-Sleep -Milliseconds 150
+
+    [void][UiSmokeMouse]::MoveWindow($process.MainWindowHandle, 40, 40, 900, 520, $true)
+    Start-Sleep -Milliseconds 300
+    $languageButton = Find-Control $mainWindow 'LanguageButton'
+    $aboutButton = Find-Control $mainWindow 'AboutButton'
+    $languageBounds = $languageButton.Current.BoundingRectangle
+    $aboutBounds = $aboutButton.Current.BoundingRectangle
+    $windowBounds = $mainWindow.Current.BoundingRectangle
+    if ($languageBounds.Width -lt 44 -or $aboutBounds.Width -lt 44 -or
+        $languageBounds.Right -gt $aboutBounds.Left -or $aboutBounds.Right -gt $windowBounds.Right) {
+        throw 'The protected language/About area overlaps or clips at the minimum window size.'
+    }
+
+    [void][UiSmokeMouse]::MoveWindow($process.MainWindowHandle, 40, 40, 1366, 768, $true)
+    Start-Sleep -Milliseconds 300
+    $windowBounds = $mainWindow.Current.BoundingRectangle
+
+    Invoke-Control (Find-Control $mainWindow 'SettingsButton') 'SettingsButton'
+    $settingsDialog = $null
+    for ($attempt = 0; $attempt -lt 20 -and $null -eq $settingsDialog; $attempt++) {
+        Start-Sleep -Milliseconds 100
+        $settingsDialog = Find-ProcessControl $process.Id 'SettingsTabs'
+    }
+    if ($null -eq $settingsDialog) {
+        throw 'Redesigned settings dialog was not shown.'
+    }
+    $settingsBounds = $settingsDialog.Current.BoundingRectangle
+    if ($settingsBounds.Width -le 0 -or $settingsBounds.Height -le 0 -or
+        $settingsBounds.Left -lt $windowBounds.Left -or $settingsBounds.Right -gt $windowBounds.Right -or
+        $settingsBounds.Top -lt $windowBounds.Top -or $settingsBounds.Bottom -gt $windowBounds.Bottom) {
+        throw 'Settings dialog is clipped by the application window.'
+    }
+    $formatCombo = Find-ProcessControl $process.Id 'OutputFormatComboBox'
+    if ($null -eq $formatCombo) {
+        throw 'Default output format selector was not found.'
+    }
+    $expandPattern = $formatCombo.GetCurrentPattern([System.Windows.Automation.ExpandCollapsePattern]::Pattern)
+    $expandPattern.Expand()
+    Start-Sleep -Milliseconds 200
+    $processCondition = New-Object System.Windows.Automation.PropertyCondition(
+        [System.Windows.Automation.AutomationElement]::ProcessIdProperty,
+        $process.Id)
+    $listItemCondition = New-Object System.Windows.Automation.PropertyCondition(
+        [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+        [System.Windows.Automation.ControlType]::ListItem)
+    $formatCondition = New-Object System.Windows.Automation.AndCondition($processCondition, $listItemCondition)
+    $formatNames = @([System.Windows.Automation.AutomationElement]::RootElement.FindAll(
+        [System.Windows.Automation.TreeScope]::Descendants,
+        $formatCondition) | ForEach-Object { $_.Current.Name })
+    foreach ($format in @('.cast', '.fbx', '.smd', '.seanim')) {
+        if ($formatNames -notcontains $format) {
+            throw "Output format is missing from settings: $format"
+        }
+    }
+    $expandPattern.Collapse()
+    [System.Windows.Forms.SendKeys]::SendWait('{ESC}')
+    Start-Sleep -Milliseconds 200
     $animationList = Find-Control $mainWindow 'AnimationList'
     $listItemCondition = New-Object System.Windows.Automation.PropertyCondition(
         [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
@@ -180,8 +282,8 @@ try {
     Start-Sleep -Milliseconds 250
 
     $languageButton = Find-Control $mainWindow 'LanguageButton'
-    Invoke-Control $languageButton 'LanguageButton'
-    Start-Sleep -Milliseconds 500
+    $explicitLanguage = if ($initialTitle -match '炼金之星') { 'EnglishLanguageMenuItem' } else { 'ChineseLanguageMenuItem' }
+    Select-Language $process $languageButton $explicitLanguage
     $switchedTitle = $mainWindow.Current.Name
     if ($switchedTitle -eq $initialTitle) {
         throw "Language switch did not update the window title: $switchedTitle"
@@ -190,10 +292,9 @@ try {
         throw "Localized window title does not contain version $expectedVersion`: $switchedTitle"
     }
 
-    Invoke-Control $languageButton 'LanguageButton'
-    Start-Sleep -Milliseconds 500
+    Select-Language $process $languageButton 'SystemLanguageMenuItem'
     if ($mainWindow.Current.Name -ne $initialTitle) {
-        throw 'Switching back did not restore the original language.'
+        throw 'Returning to automatic system language did not restore the initial language.'
     }
 
     Invoke-Control (Find-Control $mainWindow 'AboutButton') 'AboutButton'
@@ -210,14 +311,14 @@ try {
         throw "About window does not show version $expectedVersion."
     }
     $initialAboutValidation = $aboutValidation.Current.Name
-    Invoke-Control $languageButton 'LanguageButton'
+    Select-Language $process $languageButton $explicitLanguage
     for ($attempt = 0; $attempt -lt 20 -and $aboutValidation.Current.Name -eq $initialAboutValidation; $attempt++) {
         Start-Sleep -Milliseconds 100
     }
     if ($aboutValidation.Current.Name -eq $initialAboutValidation -or $aboutValidation.Current.Name -notmatch 'Maya 2025') {
         throw 'About window did not update its validation information after switching languages.'
     }
-    Invoke-Control $languageButton 'LanguageButton'
+    Select-Language $process $languageButton 'SystemLanguageMenuItem'
 
     Stop-TestProcess $process
 
@@ -239,8 +340,16 @@ try {
     $layerTextBox = $layerList.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $editCondition)
     Test-ContextMenu $process $layerTextBox 'ImportLayersContextMenuItem' 'ImportAnimationsContextMenuItem'
 
-    Write-Output "UI smoke passed: $($toolbarButtonIds.Count) accessible toolbar buttons, all context imports (including nested layer priority), $initialTitle -> $switchedTitle, and bilingual About content."
+    Write-Output "UI smoke passed: owner-centered messages, protected language/About layout, unclipped settings with four formats, system-language mode, $($toolbarButtonIds.Count) accessible toolbar buttons, context imports, and bilingual About content."
 }
 finally {
     Stop-TestProcess $process
+    if ($null -eq $previousSettingsPath) {
+        Remove-Item Env:ALCHEMY_STARS_SETTINGS_PATH -ErrorAction SilentlyContinue
+    } else {
+        $env:ALCHEMY_STARS_SETTINGS_PATH = $previousSettingsPath
+    }
+    if (Test-Path -LiteralPath $testSettingsPath) {
+        Remove-Item -LiteralPath $testSettingsPath -Force
+    }
 }

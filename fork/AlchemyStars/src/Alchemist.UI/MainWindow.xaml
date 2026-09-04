@@ -42,7 +42,7 @@
         <Grid>
             <Grid.RowDefinitions><RowDefinition Height="56"/><RowDefinition/></Grid.RowDefinitions>
             <Grid Grid.Row="0">
-                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <Grid.ColumnDefinitions><ColumnDefinition MinWidth="0"/><ColumnDefinition Width="172"/></Grid.ColumnDefinitions>
                 <ToolBarTray IsLocked="True" Grid.Column="0">
                     <ToolBar ClipToBounds="False" Style="{StaticResource MaterialDesignToolBar}" KeyboardNavigation.TabNavigation="Cycle">
                     <Button Style="{StaticResource TopBarIconButton}" ToolTip="{DynamicResource TipLoadProject}" AutomationProperties.Name="{DynamicResource TipLoadProject}" AutomationProperties.AutomationId="OpenProjectButton" Command="{Binding ImportProjectCommand}">
@@ -133,22 +133,57 @@
                     <Button Style="{StaticResource TopBarIconButton}" ToolTip="{DynamicResource TipSettings}" AutomationProperties.Name="{DynamicResource TipSettings}" AutomationProperties.AutomationId="SettingsButton" Command="{x:Static materialDesign:DialogHost.OpenDialogCommand}">
                         <Button.Content><materialDesign:PackIcon Kind="CogOutline" Style="{StaticResource TopBarIcon}"/></Button.Content>
                         <Button.CommandParameter>
-                            <StackPanel Margin="20" Width="360">
-                                <TextBlock Text="{DynamicResource SettingsTitle}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                <TextBox materialDesign:HintAssist.Hint="{DynamicResource DefaultLeftIKStart}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding LeftIKStartBoneName}"/>
-                                <TextBox materialDesign:HintAssist.Hint="{DynamicResource DefaultLeftIKMiddle}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding LeftIKMidBoneName}"/>
-                                <TextBox materialDesign:HintAssist.Hint="{DynamicResource DefaultLeftIKEnd}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding LeftIKEndBoneName}"/>
-                                <TextBox materialDesign:HintAssist.Hint="{DynamicResource DefaultLeftIKTarget}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding LeftIKTargetBoneName}"/>
-                                <TextBox materialDesign:HintAssist.Hint="{DynamicResource DefaultRightIKStart}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding RightIKStartBoneName}"/>
-                                <TextBox materialDesign:HintAssist.Hint="{DynamicResource DefaultRightIKMiddle}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding RightIKMidBoneName}"/>
-                                <TextBox materialDesign:HintAssist.Hint="{DynamicResource DefaultRightIKEnd}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding RightIKEndBoneName}"/>
-                                <TextBox materialDesign:HintAssist.Hint="{DynamicResource DefaultRightIKTarget}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding RightIKTargetBoneName}"/>
-                                <TextBox materialDesign:HintAssist.Hint="{DynamicResource OutputPrefix}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding OutputPrefix}"/>
-                                <TextBox materialDesign:HintAssist.Hint="{DynamicResource OutputSuffix}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding OutputSuffix}"/>
-                                <CheckBox Content="{DynamicResource MatchOldCod}" IsChecked="{Binding MatchOldCallOfDuty}" Margin="0,12,0,0"/>
-                                <ComboBox Margin="0,8,0,0" ItemsSource="{Binding OutputFormats}" SelectedItem="{Binding OutputFormat}"/>
-                                <Button Margin="0,12,0,0" HorizontalAlignment="Right" Command="{x:Static materialDesign:DialogHost.CloseDialogCommand}" Content="{DynamicResource Close}" IsCancel="True" Style="{StaticResource MaterialDesignFlatButton}" CommandParameter="Decline"/>
-                            </StackPanel>
+                            <Border Width="640" MaxHeight="460" Padding="24" Background="{DynamicResource MaterialDesignPaper}" AutomationProperties.AutomationId="SettingsDialog">
+                                <Grid>
+                                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="{DynamicResource SettingsTitle}" FontSize="20" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{DynamicResource SettingsSubtitle}" Margin="0,4,0,12" Opacity="0.72" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                    <TabControl Grid.Row="1" Height="330" AutomationProperties.AutomationId="SettingsTabs">
+                                        <TabItem Header="{DynamicResource OutputSettingsTab}">
+                                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                                <StackPanel Margin="4,16,12,8">
+                                                    <TextBlock Text="{DynamicResource DefaultOutputFormat}" FontWeight="SemiBold"/>
+                                                    <ComboBox x:Name="OutputFormatComboBox" AutomationProperties.AutomationId="OutputFormatComboBox" AutomationProperties.Name="{DynamicResource DefaultOutputFormat}" Height="44" Margin="0,8,0,0" ItemsSource="{Binding OutputFormats}" SelectedItem="{Binding OutputFormat}" SelectionChanged="OutputFormatSelectionChanged"/>
+                                                    <TextBlock Text="{DynamicResource OutputFormatHelp}" Margin="0,6,0,14" Opacity="0.72" TextWrapping="Wrap"/>
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+                                                        <TextBox Grid.Column="0" Margin="0,0,8,0" materialDesign:HintAssist.Hint="{DynamicResource OutputPrefix}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding OutputPrefix}"/>
+                                                        <TextBox Grid.Column="1" Margin="8,0,0,0" materialDesign:HintAssist.Hint="{DynamicResource OutputSuffix}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding OutputSuffix}"/>
+                                                    </Grid>
+                                                    <CheckBox Content="{DynamicResource MatchOldCod}" IsChecked="{Binding MatchOldCallOfDuty}" Margin="0,18,0,0"/>
+                                                    <Border Margin="0,18,0,0" Padding="12" Background="#160D8BF2" CornerRadius="4">
+                                                        <TextBlock Text="{DynamicResource FbxMayaRequirement}" TextWrapping="Wrap"/>
+                                                    </Border>
+                                                </StackPanel>
+                                            </ScrollViewer>
+                                        </TabItem>
+                                        <TabItem Header="{DynamicResource IkSettingsTab}">
+                                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                                <Grid Margin="4,16,12,8">
+                                                    <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+                                                    <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                                                        <TextBlock Text="{DynamicResource LeftHandIkSection}" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                                                        <TextBox materialDesign:HintAssist.Hint="{DynamicResource DefaultLeftIKStart}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding LeftIKStartBoneName}"/>
+                                                        <TextBox materialDesign:HintAssist.Hint="{DynamicResource DefaultLeftIKMiddle}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding LeftIKMidBoneName}"/>
+                                                        <TextBox materialDesign:HintAssist.Hint="{DynamicResource DefaultLeftIKEnd}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding LeftIKEndBoneName}"/>
+                                                        <TextBox materialDesign:HintAssist.Hint="{DynamicResource DefaultLeftIKTarget}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding LeftIKTargetBoneName}"/>
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                                                        <TextBlock Text="{DynamicResource RightHandIkSection}" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                                                        <TextBox materialDesign:HintAssist.Hint="{DynamicResource DefaultRightIKStart}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding RightIKStartBoneName}"/>
+                                                        <TextBox materialDesign:HintAssist.Hint="{DynamicResource DefaultRightIKMiddle}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding RightIKMidBoneName}"/>
+                                                        <TextBox materialDesign:HintAssist.Hint="{DynamicResource DefaultRightIKEnd}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding RightIKEndBoneName}"/>
+                                                        <TextBox materialDesign:HintAssist.Hint="{DynamicResource DefaultRightIKTarget}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding RightIKTargetBoneName}"/>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </ScrollViewer>
+                                        </TabItem>
+                                    </TabControl>
+                                    <Button Grid.Row="2" Margin="0,12,0,0" MinWidth="72" Height="44" HorizontalAlignment="Right" Command="{x:Static materialDesign:DialogHost.CloseDialogCommand}" Content="{DynamicResource Close}" IsCancel="True" Style="{StaticResource MaterialDesignFlatButton}" CommandParameter="CloseSettings"/>
+                                </Grid>
+                            </Border>
                         </Button.CommandParameter>
                     </Button>
                     <Button Style="{StaticResource TopBarIconButton}" ToolTip="{DynamicResource TipExperimental}" AutomationProperties.Name="{DynamicResource TipExperimental}" AutomationProperties.AutomationId="ExperimentalScriptsButton" Command="{x:Static materialDesign:DialogHost.OpenDialogCommand}" materialDesign:DialogHost.DialogClosing="DialogHostDialogClosing">
@@ -166,12 +201,20 @@
                     </Button>
                     </ToolBar>
                 </ToolBarTray>
-                <Border Grid.Column="1" Background="{DynamicResource MaterialDesignPaper}" Padding="4,0,8,0">
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button x:Name="LanguageButton" ToolTip="{DynamicResource TipLanguage}" AutomationProperties.Name="{DynamicResource TipLanguage}" Click="ToggleLanguageClick" MinWidth="58" Height="44" Style="{StaticResource MaterialDesignFlatButton}">
-                            <StackPanel Orientation="Horizontal"><materialDesign:PackIcon Kind="TranslateVariant" Width="20" Height="20"/><TextBlock Text="{DynamicResource LanguageButton}" Margin="5,0,0,0" VerticalAlignment="Center"/></StackPanel>
+                <Border Grid.Column="1" Panel.ZIndex="2" Background="{DynamicResource MaterialDesignPaper}" Padding="6,0">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
+                        <Button x:Name="LanguageButton" ToolTip="{DynamicResource TipLanguage}" AutomationProperties.Name="{DynamicResource TipLanguage}" AutomationProperties.AutomationId="LanguageButton" Click="OpenLanguageMenuClick" Width="112" Height="44" Style="{StaticResource MaterialDesignFlatButton}">
+                            <Button.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="{DynamicResource FollowSystemLanguage}" Tag="system" IsCheckable="True" Click="SetLanguageClick" AutomationProperties.AutomationId="SystemLanguageMenuItem"/>
+                                    <Separator/>
+                                    <MenuItem Header="简体中文" Tag="zh-CN" IsCheckable="True" Click="SetLanguageClick" AutomationProperties.AutomationId="ChineseLanguageMenuItem"/>
+                                    <MenuItem Header="English" Tag="en-US" IsCheckable="True" Click="SetLanguageClick" AutomationProperties.AutomationId="EnglishLanguageMenuItem"/>
+                                </ContextMenu>
+                            </Button.ContextMenu>
+                            <StackPanel Orientation="Horizontal"><materialDesign:PackIcon Kind="TranslateVariant" Width="20" Height="20"/><TextBlock Text="{Binding LanguageModeLabel}" Margin="6,0,4,0" VerticalAlignment="Center"/><materialDesign:PackIcon Kind="ChevronDown" Width="16" Height="16" VerticalAlignment="Center"/></StackPanel>
                         </Button>
-                        <Button x:Name="AboutButton" Content="{materialDesign:PackIcon Kind=InformationSlabCircleOutline}" ToolTip="{DynamicResource TipAbout}" AutomationProperties.Name="{DynamicResource TipAbout}" Click="OpenAboutClick" Width="44" Height="44" Style="{StaticResource MaterialDesignFlatButton}"/>
+                        <Button x:Name="AboutButton" Content="{materialDesign:PackIcon Kind=InformationSlabCircleOutline}" ToolTip="{DynamicResource TipAbout}" AutomationProperties.Name="{DynamicResource TipAbout}" AutomationProperties.AutomationId="AboutButton" Click="OpenAboutClick" Width="44" Height="44" Style="{StaticResource MaterialDesignFlatButton}"/>
                     </StackPanel>
                 </Border>
             </Grid>

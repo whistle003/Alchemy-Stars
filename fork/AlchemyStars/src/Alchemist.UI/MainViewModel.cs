@@ -28,7 +28,7 @@ namespace Alchemist.UI
 {
     public class MainViewModel : LoggableMVVMObject
     {
-        public string FileVersion { get; } = typeof(MainViewModel).Assembly.GetName().Version?.ToString(3) ?? "1.0.3";
+        public string FileVersion { get; } = typeof(MainViewModel).Assembly.GetName().Version?.ToString(3) ?? "1.1.0";
         public AnimationConverter Converter { get; set; } = new();
         public MVVMItemList<Animation> Animations { get; set; } = [];
         public MVVMItemList<Part> Parts { get; set; } = [];
@@ -101,9 +101,16 @@ namespace Alchemist.UI
 
         public string Title => $"{LocalizationManager.Get("AppDisplayName")} | {CurrentProjectFile ?? LocalizationManager.Get("UntitledBatch")} | {LocalizationManager.Get("VersionLabel")}: {FileVersion}";
 
-        public string OutputFormat { get => GetValue(".cast"); set => SetValue(value); }
+        public string LanguageModeLabel => LocalizationManager.LanguagePreference switch
+        {
+            LocalizationManager.ChineseCulture => LocalizationManager.Get("LanguageModeChinese"),
+            LocalizationManager.EnglishCulture => LocalizationManager.Get("LanguageModeEnglish"),
+            _ => LocalizationManager.Get("LanguageModeSystem"),
+        };
 
-        public string[] OutputFormats { get; } = [ ".seanim", ".cast" ];
+        public string OutputFormat { get => GetValue(LocalizationManager.DefaultOutputFormat); set => SetValue(OutputFormatCatalog.Normalize(value)); }
+
+        public string[] OutputFormats { get; } = OutputFormatCatalog.All;
 
         public Visibility IsVisible { get => GetValue(Visibility.Visible); set => SetValue(value); }
 
@@ -118,6 +125,7 @@ namespace Alchemist.UI
             // Binds
             AddBinds(nameof(CurrentProjectFile), nameof(Title));
             AddBinds(nameof(LocalizationRevision), nameof(Title));
+            AddBinds(nameof(LocalizationRevision), nameof(LanguageModeLabel));
             RefreshLocalization();
             // Callbacks
             OnCommandFailure = onCommandFailure;
@@ -146,20 +154,18 @@ namespace Alchemist.UI
                 try
                 {
                     var outputs = ExportAnimations();
-                    MessageBox.Show(
+                    UiDialogService.Show(
                         LocalizationManager.Format("ExportCompleteMessage", outputs.Count),
                         LocalizationManager.Get("ExportCompleteTitle"),
-                        MessageBoxButton.OK,
                         MessageBoxImage.Information);
                 }
                 catch (Exception ex)
                 {
                     Logging.Logger.Error("Animation export failed.", ex);
                     OnCommandFailure(ex.Message);
-                    MessageBox.Show(
+                    UiDialogService.Show(
                         ex.Message,
                         LocalizationManager.Get("ExportFailedTitle"),
-                        MessageBoxButton.OK,
                         MessageBoxImage.Error);
                 }
             });
@@ -373,6 +379,12 @@ namespace Alchemist.UI
             LocalizationRevision++;
         }
 
+        public void SetDefaultOutputFormat(string? format)
+        {
+            OutputFormat = OutputFormatCatalog.Normalize(format);
+            LocalizationManager.SetDefaultOutputFormat(OutputFormat);
+        }
+
         public static int AddLayerFiles(IEnumerable<Animation> animations, IEnumerable<string> filePaths)
         {
             var targets = animations.Distinct().ToArray();
@@ -450,7 +462,7 @@ namespace Alchemist.UI
             RightIKTargetBoneName   = prjFile.RightIKTargetBoneName;
             OutputPrefix            = prjFile.OutputPrefix;
             OutputSuffix            = prjFile.OutputSuffix;
-            OutputFormat            = prjFile.OutputFormat;
+            OutputFormat            = OutputFormatCatalog.Normalize(prjFile.OutputFormat);
             MatchOldCallOfDuty      = prjFile.MatchOldCallOfDuty;
 
             CurrentProjectFile = filePath;

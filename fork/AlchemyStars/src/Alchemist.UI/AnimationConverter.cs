@@ -77,6 +77,8 @@ namespace Alchemist.UI
         {
             Logging.Logger.Info($"Attempting to convert: {animation.Name}");
 
+            format = OutputFormatCatalog.Normalize(format);
+
             if (string.IsNullOrEmpty(animation.Name))
                 throw new ArgumentException("No input file was provided to alchemist for main animation.");
             if (string.IsNullOrEmpty(animation.OutputFolder))
@@ -383,6 +385,35 @@ namespace Alchemist.UI
                     sourceParts,
                     newAnim,
                     TranslatorFactory);
+            }
+            else if (string.Equals(format, ".smd", StringComparison.OrdinalIgnoreCase))
+            {
+                SaveAtomically(outputFull, temporaryPath => SmdAnimationExporter.Save(temporaryPath, newAnim));
+            }
+            else if (string.Equals(format, ".fbx", StringComparison.OrdinalIgnoreCase))
+            {
+                if (sourceParts is null)
+                    throw new InvalidOperationException(LocalizationManager.Get("FbxNeedsModels"));
+                SaveAtomically(outputFull, temporaryPath =>
+                {
+                    var stagingDirectory = Path.Combine(
+                        Path.GetDirectoryName(temporaryPath)!,
+                        $".alchemy-stars-fbx-{Guid.NewGuid():N}");
+                    var stagedFbx = Path.Combine(stagingDirectory, Path.GetFileName(outputFull));
+                    var stagedCast = Path.ChangeExtension(stagedFbx, ".cast");
+                    try
+                    {
+                        Directory.CreateDirectory(stagingDirectory);
+                        MayaCastPackage.Save(stagedCast, sourceParts, newAnim, TranslatorFactory);
+                        MayaFbxExporter.Export(stagedCast, stagedFbx, newAnim.Framerate);
+                        File.Move(stagedFbx, temporaryPath, overwrite: true);
+                    }
+                    finally
+                    {
+                        if (Directory.Exists(stagingDirectory))
+                            Directory.Delete(stagingDirectory, recursive: true);
+                    }
+                });
             }
             else
             {

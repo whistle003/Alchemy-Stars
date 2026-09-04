@@ -5,6 +5,7 @@ release/
 output/*.cast
 output/*.ma
 output/*.json
+output/*.png
 fork/AlchemyStars/output/*
 fork/alchemist-upstream.tar
 *.user

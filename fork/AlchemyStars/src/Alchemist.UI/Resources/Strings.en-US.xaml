@@ -32,13 +32,25 @@
     <sys:String x:Key="TipRemoveParts">Remove selected model parts</sys:String>
     <sys:String x:Key="TipSettings">Open application settings</sys:String>
     <sys:String x:Key="TipExperimental">Open experimental scripts</sys:String>
-    <sys:String x:Key="TipLanguage">切换到中文</sys:String>
+    <sys:String x:Key="TipLanguage">Choose interface language</sys:String>
     <sys:String x:Key="TipAbout">About Alchemy Stars</sys:String>
     <sys:String x:Key="LanguageButton">中文</sys:String>
+    <sys:String x:Key="LanguageModeSystem">AUTO</sys:String>
+    <sys:String x:Key="LanguageModeChinese">中文</sys:String>
+    <sys:String x:Key="LanguageModeEnglish">EN</sys:String>
+    <sys:String x:Key="FollowSystemLanguage">Follow system language</sys:String>
 
     <sys:String x:Key="AddPrefixPrompt">Prepend text to the selected output names</sys:String>
     <sys:String x:Key="AddSuffixPrompt">Append text to the selected output names</sys:String>
     <sys:String x:Key="SettingsTitle">Export and default IK settings</sys:String>
+    <sys:String x:Key="SettingsSubtitle">Choose the output format for new tasks and manage export and IK values in compact sections.</sys:String>
+    <sys:String x:Key="OutputSettingsTab">Output</sys:String>
+    <sys:String x:Key="IkSettingsTab">IK Bones</sys:String>
+    <sys:String x:Key="DefaultOutputFormat">Default output format</sys:String>
+    <sys:String x:Key="OutputFormatHelp">A selection applies to the current task immediately and becomes the default for new tasks. Project files still retain their own format.</sys:String>
+    <sys:String x:Key="FbxMayaRequirement">FBX uses the official FBX plug-in from the locally installed Maya (Maya 2025 preferred), so no extra runtime is bundled. Alchemy Stars writes SMD directly.</sys:String>
+    <sys:String x:Key="LeftHandIkSection">Left-hand IK</sys:String>
+    <sys:String x:Key="RightHandIkSection">Right-hand IK</sys:String>
     <sys:String x:Key="ScriptsTitle">Experimental scripts</sys:String>
     <sys:String x:Key="DefaultLeftIKStart">Default left-hand IK start bone</sys:String>
     <sys:String x:Key="DefaultLeftIKMiddle">Default left-hand IK middle bone</sys:String>
@@ -51,6 +63,13 @@
     <sys:String x:Key="OutputPrefix">Output filename prefix</sys:String>
     <sys:String x:Key="OutputSuffix">Output filename suffix</sys:String>
     <sys:String x:Key="MatchOldCod">Match older Call of Duty games</sys:String>
+    <sys:String x:Key="FbxMayaNotFound">FBX export requires a local Autodesk Maya installation. mayapy.exe was not detected; install Maya 2025 or set ALCHEMY_STARS_MAYAPY to its path.</sys:String>
+    <sys:String x:Key="FbxConverterMissing">The bundled FBX conversion script is missing. Reinstall Alchemy Stars.</sys:String>
+    <sys:String x:Key="FbxCastPluginMissing">The bundled Maya CAST plug-in is missing. Reinstall Alchemy Stars.</sys:String>
+    <sys:String x:Key="FbxMayaStartFailed">The local Maya FBX conversion process could not be started.</sys:String>
+    <sys:String x:Key="FbxMayaTimedOut">Maya FBX conversion exceeded 10 minutes and was cancelled.</sys:String>
+    <sys:String x:Key="FbxMayaFailed">Maya FBX conversion failed (exit code {0}).&#10;{1}</sys:String>
+    <sys:String x:Key="FbxNeedsModels">FBX export requires at least one model part so the skeleton, skin, and meshes can be retained.</sys:String>
 
     <sys:String x:Key="AnimationsTab">Animations</sys:String>
     <sys:String x:Key="PartsTab">Model Parts</sys:String>
@@ -118,12 +137,12 @@
     <sys:String x:Key="AboutOverviewTitle">Overview</sys:String>
     <sys:String x:Key="AboutOverview">Alchemy Stars is a Windows x64 desktop tool continuously improved from Scobalula/Alchemist. It combines view hands, weapons, attachments, and animation into one CAST file; every export retains one baked target animation ready to play, edit, and continue working with in Maya.</sys:String>
     <sys:String x:Key="AboutFeaturesTitle">Key capabilities</sys:String>
-    <sys:String x:Key="AboutFeatureFiles">Import through file browsers, drag and drop, or context menus; layer-area drops prioritize the hovered animation</sys:String>
+    <sys:String x:Key="AboutFeatureFiles">Import through file browsers, drag and drop, or context menus; remember last folders by category; layer-area drops prioritize the hovered animation</sys:String>
     <sys:String x:Key="AboutFeatureLayers">Normal, Additive, Gesture, and Gesture Pose layers, frame offsets, and left/right hand IK</sys:String>
     <sys:String x:Key="AboutFeatureModels">Canonical View Hands → Weapon → Attachment order is physically merged into one model without relying on Maya Import Merge</sys:String>
-    <sys:String x:Key="AboutFeatureMaya">Includes the Maya CAST importer, standard MP5/Hawk examples, and bilingual usage guides</sys:String>
+    <sys:String x:Key="AboutFeatureMaya">Exports CAST, FBX, SMD, and SEAnim; includes the Maya CAST importer, standard MP5/Hawk examples, and bilingual guides</sys:String>
     <sys:String x:Key="AboutValidationTitle">Compatibility and validation</sys:String>
-    <sys:String x:Key="AboutValidation">This version is verified in Autodesk Maya 2025 with Import Merge off: one skeleton, one target animation, and an animated weapon. Automated acceptance covers Hawk sprint and the weapon-before-hands case.</sys:String>
+    <sys:String x:Key="AboutValidation">This version verifies CAST and FBX in Autodesk Maya 2025: one skeleton, retained skinned meshes, baked animation, and an animated weapon. Automated acceptance covers Hawk sprint, SMD hierarchy/frame data, and the weapon-before-hands case.</sys:String>
     <sys:String x:Key="AboutBuildTitle">Version and environment</sys:String>
     <sys:String x:Key="AboutVersion">Application version</sys:String>
     <sys:String x:Key="AboutRuntime">Current .NET runtime</sys:String>

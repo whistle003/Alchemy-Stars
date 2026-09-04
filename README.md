@@ -4,6 +4,23 @@ Alchemy Stars 是 [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist) 
 
 主源码位于 `fork/AlchemyStars`，固定使用与原项目同期的 RedFox 提交，避免上游变动破坏构建。先前的独立重写已保存在 Git 分支 `independent-rewrite-v1`，不再是当前实现。
 
+## 相比原版 Alchemist 的改进
+
+Alchemy Stars 保留原版批处理、动画层、IK 与 RedFox 转换管线，在此基础上补齐面向实际 Maya 生产流程的闭环：
+
+| 对比项 | 原版 Alchemist | Alchemy Stars 1.1.0 |
+| --- | --- | --- |
+| Maya 模型与动画 | 模型部件和动画的组合依赖导入行为，可能出现重复骨架或武器动画丢失 | 导出前物理合并模型、同名骨骼与蒙皮权重；每个文件只有一个已烘焙动画 |
+| 输出格式 | 主要为 CAST / SEAnim 管线 | 新增真实 FBX 与原生 SMD，并保留 CAST / SEAnim |
+| FBX 工作流 | 未提供 | 自动检测本机 Maya，调用官方 `fbxmaya`，不捆绑大型转换运行环境 |
+| 素材导入 | 以原界面操作为主 | 文件浏览器、拖放、列表空白处右键、`Shift+F10`；动画层悬停区域优先路由 |
+| 本地化 | 原版界面能力 | 自动检测系统语言，可固定简体中文或 English，并即时刷新 About 等窗口 |
+| 使用连续性 | 项目保存绝对路径 | 额外按动画、层、模型、项目与输出类别记忆最近目录 |
+| UI 与发布 | 原版设置布局和图标 | 重做功能图标、无截断设置页、受保护的语言/About 区、精简无内置 .NET 运行时发布 |
+| 回归验证 | 上游示例 | 原版 MP5 示例逐字节保留，并以 Hawk 实际素材验证 CAST、FBX、SMD、IK、蒙皮和武器运动 |
+
+这些改进没有替换上游核心的动画混合思想；标准 MP5 项目仍作为兼容基准，原项目、RedFox 与 CAST 组件的署名和许可证均随发布包保留。
+
 ## 已完成的改进
 
 - 手臂和武器按同名骨骼合并，避免共享 `j_gun` 被改名或生成两套骨架。
@@ -15,18 +32,22 @@ Alchemy Stars 是 [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist) 
 - 项目载入后恢复层和部件的 UI 所有权，拖动、删除与排序命令可继续使用。
 - 外部文件拖入动画行的“动画层”区域时，悬停动画优先于外层选择，文件只会加入该动画的层列表。
 - CAST 写入采用临时文件替换，并在写入前后验证模型数、唯一动画和节点哈希。
+- 输出格式扩展为 `.cast`、`.fbx`、`.smd`、`.seanim`；SMD 直接写出完整骨骼层级与逐帧局部变换，FBX 通过本机 Maya 官方插件保留模型、蒙皮和动画。
 - 工具与产品名改为 Alchemy Stars；移除未使用的 Supabase 依赖，并将 `log4net` 更新至 3.4.0。
-- 所有动画、姿势层、模型和输出目录均通过系统文件浏览器选择；程序不再自动载入带固定路径的内置预设。
-- 主界面、对话框和 About 窗口支持中文/英文即时切换，并会记忆语言选择。
+- 所有动画、姿势层、模型和输出目录均通过系统文件浏览器选择；软件按类别记忆上一次目录，重启后继续生效。
+- 主界面、对话框和 About 窗口支持“跟随系统 / 简体中文 / English”，首次启动自动检测系统语言并记忆手动选择。
+- 设置窗口按“输出 / IK 骨骼”重新分区，在最小窗口尺寸下仍可滚动使用；语言与 About 固定在受保护的右侧区域，不再被工具栏遮挡。
 - 使用“炼金术瓶 + 星芒”主题的新应用图标。
 
 ## 直接使用
 
-运行：
+从 [GitHub Releases](https://github.com/ez4cywa/Alchemy-Stars/releases) 下载最新版 ZIP，解压后运行：
 
-`E:\Alchemy Stars\release\Alchemy Stars\Alchemy Stars.exe`
+`Alchemy Stars.exe`
 
 程序以空白批处理启动。点击工具栏的动画与模型按钮，或使用每个路径字段右侧的文件夹按钮，通过系统文件浏览器选择文件；可选姿势文件旁的清除按钮可恢复为空。
+
+打开“设置 → 输出”可在 `.cast`、`.fbx`、`.smd`、`.seanim` 中选择默认格式；选择立即应用于当前任务，并作为以后新任务的默认值。项目文件会继续保存自己的输出格式。FBX 需要本机 Maya（优先自动检测 Maya 2025），但发布包不内置 Maya 或额外运行环境；SMD 不依赖 Maya。
 
 在“动画”页的主列表区域（包括空白处）右键，选择“导入动画…”可一次加入一个或多个 `.cast`。动画行内的“动画层”子区域（包括空白处）有独立的“导入动画层…”右键菜单，不会混淆导入目标。
 
@@ -34,17 +55,19 @@ Alchemy Stars 是 [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist) 
 
 在“模型部件”页的列表区域（包括空白处）右键，选择“导入模型部件…”可一次加入一个或多个 `.cast`。上述列表均可聚焦后按 `Shift+F10` 打开对应菜单。
 
-选择手臂、武器、基础动画和需要的动画层后，点击工具栏中的“保存动画”按钮即可生成：
+选择手臂、武器、基础动画和需要的动画层后，点击工具栏中的“保存动画”按钮即可生成所选格式，例如：
 
 `E:\Alchemy Stars\fork\AlchemyStars\output\sat_vm_ar_hawk_sprint_alchemy_stars.cast`
 
 发布目录和 ZIP 均包含完整的 `Example` 文件夹。根目录的 `MP5Base.aprj`、`MP5Grip.aprj` 是从原版 Alchemist `Example` 目录直接迁移、保持逐字节一致的标准示例；统一的 `manifest.json` 为验收与发布提供路径、结构和校验值。按标准示例改进的 Hawk 冲刺、Idle 与批处理项目集中在 `Example\Hawk`。详细步骤见 [示例使用说明](fork/AlchemyStars/Example/README.zh-CN.md)，英文简版见 [Example README](fork/AlchemyStars/Example/README.en-US.md)。
 
-示例不会自动加载。`.aprj` 可从文件浏览器打开、拖进窗口或作为命令行参数载入。批处理中可以加入更多原项目支持的动画；程序会为每个条目分别输出一个 CAST，所以每个文件始终只有一个动画。项目文件保存绝对路径，换机器后应通过文件浏览器重新选择素材与输出目录，再使用“项目另存为”。
+示例不会自动加载。`.aprj` 可从文件浏览器打开、拖进窗口或作为命令行参数载入。批处理中可以加入更多原项目支持的动画；程序会为每个条目分别输出一个文件，因此每个输出只对应一个已烘焙动画。项目文件保存绝对路径，换机器后应通过文件浏览器重新选择素材与输出目录，再使用“项目另存为”。
 
 ## Maya 2025
 
 发布目录的 `MayaPlugin` 文件夹包含官方 CAST 导入插件。将其中的 `cast.py` 和 `castplugin.py` 放入 Maya 脚本/插件路径，在 Plug-in Manager 中载入 `castplugin.py`，然后用 File → Import 导入输出 CAST。
+
+选择 FBX 时，炼金之星会自动查找本机 Maya 并调用 `fbxmaya` 生成二进制 FBX。可用环境变量 `ALCHEMY_STARS_MAYAPY` 指定其他 `mayapy.exe`。FBX 在 Maya 中导入时启用 **Fill Timeline** 可自动把播放范围设为动画范围。
 
 当前冲刺产物已在本机 Maya 2025 中完成无界面实测：
 
@@ -66,7 +89,7 @@ Alchemy Stars 是 [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist) 
 .\scripts\build-release.ps1
 ```
 
-`run-tests.ps1` 会编译改进后的原项目，先验证两份标准 MP5 示例没有被改写，再以 `fork\AlchemyStars\Example\Hawk\HawkSprint.aprj` 作为 Hawk 冲刺验证的唯一配置来源，用项目自身的 `ExportAnimations()` 读取其中的 Idle 基础、两个有序 Additive 层、IK、模型部件、格式和命名设置，并把本轮实际输出路径交给 Maya 2025 验收。它还会验证 Idle、批处理 CAST，以及“武器排在手臂之前”的顺序回归。`build-release.ps1` 会生成不内置 .NET 运行环境的精简 Windows x64 单文件发布包和 ZIP。
+`run-tests.ps1` 会编译改进后的原项目，先验证两份标准 MP5 示例没有被改写，再以 `fork\AlchemyStars\Example\Hawk\HawkSprint.aprj` 作为 Hawk 冲刺验证的唯一配置来源，用项目自身的 `ExportAnimations()` 读取其中的 Idle 基础、两个有序 Additive 层、IK、模型部件、格式和命名设置。验收会实际生成 CAST、SMD 和 FBX，并把 CAST/FBX 重新导入 Maya 2025 检查骨架、网格、蒙皮、帧范围及武器动画；同时覆盖 Idle、批处理和“武器排在手臂之前”的回归。`build-release.ps1` 会生成不内置 .NET 运行环境的精简 Windows x64 单文件发布包和 ZIP。
 
 ## 源码与许可
 

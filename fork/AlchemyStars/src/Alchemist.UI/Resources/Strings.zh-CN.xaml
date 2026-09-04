@@ -32,13 +32,25 @@
     <sys:String x:Key="TipRemoveParts">移除所选模型部件</sys:String>
     <sys:String x:Key="TipSettings">打开应用设置</sys:String>
     <sys:String x:Key="TipExperimental">打开实验性脚本</sys:String>
-    <sys:String x:Key="TipLanguage">切换到英文</sys:String>
+    <sys:String x:Key="TipLanguage">选择界面语言</sys:String>
     <sys:String x:Key="TipAbout">关于 炼金之星</sys:String>
     <sys:String x:Key="LanguageButton">EN</sys:String>
+    <sys:String x:Key="LanguageModeSystem">自动</sys:String>
+    <sys:String x:Key="LanguageModeChinese">中文</sys:String>
+    <sys:String x:Key="LanguageModeEnglish">EN</sys:String>
+    <sys:String x:Key="FollowSystemLanguage">跟随系统语言</sys:String>
 
     <sys:String x:Key="AddPrefixPrompt">在所选输出名称前添加文本</sys:String>
     <sys:String x:Key="AddSuffixPrompt">在所选输出名称后添加文本</sys:String>
     <sys:String x:Key="SettingsTitle">导出与 IK 默认设置</sys:String>
+    <sys:String x:Key="SettingsSubtitle">选择新任务的输出格式，并在紧凑分区中管理导出与 IK 参数。</sys:String>
+    <sys:String x:Key="OutputSettingsTab">输出</sys:String>
+    <sys:String x:Key="IkSettingsTab">IK 骨骼</sys:String>
+    <sys:String x:Key="DefaultOutputFormat">默认输出格式</sys:String>
+    <sys:String x:Key="OutputFormatHelp">选择后立即用于当前任务，并记作以后新任务的默认值。项目文件仍会保存自己的格式。</sys:String>
+    <sys:String x:Key="FbxMayaRequirement">FBX 由本机 Maya（优先 Maya 2025）的官方 FBX 插件生成；无需随软件打包额外运行环境。SMD 由炼金之星直接写出。</sys:String>
+    <sys:String x:Key="LeftHandIkSection">左手 IK</sys:String>
+    <sys:String x:Key="RightHandIkSection">右手 IK</sys:String>
     <sys:String x:Key="ScriptsTitle">实验性脚本</sys:String>
     <sys:String x:Key="DefaultLeftIKStart">默认左手 IK 起始骨骼</sys:String>
     <sys:String x:Key="DefaultLeftIKMiddle">默认左手 IK 中间骨骼</sys:String>
@@ -51,6 +63,13 @@
     <sys:String x:Key="OutputPrefix">输出文件前缀</sys:String>
     <sys:String x:Key="OutputSuffix">输出文件后缀</sys:String>
     <sys:String x:Key="MatchOldCod">兼容旧版 Call of Duty</sys:String>
+    <sys:String x:Key="FbxMayaNotFound">导出 FBX 需要本机安装 Autodesk Maya。未检测到 mayapy.exe；可安装 Maya 2025，或通过 ALCHEMY_STARS_MAYAPY 环境变量指定路径。</sys:String>
+    <sys:String x:Key="FbxConverterMissing">缺少随软件发布的 FBX 转换脚本，请重新安装炼金之星。</sys:String>
+    <sys:String x:Key="FbxCastPluginMissing">缺少随软件发布的 Maya CAST 插件，请重新安装炼金之星。</sys:String>
+    <sys:String x:Key="FbxMayaStartFailed">无法启动本机 Maya FBX 转换进程。</sys:String>
+    <sys:String x:Key="FbxMayaTimedOut">Maya FBX 转换超过 10 分钟，已取消。</sys:String>
+    <sys:String x:Key="FbxMayaFailed">Maya FBX 转换失败（退出代码 {0}）。&#10;{1}</sys:String>
+    <sys:String x:Key="FbxNeedsModels">FBX 导出需要至少一个模型部件，以保留骨架、蒙皮和网格。</sys:String>
 
     <sys:String x:Key="AnimationsTab">动画</sys:String>
     <sys:String x:Key="PartsTab">模型部件</sys:String>
@@ -118,12 +137,12 @@
     <sys:String x:Key="AboutOverviewTitle">项目简介</sys:String>
     <sys:String x:Key="AboutOverview">炼金之星是在 Scobalula/Alchemist 基础上持续改进的 Windows x64 桌面工具。它将手臂、武器、附件与动画合并为单个 CAST；每个导出文件只保留一个已烘焙的目标动画，便于在 Maya 中直接播放、编辑和继续制作。</sys:String>
     <sys:String x:Key="AboutFeaturesTitle">主要能力</sys:String>
-    <sys:String x:Key="AboutFeatureFiles">支持文件浏览器、拖放和列表区域右键导入；拖到动画层区域时优先加入悬停动画</sys:String>
+    <sys:String x:Key="AboutFeatureFiles">支持文件浏览器、拖放和列表区域右键导入；分类记忆上一次目录；拖到动画层区域时优先加入悬停动画</sys:String>
     <sys:String x:Key="AboutFeatureLayers">支持普通、叠加、手势、手势姿势动画层、帧偏移及左右手 IK</sys:String>
     <sys:String x:Key="AboutFeatureModels">按“手臂 → 武器 → 附件”规范化顺序并物理合并为单个模型，无需依赖 Maya 的 Import Merge 选项</sys:String>
-    <sys:String x:Key="AboutFeatureMaya">随发布包提供 Maya CAST 导入插件、标准 MP5/Hawk 示例和中英文使用文档</sys:String>
+    <sys:String x:Key="AboutFeatureMaya">支持 CAST、FBX、SMD、SEAnim 输出；随包提供 Maya CAST 插件、标准 MP5/Hawk 示例和中英文文档</sys:String>
     <sys:String x:Key="AboutValidationTitle">兼容性与验证</sys:String>
-    <sys:String x:Key="AboutValidation">当前版本已在 Autodesk Maya 2025 关闭 Import Merge 的条件下验证：导入后保持单一骨架和单一目标动画，武器正常随动画运动。Hawk 冲刺及“武器排在手臂之前”的场景已纳入自动验收。</sys:String>
+    <sys:String x:Key="AboutValidation">当前版本已在 Autodesk Maya 2025 验证 CAST 与 FBX：导入后保持单一骨架、网格蒙皮和已烘焙动画，武器正常随动画运动。Hawk 冲刺、SMD 层级/帧数据及“武器排在手臂之前”的场景已纳入自动验收。</sys:String>
     <sys:String x:Key="AboutBuildTitle">版本与运行环境</sys:String>
     <sys:String x:Key="AboutVersion">应用版本</sys:String>
     <sys:String x:Key="AboutRuntime">当前 .NET 运行时</sys:String>

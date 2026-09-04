@@ -3,11 +3,13 @@ using Alchemist.UI;
 using Cast.NET;
 using Cast.NET.Nodes;
 using RedFox.Graphics3D.Skeletal;
+using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.Numerics;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
@@ -44,6 +46,8 @@ foreach (var part in weaponFirstParts)
     weaponFirstSprintProject.Parts.Add(part);
 }
 var idleProject = LoadExampleProject(exampleDirectory, improvedExamples["hawk-idle"].Path);
+var smdProject = LoadExampleProject(exampleDirectory, improvedExamples["hawk-sprint"].Path);
+var fbxProject = LoadExampleProject(exampleDirectory, improvedExamples["hawk-sprint"].Path);
 var batchProject = LoadExampleProject(exampleDirectory, improvedExamples["hawk-batch"].Path);
 var mp5BaseProject = LoadExampleProject(exampleDirectory, standardExamples["mp5-base"].Path);
 var mp5GripProject = LoadExampleProject(exampleDirectory, standardExamples["mp5-grip"].Path);
@@ -52,8 +56,25 @@ var idleTemplate = idleProject.Animations.Single();
 string? sprintOutput = null;
 string? weaponFirstSprintOutput = null;
 string? idleOutput = null;
+string? smdOutput = null;
+string? fbxOutput = null;
 
 Run("Animation.Clone preserves all per-animation settings", () => TestAnimationClone(sprintTemplate));
+Run("Export format choices include CAST, SEAnim, FBX, and SMD", () =>
+{
+    var formats = new MainViewModel(_ => { }, string.Empty).OutputFormats;
+    Assert(formats.SequenceEqual([".cast", ".fbx", ".smd", ".seanim"]),
+        "Export formats must be ordered as CAST, FBX, SMD, and SEAnim.");
+});
+Run("System language detection and explicit language choices resolve predictably", () =>
+{
+    Assert(LocalizationManager.ResolveCulture("system", CultureInfo.GetCultureInfo("zh-TW")) == "zh-CN",
+        "A Chinese system culture should select the Chinese interface.");
+    Assert(LocalizationManager.ResolveCulture("system", CultureInfo.GetCultureInfo("fr-FR")) == "en-US",
+        "A non-Chinese system culture should select the English interface.");
+    Assert(LocalizationManager.ResolveCulture("en-US", CultureInfo.GetCultureInfo("zh-CN")) == "en-US",
+        "An explicit English choice should override the system culture.");
+});
 Run("Context animation import adds every selected animation", TestContextAnimationImport);
 Run("Context layer import targets only the requested animation", TestContextLayerImport);
 Run("External drop over animation layers prioritizes the hovered animation", TestLayerDropTargetPriority);
@@ -113,6 +134,29 @@ if (requiredFiles.All(File.Exists))
         ValidateMayaPackage(idleOutput, idleProject.Parts);
     });
 
+    Run("Hawk sprint exports a complete SMD animation", () =>
+    {
+        smdProject.OutputFormat = ".smd";
+        smdProject.Animations.Single().OutputFolder = Path.Combine(outputDirectory, "smd");
+        var outputs = smdProject.ExportAnimations();
+        Assert(outputs.Count == 1, "SMD export should create exactly one file.");
+        smdOutput = Path.GetFullPath(outputs.Single());
+        ValidateSmdAnimation(smdOutput, expectedBoneCount: skeleton.Bones.Count, expectedFrameCount: 67);
+    });
+
+    if (MayaFbxExporter.FindMayapy() is not null)
+    {
+        Run("Hawk sprint exports an FBX through the local Maya", () =>
+        {
+            fbxProject.OutputFormat = ".fbx";
+            fbxProject.Animations.Single().OutputFolder = Path.Combine(outputDirectory, "fbx");
+            var outputs = fbxProject.ExportAnimations();
+            Assert(outputs.Count == 1, "FBX export should create exactly one file.");
+            fbxOutput = Path.GetFullPath(outputs.Single());
+            Assert(File.Exists(fbxOutput) && new FileInfo(fbxOutput).Length > 0, "FBX output is missing or empty.");
+        });
+    }
+
     Run("Batch example exports two valid one-animation Maya CAST files", () =>
     {
         var batchOutputDirectory = Path.Combine(outputDirectory, "batch-example");
@@ -140,6 +184,8 @@ var report = new
         sprintCast = sprintOutput,
         weaponFirstSprintCast = weaponFirstSprintOutput,
         idleCast = idleOutput,
+        sprintSmd = smdOutput,
+        sprintFbx = fbxOutput,
     },
     passed = failures.Count == 0,
     checks,
@@ -530,6 +576,97 @@ static void ValidateMayaPackage(string path, IEnumerable<Part> sourceParts)
     }
     Assert(nodes.Select(x => x.Hash).Distinct().Count() == nodes.Length, "CAST package contains duplicate hashes.");
 }
+
+static void ValidateSmdAnimation(string path, int expectedBoneCount, int expectedFrameCount)
+{
+    Assert(File.Exists(path), "SMD output was not created.");
+    var lines = File.ReadAllLines(path);
+    Assert(lines.FirstOrDefault() == "version 1", "SMD version header is missing.");
+    var nodesStart = Array.IndexOf(lines, "nodes");
+    var nodesEnd = Array.IndexOf(lines, "end", nodesStart + 1);
+    var skeletonStart = Array.IndexOf(lines, "skeleton", nodesEnd + 1);
+    Assert(nodesStart >= 0 && nodesEnd > nodesStart && skeletonStart > nodesEnd, "SMD sections are malformed.");
+    var nodeLines = lines[(nodesStart + 1)..nodesEnd];
+    Assert(nodeLines.Length == expectedBoneCount, "SMD did not retain every skeleton bone.");
+    var gunNode = nodeLines.FirstOrDefault(line => line.Contains("\"j_gun\"", StringComparison.OrdinalIgnoreCase));
+    Assert(gunNode is not null, "SMD skeleton does not contain j_gun.");
+    var gunIndex = int.Parse(gunNode!.Split(' ', StringSplitOptions.RemoveEmptyEntries)[0], CultureInfo.InvariantCulture);
+    var parents = nodeLines.ToDictionary(
+        line => int.Parse(line.AsSpan(0, line.IndexOf(' ')), CultureInfo.InvariantCulture),
+        line => int.Parse(line.AsSpan(line.LastIndexOf(' ') + 1), CultureInfo.InvariantCulture));
+
+    var frameTimes = lines.Skip(skeletonStart + 1)
+        .Where(line => line.StartsWith("time ", StringComparison.Ordinal))
+        .Select(line => int.Parse(line.AsSpan(5), CultureInfo.InvariantCulture))
+        .ToArray();
+    Assert(frameTimes.SequenceEqual(Enumerable.Range(0, expectedFrameCount)), "SMD frames are missing or out of order.");
+    var transformLines = lines.Skip(skeletonStart + 1)
+        .Where(line => line.Length > 0 && char.IsDigit(line[0]))
+        .ToArray();
+    Assert(transformLines.Length == expectedBoneCount * expectedFrameCount,
+        "SMD does not contain one local transform for every bone on every frame.");
+    Assert(transformLines.All(line => line.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length == 7),
+        "SMD transform records must contain bone, translation, and Euler rotation values.");
+    var gunWorldPositions = new List<Vector3>();
+    foreach (var frame in Enumerable.Range(0, expectedFrameCount))
+    {
+        var localTransforms = transformLines
+            .Skip(frame * expectedBoneCount)
+            .Take(expectedBoneCount)
+            .Select(ParseSmdTransform)
+            .ToDictionary(transform => transform.Index);
+        var worldTransforms = new Dictionary<int, (Vector3 Position, Quaternion Rotation)>();
+        (Vector3 Position, Quaternion Rotation) ResolveWorld(int index)
+        {
+            if (worldTransforms.TryGetValue(index, out var cached))
+                return cached;
+            var local = localTransforms[index];
+            var parent = parents[index];
+            var world = parent < 0
+                ? (local.Position, local.Rotation)
+                : Compose(ResolveWorld(parent), (local.Position, local.Rotation));
+            worldTransforms[index] = world;
+            return world;
+        }
+        gunWorldPositions.Add(ResolveWorld(gunIndex).Position);
+    }
+    Assert(gunWorldPositions.Skip(1).Any(position => Vector3.DistanceSquared(position, gunWorldPositions[0]) > 0.000001f),
+        "SMD weapon joint has no world-space motion; the weapon animation was not retained.");
+}
+
+static (int Index, Vector3 Position, Quaternion Rotation) ParseSmdTransform(string line)
+{
+    var values = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    var index = int.Parse(values[0], CultureInfo.InvariantCulture);
+    var position = new Vector3(
+        float.Parse(values[1], CultureInfo.InvariantCulture),
+        float.Parse(values[2], CultureInfo.InvariantCulture),
+        float.Parse(values[3], CultureInfo.InvariantCulture));
+    var x = float.Parse(values[4], CultureInfo.InvariantCulture);
+    var y = float.Parse(values[5], CultureInfo.InvariantCulture);
+    var z = float.Parse(values[6], CultureInfo.InvariantCulture);
+    var halfX = x / 2;
+    var halfY = y / 2;
+    var halfZ = z / 2;
+    var sinX = MathF.Sin(halfX);
+    var cosX = MathF.Cos(halfX);
+    var sinY = MathF.Sin(halfY);
+    var cosY = MathF.Cos(halfY);
+    var sinZ = MathF.Sin(halfZ);
+    var cosZ = MathF.Cos(halfZ);
+    var rotation = Quaternion.Normalize(new Quaternion(
+        sinX * cosY * cosZ - cosX * sinY * sinZ,
+        cosX * sinY * cosZ + sinX * cosY * sinZ,
+        cosX * cosY * sinZ - sinX * sinY * cosZ,
+        cosX * cosY * cosZ + sinX * sinY * sinZ));
+    return (index, position, rotation);
+}
+
+static (Vector3 Position, Quaternion Rotation) Compose(
+    (Vector3 Position, Quaternion Rotation) parent,
+    (Vector3 Position, Quaternion Rotation) local) =>
+    (Vector3.Transform(local.Position, parent.Rotation) + parent.Position,
+        Quaternion.Normalize(parent.Rotation * local.Rotation));
 
 static IEnumerable<CastNode> DescendantsAndSelf(CastNode node)
 {

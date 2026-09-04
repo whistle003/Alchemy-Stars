@@ -7,7 +7,7 @@ namespace Alchemist.UI;
 
 public partial class AboutWindow : Window
 {
-    public string AppVersion { get; } = typeof(AboutWindow).Assembly.GetName().Version?.ToString(3) ?? "1.0.3";
+    public string AppVersion { get; } = typeof(AboutWindow).Assembly.GetName().Version?.ToString(3) ?? "1.1.0";
     public string RuntimeVersion { get; } = RuntimeInformation.FrameworkDescription;
     public string OperatingSystem { get; } = RuntimeInformation.OSDescription;
 

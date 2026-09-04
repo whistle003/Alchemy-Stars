@@ -37,7 +37,9 @@ namespace Alchemist.UI
             "ModelPartsList",
         ];
 
-        public static MainViewModel ViewModel { get; set; } = new((message) => { }, string.Empty);
+        public static MainViewModel ViewModel { get; set; } = new(
+            (message) => { },
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Alchemy Stars"));
         private AboutWindow? aboutWindow;
 
         public MainWindow()
@@ -51,7 +53,7 @@ namespace Alchemist.UI
             LoadStartupProject();
         }
 
-        private static void LoadStartupProject()
+        private void LoadStartupProject()
         {
             var requestedProject = Environment.GetCommandLineArgs()
                 .Skip(1)
@@ -68,20 +70,20 @@ namespace Alchemist.UI
             catch (Exception ex)
             {
                 Logging.Logger.Error($"Failed to load startup project: {requestedProject}", ex);
-                MessageBox.Show(
+                UiDialogService.Show(
                     LocalizationManager.Format("StartupProjectFailedMessage", requestedProject, ex.Message),
                     LocalizationManager.Get("StartupProjectFailedTitle"),
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
+                    MessageBoxImage.Warning,
+                    this);
             }
         }
 
         private void CurrentDomainUnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            MessageBox.Show(
+            Logging.Logger.Error("Unhandled application exception.", e.ExceptionObject as Exception);
+            UiDialogService.Show(
                 LocalizationManager.Format("FatalErrorMessage", e.ExceptionObject),
                 LocalizationManager.Get("FatalErrorTitle"),
-                MessageBoxButton.OK,
                 MessageBoxImage.Error);
 
             try
@@ -97,7 +99,28 @@ namespace Alchemist.UI
 
         private static void OnLanguageChanged(object? sender, EventArgs e) => ViewModel.RefreshLocalization();
 
-        private void ToggleLanguageClick(object sender, RoutedEventArgs e) => LocalizationManager.Toggle();
+        private void OpenLanguageMenuClick(object sender, RoutedEventArgs e)
+        {
+            if (LanguageButton.ContextMenu is not ContextMenu menu)
+                return;
+            foreach (var item in menu.Items.OfType<MenuItem>())
+                item.IsChecked = string.Equals(item.Tag as string, LocalizationManager.LanguagePreference, StringComparison.OrdinalIgnoreCase);
+            menu.PlacementTarget = LanguageButton;
+            menu.Placement = PlacementMode.Bottom;
+            menu.IsOpen = true;
+        }
+
+        private void SetLanguageClick(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuItem { Tag: string preference })
+                LocalizationManager.SetLanguagePreference(preference);
+        }
+
+        private void OutputFormatSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (sender is ComboBox { IsLoaded: true, SelectedItem: string format })
+                ViewModel.SetDefaultOutputFormat(format);
+        }
 
         private void OpenAboutClick(object sender, RoutedEventArgs e)
         {
@@ -395,6 +418,9 @@ namespace Alchemist.UI
                     case "Run":
                         foreach (var script in ScriptsListBox.SelectedItems.Cast<Script>())
                             script.Run(ViewModel);
+                        break;
+                    case "CloseSettings":
+                        ViewModel.SetDefaultOutputFormat(ViewModel.OutputFormat);
                         break;
                     default:
                         break;

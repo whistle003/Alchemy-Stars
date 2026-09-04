@@ -1,3 +1,8 @@
+param(
+    [string]$PublishDirectory = '',
+    [string]$ArchivePath = ''
+)
+
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $solution = Join-Path $projectRoot 'fork\AlchemyStars\AlchemyStars.slnx'
@@ -35,6 +40,19 @@ function Test-CastInMaya([string]$castPath, [string]$label) {
     if ($LASTEXITCODE -ne 0) { throw "Maya 2025 $label acceptance failed with exit code $LASTEXITCODE" }
 }
 
+function Test-FbxInMaya([string]$fbxPath) {
+    $stem = [System.IO.Path]::GetFileNameWithoutExtension($fbxPath)
+    $artifactDirectory = Split-Path -Parent $fbxPath
+    $mayaScene = Join-Path $artifactDirectory ($stem + '.ma')
+    $mayaReport = Join-Path $artifactDirectory ($stem + '.maya2025.json')
+    & $mayaPython `
+        (Join-Path $projectRoot 'maya\verify_fbx_in_maya.py') `
+        $fbxPath `
+        $mayaScene `
+        $mayaReport
+    if ($LASTEXITCODE -ne 0) { throw "Maya 2025 FBX acceptance failed with exit code $LASTEXITCODE" }
+}
+
 dotnet build $solution -c Release
 if ($LASTEXITCODE -ne 0) { throw "dotnet build failed with exit code $LASTEXITCODE" }
 $acceptanceStartedUtc = [DateTime]::UtcNow
@@ -45,13 +63,26 @@ if (-not (Test-Path -LiteralPath $acceptanceReport)) { throw "Acceptance report 
 $report = Get-Content -LiteralPath $acceptanceReport -Raw | ConvertFrom-Json
 $sprintCast = Resolve-AcceptanceArtifact ([string]$report.artifacts.sprintCast) 'sprint CAST' $acceptanceStartedUtc
 $weaponFirstSprintCast = Resolve-AcceptanceArtifact ([string]$report.artifacts.weaponFirstSprintCast) 'weapon-first sprint CAST' $acceptanceStartedUtc
+$sprintSmd = Resolve-AcceptanceArtifact ([string]$report.artifacts.sprintSmd) 'sprint SMD' $acceptanceStartedUtc
 
 if (Test-Path -LiteralPath $mayaPython) {
     Test-CastInMaya $sprintCast 'standard-order sprint'
     Test-CastInMaya $weaponFirstSprintCast 'weapon-first sprint'
+    $sprintFbx = Resolve-AcceptanceArtifact ([string]$report.artifacts.sprintFbx) 'sprint FBX' $acceptanceStartedUtc
+    Test-FbxInMaya $sprintFbx
 }
 
-& (Join-Path $PSScriptRoot 'build-release.ps1')
+$releaseArguments = @{}
+if (-not [string]::IsNullOrWhiteSpace($PublishDirectory)) { $releaseArguments.PublishDirectory = $PublishDirectory }
+if (-not [string]::IsNullOrWhiteSpace($ArchivePath)) { $releaseArguments.ArchivePath = $ArchivePath }
+& (Join-Path $PSScriptRoot 'build-release.ps1') @releaseArguments
 if ($LASTEXITCODE -ne 0) { throw "Release build failed with exit code $LASTEXITCODE" }
-& (Join-Path $PSScriptRoot 'test-ui.ps1')
+$publishedExecutable = if ([string]::IsNullOrWhiteSpace($PublishDirectory)) {
+    Join-Path $projectRoot 'release\Alchemy Stars\Alchemy Stars.exe'
+} elseif ([System.IO.Path]::IsPathRooted($PublishDirectory)) {
+    Join-Path $PublishDirectory 'Alchemy Stars.exe'
+} else {
+    Join-Path (Join-Path $projectRoot $PublishDirectory) 'Alchemy Stars.exe'
+}
+& (Join-Path $PSScriptRoot 'test-ui.ps1') -ExecutablePath $publishedExecutable
 if ($LASTEXITCODE -ne 0) { throw "UI smoke tests failed with exit code $LASTEXITCODE" }

@@ -68,6 +68,9 @@
     <sys:String x:Key="EnableLeftHand">Enable left hand</sys:String>
     <sys:String x:Key="EnableRightHand">Enable right hand</sys:String>
     <sys:String x:Key="LayerPath">Animation layer file</sys:String>
+    <sys:String x:Key="ContextImportLayers">Import animation layers…</sys:String>
+    <sys:String x:Key="ContextImportAnimations">Import animations…</sys:String>
+    <sys:String x:Key="ContextImportParts">Import model parts…</sys:String>
     <sys:String x:Key="Offset">Offset</sys:String>
     <sys:String x:Key="TipMoveUp">Move up</sys:String>
     <sys:String x:Key="TipMoveDown">Move down</sys:String>

@@ -122,8 +122,15 @@
             </Grid>
 
             <TabControl Grid.Row="1" materialDesign:ColorZoneAssist.Mode="PrimaryDark" Style="{StaticResource MaterialDesignFilledTabControl}">
-                <TabItem Header="{DynamicResource AnimationsTab}">
-                    <ListView x:Name="MainAnimationList" AutomationProperties.AutomationId="AnimationList" Visibility="{Binding IsVisible}" ItemsSource="{Binding Animations}" AllowDrop="True" Drop="ListViewDrop" SelectionChanged="ListViewSelectionChanged" d:ItemsSource="{d:SampleData ItemCount=5}" SelectionMode="Extended">
+                <TabItem Header="{DynamicResource AnimationsTab}" AutomationProperties.AutomationId="AnimationsTab">
+                    <ListView x:Name="MainAnimationList" AutomationProperties.AutomationId="AnimationList" Visibility="{Binding IsVisible}" ItemsSource="{Binding Animations}" Background="#20000000" AllowDrop="True" Drop="ListViewDrop" SelectionChanged="ListViewSelectionChanged" PreviewMouseRightButtonUp="ImportSurfacePreviewMouseRightButtonUp" PreviewKeyDown="ImportSurfacePreviewKeyDown" d:ItemsSource="{d:SampleData ItemCount=5}" SelectionMode="Extended">
+                        <ListView.ContextMenu>
+                            <ContextMenu DataContext="{Binding PlacementTarget, RelativeSource={RelativeSource Self}}">
+                                <MenuItem Header="{DynamicResource ContextImportAnimations}" AutomationProperties.Name="{DynamicResource ContextImportAnimations}" AutomationProperties.AutomationId="ImportAnimationsContextMenuItem" Command="{Binding DataContext.AddAnimationsCommand}">
+                                    <MenuItem.Icon><materialDesign:PackIcon Kind="FileUploadOutline" Width="20" Height="20"/></MenuItem.Icon>
+                                </MenuItem>
+                            </ContextMenu>
+                        </ListView.ContextMenu>
                         <ListView.ItemContainerStyle><Style TargetType="ListViewItem" BasedOn="{StaticResource MaterialDesignGridViewItem}"><Setter Property="HorizontalContentAlignment" Value="Stretch"/></Style></ListView.ItemContainerStyle>
                         <ListView.View>
                             <GridView>
@@ -138,7 +145,14 @@
                                     <GridViewColumn.CellTemplate><DataTemplate><StackPanel><TextBox Margin="0,4,0,0" materialDesign:HintAssist.Hint="{DynamicResource LeftIKTargetOverride}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding LeftIKTargetBoneName}"/><TextBox Margin="0,4,0,0" materialDesign:HintAssist.Hint="{DynamicResource RightIKTargetOverride}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding RightIKTargetBoneName}"/><CheckBox Margin="0,12,0,0" Content="{DynamicResource EnableLeftHand}" IsChecked="{Binding EnableLeftHandIK}"/><CheckBox Margin="0,8,0,0" Content="{DynamicResource EnableRightHand}" IsChecked="{Binding EnableRightHandIK}"/></StackPanel></DataTemplate></GridViewColumn.CellTemplate>
                                 </GridViewColumn>
                                 <GridViewColumn Header="{DynamicResource LayersColumn}" Width="{Binding LayersColumnWith, FallbackValue=600}">
-                                    <GridViewColumn.CellTemplate><DataTemplate><ListBox Height="168" ItemsSource="{Binding Layers}" Background="#20000000" SelectionMode="Extended" SelectionChanged="ListBoxSelectionChanged">
+                                    <GridViewColumn.CellTemplate><DataTemplate><ListBox Height="168" ItemsSource="{Binding Layers}" Background="#20000000" SelectionMode="Extended" SelectionChanged="ListBoxSelectionChanged" AutomationProperties.AutomationId="LayerList" Tag="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=DataContext}">
+                                        <ListBox.ContextMenu>
+                                            <ContextMenu DataContext="{Binding PlacementTarget, RelativeSource={RelativeSource Self}}">
+                                                <MenuItem Header="{DynamicResource ContextImportLayers}" AutomationProperties.Name="{DynamicResource ContextImportLayers}" AutomationProperties.AutomationId="ImportLayersContextMenuItem" Command="{Binding Tag.AddLayersForAnimationCommand}" CommandParameter="{Binding DataContext}">
+                                                    <MenuItem.Icon><materialDesign:PackIcon Kind="FileUploadOutline" Width="20" Height="20"/></MenuItem.Icon>
+                                                </MenuItem>
+                                            </ContextMenu>
+                                        </ListBox.ContextMenu>
                                         <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem" BasedOn="{StaticResource MaterialDesignListBoxItem}"><Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="Background" Value="{Binding ColorBrush}"/></Style></ListBox.ItemContainerStyle>
                                         <ListBox.ItemTemplate><DataTemplate><Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="44"/><ColumnDefinition Width="112"/><ColumnDefinition Width="66"/><ColumnDefinition Width="44"/><ColumnDefinition Width="44"/><ColumnDefinition Width="44"/></Grid.ColumnDefinitions><TextBox Grid.Column="0" IsReadOnly="True" Text="{Binding Name}" VerticalContentAlignment="Center" materialDesign:HintAssist.Hint="{DynamicResource LayerPath}"/><Button Grid.Column="1" Style="{StaticResource PathBrowseButton}" Click="BrowseLayerClick"><materialDesign:PackIcon Kind="FolderSearchOutline" Width="20" Height="20"/></Button><ComboBox Grid.Column="2" Margin="4,0" ItemsSource="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=DataContext.LayerTypeOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Value" SelectedValue="{Binding Type, Mode=TwoWay}"/><TextBox Grid.Column="3" Margin="4,0" materialDesign:HintAssist.Hint="{DynamicResource Offset}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding Offset, UpdateSourceTrigger=PropertyChanged}"/><Button Grid.Column="4" Style="{StaticResource PathBrowseButton}" Content="{materialDesign:PackIcon Kind=ArrowUpBold}" ToolTip="{DynamicResource TipMoveUp}" Command="{Binding MoveUpCommand}"/><Button Grid.Column="5" Style="{StaticResource PathBrowseButton}" Content="{materialDesign:PackIcon Kind=ArrowDownBold}" ToolTip="{DynamicResource TipMoveDown}" Command="{Binding MoveDownCommand}"/><Button Grid.Column="6" Style="{StaticResource PathBrowseButton}" Content="{materialDesign:PackIcon Kind=Delete}" ToolTip="{DynamicResource TipDelete}" Command="{Binding DeleteCommand}"/></Grid></DataTemplate></ListBox.ItemTemplate>
                                     </ListBox></DataTemplate></GridViewColumn.CellTemplate>
@@ -150,8 +164,15 @@
                         </ListView.View>
                     </ListView>
                 </TabItem>
-                <TabItem Header="{DynamicResource PartsTab}">
-                    <ListView x:Name="MainModelList" Visibility="{Binding IsVisible}" ItemsSource="{Binding Parts}" SelectionChanged="ListViewSelectionChanged" AllowDrop="True" Drop="ModelListDrop" d:ItemsSource="{d:SampleData ItemCount=5}" SelectionMode="Extended">
+                <TabItem Header="{DynamicResource PartsTab}" AutomationProperties.AutomationId="PartsTab">
+                    <ListView x:Name="MainModelList" AutomationProperties.AutomationId="ModelPartsList" Visibility="{Binding IsVisible}" ItemsSource="{Binding Parts}" Background="#20000000" SelectionChanged="ListViewSelectionChanged" AllowDrop="True" Drop="ModelListDrop" PreviewMouseRightButtonUp="ImportSurfacePreviewMouseRightButtonUp" PreviewKeyDown="ImportSurfacePreviewKeyDown" d:ItemsSource="{d:SampleData ItemCount=5}" SelectionMode="Extended">
+                        <ListView.ContextMenu>
+                            <ContextMenu DataContext="{Binding PlacementTarget, RelativeSource={RelativeSource Self}}">
+                                <MenuItem Header="{DynamicResource ContextImportParts}" AutomationProperties.Name="{DynamicResource ContextImportParts}" AutomationProperties.AutomationId="ImportPartsContextMenuItem" Command="{Binding DataContext.AddPartsCommand}">
+                                    <MenuItem.Icon><materialDesign:PackIcon Kind="FileUploadOutline" Width="20" Height="20"/></MenuItem.Icon>
+                                </MenuItem>
+                            </ContextMenu>
+                        </ListView.ContextMenu>
                         <ListView.ItemContainerStyle><Style TargetType="ListViewItem" BasedOn="{StaticResource MaterialDesignGridViewItem}"><Setter Property="HorizontalContentAlignment" Value="Stretch"/></Style></ListView.ItemContainerStyle>
                         <ListView.View><GridView>
                             <GridViewColumn Header="{DynamicResource FileColumn}" Width="{Binding PartsFileColumnWith, FallbackValue=560}"><GridViewColumn.CellTemplate><DataTemplate><Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="44"/></Grid.ColumnDefinitions><TextBox Margin="0,4,4,0" IsReadOnly="True" materialDesign:HintAssist.Hint="{DynamicResource ModelPath}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding FilePath}"/><Button Grid.Column="1" Margin="0,4,0,0" Style="{StaticResource PathBrowseButton}" Click="BrowsePartClick"><materialDesign:PackIcon Kind="FolderSearchOutline" Width="20" Height="20"/></Button></Grid></DataTemplate></GridViewColumn.CellTemplate></GridViewColumn>

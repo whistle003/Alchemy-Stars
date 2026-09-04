@@ -68,6 +68,9 @@
     <sys:String x:Key="EnableLeftHand">启用左手</sys:String>
     <sys:String x:Key="EnableRightHand">启用右手</sys:String>
     <sys:String x:Key="LayerPath">动画层文件</sys:String>
+    <sys:String x:Key="ContextImportLayers">导入动画层…</sys:String>
+    <sys:String x:Key="ContextImportAnimations">导入动画…</sys:String>
+    <sys:String x:Key="ContextImportParts">导入模型部件…</sys:String>
     <sys:String x:Key="Offset">偏移</sys:String>
     <sys:String x:Key="TipMoveUp">上移</sys:String>
     <sys:String x:Key="TipMoveDown">下移</sys:String>

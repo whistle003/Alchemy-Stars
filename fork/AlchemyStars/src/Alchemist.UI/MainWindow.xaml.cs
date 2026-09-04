@@ -13,7 +13,9 @@ using System.Runtime.CompilerServices;
 using System.Security.Policy;
 using System.Text;
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -28,6 +30,13 @@ namespace Alchemist.UI
     /// </summary>
     public partial class MainWindow : Window
     {
+        private static readonly HashSet<string> ImportSurfaceIds =
+        [
+            "AnimationList",
+            "LayerList",
+            "ModelPartsList",
+        ];
+
         public static MainViewModel ViewModel { get; set; } = new((message) => { }, string.Empty);
         private AboutWindow? aboutWindow;
 
@@ -179,6 +188,62 @@ namespace Alchemist.UI
             var selected = FileBrowserService.ChooseCastFile(this, "DialogAddPart", part.FilePath);
             if (selected is not null)
                 part.FilePath = selected;
+        }
+
+        private void ImportSurfacePreviewMouseRightButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            var surface = FindImportSurface(e.OriginalSource as DependencyObject)
+                ?? sender as FrameworkElement;
+            if (OpenImportContextMenu(surface, PlacementMode.MousePoint))
+                e.Handled = true;
+        }
+
+        private void ImportSurfacePreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            var isContextMenuKey = e.Key == Key.Apps
+                || (e.Key == Key.F10 && Keyboard.Modifiers.HasFlag(ModifierKeys.Shift));
+            if (!isContextMenuKey)
+                return;
+
+            var surface = FindImportSurface(Keyboard.FocusedElement as DependencyObject)
+                ?? sender as FrameworkElement;
+            if (OpenImportContextMenu(surface, PlacementMode.Center))
+                e.Handled = true;
+        }
+
+        private static bool OpenImportContextMenu(FrameworkElement? surface, PlacementMode placement)
+        {
+            if (surface?.ContextMenu is not ContextMenu menu)
+                return false;
+
+            menu.PlacementTarget = surface;
+            menu.Placement = placement;
+            menu.IsOpen = true;
+            return true;
+        }
+
+        private static FrameworkElement? FindImportSurface(DependencyObject? current)
+        {
+            while (current is not null)
+            {
+                if (current is FrameworkElement element
+                    && ImportSurfaceIds.Contains(AutomationProperties.GetAutomationId(element)))
+                    return element;
+
+                current = GetParent(current);
+            }
+
+            return null;
+        }
+
+        private static DependencyObject? GetParent(DependencyObject current)
+        {
+            if (current is Visual || current is System.Windows.Media.Media3D.Visual3D)
+                return VisualTreeHelper.GetParent(current);
+            if (current is ContentElement content)
+                return ContentOperations.GetParent(content)
+                    ?? (content as FrameworkContentElement)?.Parent;
+            return LogicalTreeHelper.GetParent(current);
         }
 
         private void TextBoxGotFocus(object sender, RoutedEventArgs e)

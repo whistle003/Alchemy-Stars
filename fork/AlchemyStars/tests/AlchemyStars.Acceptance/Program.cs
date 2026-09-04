@@ -16,6 +16,9 @@ var sprintTemplate = sprintProject.Animations.Single();
 var idleTemplate = idleProject.Animations.Single();
 
 Run("Animation.Clone preserves all per-animation settings", () => TestAnimationClone(sprintTemplate));
+Run("Context animation import adds every selected animation", TestContextAnimationImport);
+Run("Context layer import targets only the requested animation", TestContextLayerImport);
+Run("Context model import adds every selected model part", TestContextPartImport);
 Run("Bundled sprint project restores layer and part ownership", () => TestBundledProject(sprintProject, expectedLayerCount: 1));
 Run("Bundled idle project restores part ownership", () => TestBundledProject(idleProject, expectedLayerCount: 0));
 
@@ -112,6 +115,37 @@ static void TestAnimationClone(Animation template)
     Assert(!clone.EnableLeftHandIK && clone.EnableRightHandIK, "IK flags were not cloned independently.");
     Assert(clone.LeftIKTargetBoneName == "left_override" && clone.RightIKTargetBoneName == "right_override", "IK overrides were lost.");
     Assert(clone.Layers.Single().Offset == 7 && ReferenceEquals(clone.Layers.Single().Owner, clone), "Layer offset or ownership was lost.");
+}
+
+static void TestContextLayerImport()
+{
+    var target = new Animation("base.cast");
+    var other = new Animation("other.cast");
+    var added = MainViewModel.AddLayerFiles([target], ["offset.cast", "gesture.cast"]);
+
+    Assert(added == 2, "Both selected layer files should be imported into the target animation.");
+    Assert(target.Layers.Select(layer => layer.Name).SequenceEqual(["offset.cast", "gesture.cast"]), "Imported layers are missing or out of order.");
+    Assert(target.Layers.All(layer => ReferenceEquals(layer.Owner, target)), "Imported layer ownership was not assigned to the target animation.");
+    Assert(other.Layers.Count == 0, "A non-target animation was modified by context import.");
+}
+
+static void TestContextAnimationImport()
+{
+    var viewModel = new MainViewModel(_ => { }, string.Empty);
+    var added = viewModel.AddAnimationFiles(["sprint.cast", "idle.cast"]);
+
+    Assert(added == 2, "Both selected animation files should be imported.");
+    Assert(viewModel.Animations.Select(animation => animation.Name).SequenceEqual(["sprint.cast", "idle.cast"]), "Imported animations are missing or out of order.");
+}
+
+static void TestContextPartImport()
+{
+    var viewModel = new MainViewModel(_ => { }, string.Empty);
+    var added = viewModel.AddPartFiles(["hands.cast", "weapon.cast"]);
+
+    Assert(added == 2, "Both selected model files should be imported.");
+    Assert(viewModel.Parts.Select(part => part.FilePath).SequenceEqual(["hands.cast", "weapon.cast"]), "Imported model parts are missing or out of order.");
+    Assert(viewModel.Parts.All(part => ReferenceEquals(part.Owner, viewModel)), "Imported model part ownership was not assigned to the current project.");
 }
 
 static void TestMergedSkeleton(Skeleton skeleton)

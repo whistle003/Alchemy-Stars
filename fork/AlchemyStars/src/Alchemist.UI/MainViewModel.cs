@@ -50,6 +50,7 @@ namespace Alchemist.UI
         public ICommand ToggleRightHandIKCommand { get; set; }
         public ICommand SetPoseFileCommand { get; set; }
         public ICommand AddLayerCommand { get; set; }
+        public ICommand AddLayersForAnimationCommand { get; set; }
         public ICommand RemoveLayerCommand { get; set; }
         public ICommand MoveLayerCommand { get; set; }
         public ICommand ImportProjectCommand { get; set; }
@@ -133,24 +134,12 @@ namespace Alchemist.UI
             // IO Commands
             AddAnimationsCommand = new ButtonCommand((obj) =>
             {
-                // TODO: Move to a service for multi-plat/Avalonia/etc
-                var files = FileBrowserService.ChooseCastFiles(Application.Current?.MainWindow, "DialogAddAnimation");
-                foreach (var file in files)
-                {
-                    var anim = new Animation(file);
-                    Animations.Add(anim);
-                }
+                ImportAnimationFiles();
             });
             // Parts Commands
             AddPartsCommand = new ButtonCommand((obj) =>
             {
-                // TODO: Move to a service for multi-plat/Avalonia/etc
-                var files = FileBrowserService.ChooseCastFiles(Application.Current?.MainWindow, "DialogAddPart");
-                foreach (var file in files)
-                {
-                    var model = new Part(this, file);
-                    Parts.Add(model);
-                }
+                ImportPartFiles();
             });
             SaveAnimationsCommand = new ButtonCommand((obj) =>
             {
@@ -241,15 +230,12 @@ namespace Alchemist.UI
             // Layers
             AddLayerCommand = new ButtonCommand((obj) =>
             {
-                // TODO: Move to a service for multi-plat/Avalonia/etc
-                var files = FileBrowserService.ChooseCastFiles(Application.Current?.MainWindow, "DialogAddLayer");
-                foreach (var file in files)
-                {
-                    foreach (var anim in SelectedAnimations)
-                    {
-                        anim.Layers.Add(new(file, anim));
-                    }
-                }
+                ImportLayerFiles(SelectedAnimations);
+            });
+            AddLayersForAnimationCommand = new ButtonCommand((obj) =>
+            {
+                if (obj is Animation animation)
+                    ImportLayerFiles([animation]);
             });
             RemoveLayerCommand = new ButtonCommand((obj) =>
             {
@@ -385,6 +371,59 @@ namespace Alchemist.UI
             foreach (var option in PartTypeOptions)
                 option.Refresh();
             LocalizationRevision++;
+        }
+
+        public static int AddLayerFiles(IEnumerable<Animation> animations, IEnumerable<string> filePaths)
+        {
+            var targets = animations.Distinct().ToArray();
+            var files = filePaths.Where(path => !string.IsNullOrWhiteSpace(path)).ToArray();
+            foreach (var animation in targets)
+            {
+                foreach (var file in files)
+                    animation.Layers.Add(new AnimationLayer(file, animation));
+            }
+
+            return targets.Length * files.Length;
+        }
+
+        public int AddAnimationFiles(IEnumerable<string> filePaths)
+        {
+            var files = filePaths.Where(path => !string.IsNullOrWhiteSpace(path)).ToArray();
+            foreach (var file in files)
+                Animations.Add(new Animation(file));
+
+            return files.Length;
+        }
+
+        public int AddPartFiles(IEnumerable<string> filePaths)
+        {
+            var files = filePaths.Where(path => !string.IsNullOrWhiteSpace(path)).ToArray();
+            foreach (var file in files)
+                Parts.Add(new Part(this, file));
+
+            return files.Length;
+        }
+
+        private void ImportAnimationFiles()
+        {
+            var files = FileBrowserService.ChooseCastFiles(Application.Current?.MainWindow, "DialogAddAnimation");
+            AddAnimationFiles(files);
+        }
+
+        private static void ImportLayerFiles(IEnumerable<Animation> animations)
+        {
+            var targets = animations.Distinct().ToArray();
+            if (targets.Length == 0)
+                return;
+
+            var files = FileBrowserService.ChooseCastFiles(Application.Current?.MainWindow, "DialogAddLayer");
+            AddLayerFiles(targets, files);
+        }
+
+        private void ImportPartFiles()
+        {
+            var files = FileBrowserService.ChooseCastFiles(Application.Current?.MainWindow, "DialogAddPart");
+            AddPartFiles(files);
         }
 
         public void LoadProjectFile(string filePath)

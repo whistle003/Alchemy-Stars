@@ -194,51 +194,51 @@ namespace Alchemist.UI
                         case "ik_out_start_left_hand":
                         case "ik_in_end_left_hand":
                             Logging.Logger.Info($"Adding Left Hand IK 1.0 from: {note.Name} ({note.KeyFrames.Count} frames)");
-                            note.KeyFrames.ForEach(x => lSolver?.Weights.Add(new(x.Frame + sampler.StartFrame, 1)));
+                            AddShiftedWeights(lSolver?.Weights, note.KeyFrames, sampler.StartFrame, 1);
                             break;
                         case "ik_in_start_left_hand":
                         case "ik_out_end_left_hand":
                             Logging.Logger.Info($"Adding Left Hand IK 0.0 weights from: {note.Name} ({note.KeyFrames.Count} frames)");
-                            note.KeyFrames.ForEach(x => lSolver?.Weights.Add(new(x.Frame + sampler.StartFrame, 0)));
+                            AddShiftedWeights(lSolver?.Weights, note.KeyFrames, sampler.StartFrame, 0);
                             break;
                         case "ik_out_start_right_hand":
                         case "ik_in_end_right_hand":
                             Logging.Logger.Info($"Adding Right Hand IK 1.0 weights from: {note.Name} ({note.KeyFrames.Count} frames)");
-                            note.KeyFrames.ForEach(x => rSolver?.Weights.Add(new(x.Frame + sampler.StartFrame, 1)));
+                            AddShiftedWeights(rSolver?.Weights, note.KeyFrames, sampler.StartFrame, 1);
                             break;
                         case "ik_in_start_right_hand":
                         case "ik_out_end_right_hand":
                             Logging.Logger.Info($"Adding Right Hand IK 0.0 weights from: {note.Name} ({note.KeyFrames.Count} frames)");
-                            note.KeyFrames.ForEach(x => rSolver?.Weights.Add(new(x.Frame + sampler.StartFrame, 0)));
+                            AddShiftedWeights(rSolver?.Weights, note.KeyFrames, sampler.StartFrame, 0);
                             break;
                         case "fingers_out_start_left_hand":
                         case "fingers_in_end_left_hand":
                             Logging.Logger.Info($"Adding Left Hand Finger 1.0 weights from: {note.Name} ({note.KeyFrames.Count} frames)");
-                            note.KeyFrames.ForEach(x => plSampler?.Weights.Add(new(x.Frame + sampler.StartFrame, 1)));
+                            AddShiftedWeights(plSampler?.Weights, note.KeyFrames, sampler.StartFrame, 1);
                             break;
                         case "fingers_in_start_left_hand":
                         case "fingers_out_end_left_hand":
                             Logging.Logger.Info($"Adding Left Hand Finger 0.0 weights from: {note.Name} ({note.KeyFrames.Count} frames)");
-                            note.KeyFrames.ForEach(x => plSampler?.Weights.Add(new(x.Frame + sampler.StartFrame, 0)));
+                            AddShiftedWeights(plSampler?.Weights, note.KeyFrames, sampler.StartFrame, 0);
                             break;
                         case "fingers_out_start_right_hand":
                         case "fingers_in_end_right_hand":
                             Logging.Logger.Info($"Adding Right Hand Finger 1.0 weights from: {note.Name} ({note.KeyFrames.Count} frames)");
-                            note.KeyFrames.ForEach(x => prSampler?.Weights.Add(new(x.Frame + sampler.StartFrame, 1)));
+                            AddShiftedWeights(prSampler?.Weights, note.KeyFrames, sampler.StartFrame, 1);
                             break;
                         case "fingers_in_start_right_hand":
                         case "fingers_out_end_right_hand":
                             Logging.Logger.Info($"Adding Right Hand Finger 0.0 weights from: {note.Name} ({note.KeyFrames.Count} frames)");
-                            note.KeyFrames.ForEach(x => prSampler?.Weights.Add(new(x.Frame + sampler.StartFrame, 0)));
+                            AddShiftedWeights(prSampler?.Weights, note.KeyFrames, sampler.StartFrame, 0);
                             break;
                         case "gesture_blend_in":
                         case "gesture_blend_out_start":
                             Logging.Logger.Info($"Adding Gesture 1.0 weights from: {note.Name} ({note.KeyFrames.Count} frames)");
-                            note.KeyFrames.ForEach(x => gestureLayers.ForEach(y => y.Weights.Add(new(x.Frame + sampler.StartFrame, 1))));
+                            gestureLayers.ForEach(layer => AddShiftedWeights(layer.Weights, note.KeyFrames, sampler.StartFrame, 1));
                             break;
                         case "gesture_blend_out_end":
                             Logging.Logger.Info($"Adding Gesture 0.0 weights from: {note.Name} ({note.KeyFrames.Count} frames)");
-                            note.KeyFrames.ForEach(x => gestureLayers.ForEach(y => y.Weights.Add(new(x.Frame + sampler.StartFrame, 0))));
+                            gestureLayers.ForEach(layer => AddShiftedWeights(layer.Weights, note.KeyFrames, sampler.StartFrame, 0));
                             break;
                     }
                 }
@@ -398,76 +398,8 @@ namespace Alchemist.UI
         /// </summary>
         /// <param name="parts">The parts to load skeletons from.</param>
         /// <returns>A single combined skeleton.</returns>
-        public static Skeleton LoadSkeletonFromParts(IEnumerable<Part> parts, bool matchOldCallOfDuty)
-        {
-            var skeleton = new Skeleton("Alchemy Stars Merged Skeleton");
-            var bonesByName = new Dictionary<string, SkeletonBone>(StringComparer.OrdinalIgnoreCase);
-
-            foreach (var part in parts)
-            {
-                if (string.IsNullOrWhiteSpace(part.FilePath) || !File.Exists(part.FilePath))
-                    throw new FileNotFoundException("Model part could not be found.", part.FilePath);
-
-                var loadedModel = TranslatorFactory.Load<Model>(part.FilePath);
-
-                if (loadedModel.Skeleton is null)
-                {
-                    continue;
-                }
-                if (loadedModel.Skeleton.Bones.Count <= 0)
-                {
-                    continue;
-                }
-
-                _ = loadedModel.Skeleton.Bones.FirstOrDefault(x => x.Parent is null)
-                    ?? throw new InvalidDataException($"Model has no root bone: {part.FilePath}");
-                var requestedParent = string.IsNullOrWhiteSpace(part.ParentBoneTag)
-                    ? null
-                    : bonesByName.GetValueOrDefault(part.ParentBoneTag);
-                if (!string.IsNullOrWhiteSpace(part.ParentBoneTag) && requestedParent is null)
-                    throw new InvalidDataException($"Parent bone '{part.ParentBoneTag}' was not found before loading: {part.FilePath}");
-                var boneMap = new Dictionary<SkeletonBone, SkeletonBone>();
-
-                foreach (var sourceBone in loadedModel.Skeleton.EnumerateHierarchy())
-                {
-                    var boneName = sourceBone.Name;
-                    if (string.IsNullOrWhiteSpace(boneName))
-                        throw new InvalidDataException($"Model contains an unnamed bone: {part.FilePath}");
-                    if (bonesByName.TryGetValue(boneName, out var existingBone))
-                    {
-                        boneMap[sourceBone] = existingBone;
-                        continue;
-                    }
-
-                    var parent = sourceBone.Parent is null
-                        ? requestedParent
-                        : boneMap[sourceBone.Parent];
-                    var resetViewHands = part.Type == PartType.ViewHands && matchOldCallOfDuty;
-                    var mergedBone = new SkeletonBone(boneName)
-                    {
-                        Parent = parent,
-                        BaseLocalRotation = resetViewHands ? Quaternion.Identity : sourceBone.BaseLocalRotation,
-                        BaseLocalTranslation = resetViewHands ? Vector3.Zero : sourceBone.BaseLocalTranslation,
-                        BaseWorldRotation = sourceBone.BaseWorldRotation,
-                        BaseWorldTranslation = sourceBone.BaseWorldTranslation,
-                        BaseScale = sourceBone.BaseScale,
-                        Scale = sourceBone.Scale,
-                        CanAnimate = sourceBone.CanAnimate,
-                    };
-                    skeleton.AddBone(mergedBone);
-                    bonesByName.Add(boneName, mergedBone);
-                    boneMap[sourceBone] = mergedBone;
-                }
-            }
-
-            if (skeleton.Bones.Count == 0)
-                throw new InvalidDataException("No model part contained a usable skeleton.");
-
-            skeleton.AssignBoneIndices();
-            skeleton.GenerateGlobalTransforms();
-
-            return skeleton;
-        }
+        public static Skeleton LoadSkeletonFromParts(IEnumerable<Part> parts, bool matchOldCallOfDuty) =>
+            MergedSkeletonBuilder.Build(parts, matchOldCallOfDuty, TranslatorFactory);
 
         private static void SaveAtomically(string outputPath, Action<string> write)
         {
@@ -490,6 +422,19 @@ namespace Alchemist.UI
                     File.Delete(temporaryPath);
                 }
             }
+        }
+
+        private static void AddShiftedWeights(
+            List<AnimationKeyFrame<float, float>>? destination,
+            IEnumerable<AnimationKeyFrame<float, Action<Graphics3DScene>?>> source,
+            float frameOffset,
+            float value)
+        {
+            if (destination is null)
+                return;
+
+            destination.AddRange(source.Select(frame =>
+                new AnimationKeyFrame<float, float>(frame.Frame + frameOffset, value)));
         }
     }
 }

@@ -4,50 +4,51 @@ using Cast.NET;
 using RedFox.Graphics3D.Skeletal;
 using System.Text.Json;
 
-const string ArmsPath = @"D:\_tiqu\Files\viewhands_mp_base_iw8_LOD0.cast";
-const string WeaponPath = @"D:\_tiqu\Saluki\exported_files\Merged Models\sat_vm_ar_hawk_rec_LOD0.cast";
-const string SprintPath = @"D:\_tiqu\Saluki\exported_files\bo7\animations\sat_vm_ar_hawk_sprint_loop.cast";
-const string SprintOffsetPath = @"D:\_tiqu\Saluki\exported_files\bo7\animations\sat_vm_ar_hawk_sprint_offset_additive.cast";
-const string IdlePath = @"D:\_tiqu\Saluki\exported_files\bo7\animations\sat_vm_ar_hawk_idle.cast";
-
 var outputDirectory = args.Length > 0
     ? Path.GetFullPath(args[0])
     : Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "output"));
 
 var checks = new List<object>();
 var failures = new List<string>();
+var sprintProject = LoadBundledProject("sat_vm_ar_hawk_sprint.aprj");
+var idleProject = LoadBundledProject("sat_vm_ar_hawk_idle.aprj");
+var sprintTemplate = sprintProject.Animations.Single();
+var idleTemplate = idleProject.Animations.Single();
 
-Run("Animation.Clone preserves all per-animation settings", TestAnimationClone);
-Run("Bundled sprint project restores layer and part ownership", TestBundledProject);
+Run("Animation.Clone preserves all per-animation settings", () => TestAnimationClone(sprintTemplate));
+Run("Bundled sprint project restores layer and part ownership", () => TestBundledProject(sprintProject, expectedLayerCount: 1));
+Run("Bundled idle project restores part ownership", () => TestBundledProject(idleProject, expectedLayerCount: 0));
 
-var requiredFiles = new[] { ArmsPath, WeaponPath, SprintPath, SprintOffsetPath, IdlePath };
+var requiredFiles = sprintProject.Parts.Select(part => part.FilePath)
+    .Concat(sprintProject.Animations.Select(animation => animation.Name))
+    .Concat(sprintProject.Animations.SelectMany(animation => animation.Layers.Select(layer => layer.Name)))
+    .Concat(idleProject.Animations.Select(animation => animation.Name))
+    .Distinct(StringComparer.OrdinalIgnoreCase)
+    .ToArray();
 if (requiredFiles.All(File.Exists))
 {
     Directory.CreateDirectory(outputDirectory);
-    var parts = CreateParts();
+    var parts = sprintProject.Parts.ToList();
     var skeleton = AnimationConverter.LoadSkeletonFromParts(parts, matchOldCallOfDuty: false);
 
     Run("View hands and weapon share one merged skeleton", () => TestMergedSkeleton(skeleton));
     Run("Unsafe right-hand IK target is rejected", () => TestRightHandIkCycle(skeleton));
 
-    var sprintOutput = Path.Combine(outputDirectory, "sat_vm_ar_hawk_sprint_alchemy_stars.cast");
+    var sprintAnimation = sprintTemplate.Clone();
+    sprintAnimation.OutputFolder = outputDirectory;
+    var sprintOutput = Path.Combine(outputDirectory, sprintAnimation.OutputName + ".cast");
     Run("Sprint and additive offset bake into one Maya CAST", () =>
     {
-        var animation = CreateAnimation(SprintPath, sprintOutput, enableLeftIk: true);
-        animation.Layers.Add(new AnimationLayer(SprintOffsetPath, animation)
-        {
-            Type = AnimationLayerType.Additive,
-            Offset = 0,
-        });
-        Bake(parts, skeleton, animation);
+        Bake(parts, skeleton, sprintAnimation);
         ValidateMayaPackage(sprintOutput);
     });
 
-    var idleOutput = Path.Combine(outputDirectory, "sat_vm_ar_hawk_idle_alchemy_stars.cast");
+    var idleAnimation = idleTemplate.Clone();
+    idleAnimation.OutputFolder = outputDirectory;
+    var idleOutput = Path.Combine(outputDirectory, idleAnimation.OutputName + ".cast");
     Run("Idle bakes into a separate one-animation Maya CAST", () =>
     {
-        var animation = CreateAnimation(IdlePath, idleOutput, enableLeftIk: false);
-        Bake(parts, skeleton, animation);
+        Bake(parts, skeleton, idleAnimation);
         ValidateMayaPackage(idleOutput);
     });
 }
@@ -81,21 +82,6 @@ void Run(string name, Action test)
     }
 }
 
-static List<Part> CreateParts() =>
-[
-    new Part(null, ArmsPath) { Type = PartType.ViewHands },
-    new Part(null, WeaponPath) { Type = PartType.Weapon, ParentBoneTag = "j_gun" },
-];
-
-static Animation CreateAnimation(string sourcePath, string outputPath, bool enableLeftIk) => new(sourcePath)
-{
-    OutputName = Path.GetFileNameWithoutExtension(outputPath),
-    OutputFolder = Path.GetDirectoryName(outputPath)!,
-    OutputFramerate = 30.0f,
-    EnableLeftHandIK = enableLeftIk,
-    EnableRightHandIK = false,
-};
-
 static void Bake(IEnumerable<Part> parts, Skeleton skeleton, Animation animation)
 {
     var output = AnimationConverter.Convert(
@@ -113,16 +99,14 @@ static void Bake(IEnumerable<Part> parts, Skeleton skeleton, Animation animation
         "Unexpected output path.");
 }
 
-static void TestAnimationClone()
+static void TestAnimationClone(Animation template)
 {
-    var source = new Animation(SprintPath)
-    {
-        EnableLeftHandIK = false,
-        EnableRightHandIK = true,
-        LeftIKTargetBoneName = "left_override",
-        RightIKTargetBoneName = "right_override",
-    };
-    source.Layers.Add(new AnimationLayer(SprintOffsetPath, source) { Offset = 7 });
+    var source = template.Clone();
+    source.EnableLeftHandIK = false;
+    source.EnableRightHandIK = true;
+    source.LeftIKTargetBoneName = "left_override";
+    source.RightIKTargetBoneName = "right_override";
+    source.Layers.Single().Offset = 7;
 
     var clone = source.Clone();
     Assert(!clone.EnableLeftHandIK && clone.EnableRightHandIK, "IK flags were not cloned independently.");
@@ -157,17 +141,21 @@ static void TestRightHandIkCycle(Skeleton skeleton)
     Assert(solver is null && player.Solvers.Count == 0, "Unsafe IK solver was added to the animation player.");
 }
 
-static void TestBundledProject()
+static void TestBundledProject(MainViewModel viewModel, int expectedLayerCount)
 {
-    var preset = FindFile("presets", "sat_vm_ar_hawk_sprint.aprj");
-    var viewModel = new MainViewModel(_ => { }, string.Empty);
-    viewModel.LoadProjectFile(preset);
-
     Assert(viewModel.Animations.Count == 1 && viewModel.Parts.Count == 2, "Bundled sprint preset has unexpected inputs.");
     var animation = viewModel.Animations.Single();
-    Assert(animation.Layers.Count == 1 && ReferenceEquals(animation.Layers.Single().Owner, animation), "Layer owner was not restored.");
+    Assert(animation.Layers.Count == expectedLayerCount, "Bundled preset has an unexpected layer count.");
+    Assert(animation.Layers.All(layer => ReferenceEquals(layer.Owner, animation)), "Layer owner was not restored.");
     Assert(viewModel.Parts.All(part => ReferenceEquals(part.Owner, viewModel)), "Part owners were not restored.");
     Assert(!animation.EnableRightHandIK, "Bundled preset must not enable cyclic right-hand IK.");
+}
+
+static MainViewModel LoadBundledProject(string fileName)
+{
+    var viewModel = new MainViewModel(_ => { }, string.Empty);
+    viewModel.LoadProjectFile(FindFile("presets", fileName));
+    return viewModel;
 }
 
 static string FindFile(params string[] relativeParts)

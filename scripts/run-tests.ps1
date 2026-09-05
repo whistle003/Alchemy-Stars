@@ -97,6 +97,8 @@ function Test-FbxInMaya([string]$fbxPath) {
 
 dotnet build $solution -c Release
 if ($LASTEXITCODE -ne 0) { throw "dotnet build failed with exit code $LASTEXITCODE" }
+dotnet run --project $acceptanceProject -c Release --no-build -- --ui-layout-only (Join-Path $output 'ui-layout')
+if ($LASTEXITCODE -ne 0) { throw "UI layout regression failed with exit code $LASTEXITCODE" }
 $acceptanceStartedUtc = [DateTime]::UtcNow
 dotnet run --project $acceptanceProject -c Release --no-build -- $output $exampleDirectory
 if ($LASTEXITCODE -ne 0) { throw "Acceptance tests failed with exit code $LASTEXITCODE" }

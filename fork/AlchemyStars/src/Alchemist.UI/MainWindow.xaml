@@ -9,16 +9,20 @@
         mc:Ignorable="d"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         Background="{DynamicResource MaterialDesignPaper}"
-        Title="{Binding Title}" KeyDown="WindowKeyDown" AutomationProperties.AutomationId="MainWindow"
+        Title="{Binding Title}" KeyDown="WindowKeyDown" SizeChanged="WindowSizeChanged" Loaded="WindowLoaded" AutomationProperties.AutomationId="MainWindow"
+        FontSize="14" UseLayoutRounding="True" SnapsToDevicePixels="True"
         Height="768" Width="1366" MinHeight="520" MinWidth="900">
     <Window.Resources>
         <Style x:Key="PathBrowseButton" TargetType="Button" BasedOn="{StaticResource MaterialDesignToolButton}">
+            <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
             <Setter Property="Width" Value="42"/>
             <Setter Property="Height" Value="42"/>
             <Setter Property="Padding" Value="8"/>
             <Setter Property="ToolTip" Value="{DynamicResource Browse}"/>
+            <Setter Property="AutomationProperties.Name" Value="{Binding ToolTip, RelativeSource={RelativeSource Self}}"/>
         </Style>
         <Style x:Key="TopBarIconButton" TargetType="Button" BasedOn="{StaticResource MaterialDesignToolButton}">
+            <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
             <Setter Property="Width" Value="44"/>
             <Setter Property="Height" Value="44"/>
             <Setter Property="Margin" Value="1,0"/>
@@ -45,7 +49,7 @@
             <Setter Property="Opacity" Value="0.78"/>
             <Setter Property="Margin" Value="0,0,0,4"/>
         </Style>
-        <Style x:Key="SettingsTextBox" TargetType="TextBox">
+        <Style x:Key="SettingsTextBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignTextBox}">
             <Setter Property="Height" Value="42"/>
             <Setter Property="MinWidth" Value="0"/>
             <Setter Property="Padding" Value="8,0"/>
@@ -53,15 +57,32 @@
         </Style>
         <Style x:Key="EditablePathTextBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignFloatingHintTextBox}">
             <Setter Property="AllowDrop" Value="True"/>
+            <Setter Property="MinHeight" Value="48"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}"/>
             <EventSetter Event="LostFocus" Handler="PathTextBoxLostFocus"/>
             <EventSetter Event="PreviewDragOver" Handler="PathTextBoxPreviewDragOver"/>
             <EventSetter Event="PreviewDrop" Handler="PathTextBoxPreviewDrop"/>
+        </Style>
+        <Style x:Key="RowTextBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignFloatingHintTextBox}">
+            <Setter Property="MinHeight" Value="48"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="AutomationProperties.Name" Value="{Binding Path=(materialDesign:HintAssist.Hint), RelativeSource={RelativeSource Self}}"/>
+        </Style>
+        <Style x:Key="RowComboBox" TargetType="ComboBox" BasedOn="{StaticResource MaterialDesignComboBox}">
+            <Setter Property="MinHeight" Value="44"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="ItemContainerStyle">
+                <Setter.Value><Style TargetType="ComboBoxItem" BasedOn="{StaticResource {x:Type ComboBoxItem}}"><Setter Property="MinHeight" Value="36"/><Setter Property="Padding" Value="12,8"/></Style></Setter.Value>
+            </Setter>
         </Style>
         <Style x:Key="IkFieldLabel" TargetType="TextBlock" BasedOn="{StaticResource SettingsFieldLabel}">
             <Setter Property="MinHeight" Value="30"/>
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
         <Style x:Key="OutputFormatOption" TargetType="RadioButton">
+            <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
             <Setter Property="MinHeight" Value="44"/>
             <Setter Property="Margin" Value="3"/>
             <Setter Property="Padding" Value="10,8"/>
@@ -84,13 +105,13 @@
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="True">
                                 <Setter TargetName="SelectionIcon" Property="Kind" Value="RadioboxMarked"/>
-                                <Setter TargetName="SelectionIcon" Property="Foreground" Value="{DynamicResource PrimaryHueMidBrush}"/>
-                                <Setter TargetName="FormatBorder" Property="BorderBrush" Value="{DynamicResource PrimaryHueMidBrush}"/>
+                                <Setter TargetName="SelectionIcon" Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Primary}"/>
+                                <Setter TargetName="FormatBorder" Property="BorderBrush" Value="{DynamicResource MaterialDesign.Brush.Primary}"/>
                                 <Setter TargetName="FormatBorder" Property="Background" Value="{DynamicResource AlchemyMutedSurfaceBrush}"/>
                             </Trigger>
                             <Trigger Property="IsKeyboardFocused" Value="True">
                                 <Setter TargetName="FormatBorder" Property="BorderThickness" Value="2"/>
-                                <Setter TargetName="FormatBorder" Property="BorderBrush" Value="{DynamicResource PrimaryHueMidBrush}"/>
+                                <Setter TargetName="FormatBorder" Property="BorderBrush" Value="{DynamicResource MaterialDesign.Brush.Primary}"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.48"/>
@@ -110,7 +131,8 @@
             <Grid Grid.Row="0">
                 <Grid.ColumnDefinitions><ColumnDefinition MinWidth="0"/><ColumnDefinition Width="172"/></Grid.ColumnDefinitions>
                 <ToolBarTray IsLocked="True" Grid.Column="0">
-                    <ToolBar ClipToBounds="False" Style="{StaticResource MaterialDesignToolBar}" KeyboardNavigation.TabNavigation="Cycle">
+                    <ToolBar ClipToBounds="True" MaxWidth="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ToolBarTray}}"
+                             AutomationProperties.AutomationId="MainToolbar" Style="{StaticResource MaterialDesignToolBar}" KeyboardNavigation.TabNavigation="Continue">
                     <Button Style="{StaticResource TopBarIconButton}" ToolTip="{DynamicResource TipLoadProject}" AutomationProperties.Name="{DynamicResource TipLoadProject}" AutomationProperties.AutomationId="OpenProjectButton" Command="{Binding ImportProjectCommand}">
                         <materialDesign:PackIcon Kind="FolderOpenOutline" Style="{StaticResource TopBarIcon}"/>
                     </Button>
@@ -199,7 +221,7 @@
                     <Button Style="{StaticResource TopBarIconButton}" ToolTip="{DynamicResource TipSettings}" AutomationProperties.Name="{DynamicResource TipSettings}" AutomationProperties.AutomationId="SettingsButton" Command="{x:Static materialDesign:DialogHost.OpenDialogCommand}">
                         <Button.Content><materialDesign:PackIcon Kind="CogOutline" Style="{StaticResource TopBarIcon}"/></Button.Content>
                         <Button.CommandParameter>
-                            <Border Width="840" Height="620"
+                            <Border x:Name="SettingsDialogBorder" Width="840" Height="620"
                                     MaxHeight="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
                                     Padding="24,20" Background="{DynamicResource MaterialDesignPaper}"
                                     AutomationProperties.AutomationId="SettingsDialog">
@@ -223,7 +245,7 @@
                                                             <StackPanel>
                                                                 <TextBlock Text="{DynamicResource OutputFormatSection}" FontSize="15" FontWeight="SemiBold"/>
                                                                 <TextBlock Text="{DynamicResource DefaultOutputFormat}" Style="{StaticResource SettingsFieldLabel}" Margin="0,12,0,4"/>
-                                                                <UniformGrid Columns="4" Rows="1" KeyboardNavigation.TabNavigation="Continue">
+                                                                <UniformGrid Columns="2" Rows="2" KeyboardNavigation.TabNavigation="Continue">
                                                                     <RadioButton Content=".cast" Tag=".cast" GroupName="DefaultOutputFormat"
                                                                                  AutomationProperties.AutomationId="CastOutputFormatRadioButton"
                                                                                  AutomationProperties.Name=".cast"
@@ -397,7 +419,7 @@
                 </ToolBarTray>
                 <Border Grid.Column="1" Panel.ZIndex="2" Background="{DynamicResource MaterialDesignPaper}" Padding="6,0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
-                        <Button x:Name="LanguageButton" ToolTip="{DynamicResource TipLanguage}" AutomationProperties.Name="{DynamicResource TipLanguage}" AutomationProperties.AutomationId="LanguageButton" Click="OpenLanguageMenuClick" Width="112" Height="44" Style="{StaticResource MaterialDesignFlatButton}">
+                        <Button x:Name="LanguageButton" Padding="8,0" ToolTip="{DynamicResource TipLanguage}" AutomationProperties.Name="{DynamicResource TipLanguage}" AutomationProperties.AutomationId="LanguageButton" Click="OpenLanguageMenuClick" Width="112" Height="44" Style="{StaticResource MaterialDesignFlatButton}">
                             <Button.ContextMenu>
                                 <ContextMenu>
                                     <MenuItem Header="{DynamicResource FollowSystemLanguage}" Tag="system" IsCheckable="True" Click="SetLanguageClick" AutomationProperties.AutomationId="SystemLanguageMenuItem"/>
@@ -408,13 +430,16 @@
                             </Button.ContextMenu>
                             <StackPanel Orientation="Horizontal"><materialDesign:PackIcon Kind="TranslateVariant" Width="20" Height="20"/><TextBlock Text="{Binding LanguageModeLabel}" Margin="6,0,4,0" VerticalAlignment="Center"/><materialDesign:PackIcon Kind="ChevronDown" Width="16" Height="16" VerticalAlignment="Center"/></StackPanel>
                         </Button>
-                        <Button x:Name="AboutButton" Content="{materialDesign:PackIcon Kind=InformationSlabCircleOutline}" ToolTip="{DynamicResource TipAbout}" AutomationProperties.Name="{DynamicResource TipAbout}" AutomationProperties.AutomationId="AboutButton" Click="OpenAboutClick" Width="44" Height="44" Style="{StaticResource MaterialDesignFlatButton}"/>
+                        <Button x:Name="AboutButton" Padding="10" ToolTip="{DynamicResource TipAbout}" AutomationProperties.Name="{DynamicResource TipAbout}" AutomationProperties.AutomationId="AboutButton" Click="OpenAboutClick" Width="44" Height="44" Style="{StaticResource MaterialDesignFlatButton}">
+                            <materialDesign:PackIcon Kind="InformationSlabCircleOutline" Width="22" Height="22"/>
+                        </Button>
                     </StackPanel>
                 </Border>
             </Grid>
 
             <TabControl Grid.Row="1" materialDesign:ColorZoneAssist.Mode="PrimaryDark" Style="{StaticResource MaterialDesignFilledTabControl}">
                 <TabItem Header="{DynamicResource AnimationsTab}" AutomationProperties.AutomationId="AnimationsTab">
+                    <Grid>
                     <ListView x:Name="MainAnimationList" AutomationProperties.AutomationId="AnimationList" Visibility="{Binding IsVisible}" ItemsSource="{Binding Animations}" Background="#20000000" AllowDrop="True" Drop="ListViewDrop" SelectionChanged="ListViewSelectionChanged" PreviewMouseRightButtonUp="ImportSurfacePreviewMouseRightButtonUp" PreviewKeyDown="ImportSurfacePreviewKeyDown" d:ItemsSource="{d:SampleData ItemCount=5}" SelectionMode="Extended">
                         <ListView.ContextMenu>
                             <ContextMenu DataContext="{Binding PlacementTarget, RelativeSource={RelativeSource Self}}">
@@ -434,10 +459,17 @@
                                     </StackPanel></DataTemplate></GridViewColumn.CellTemplate>
                                 </GridViewColumn>
                                 <GridViewColumn Header="{DynamicResource IKSettingsColumn}" Width="{Binding IKSettingsColumnWith}">
-                                    <GridViewColumn.CellTemplate><DataTemplate><StackPanel><TextBox Margin="0,4,0,0" materialDesign:HintAssist.Hint="{DynamicResource LeftIKTargetOverride}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding LeftIKTargetBoneName}"/><TextBox Margin="0,4,0,0" materialDesign:HintAssist.Hint="{DynamicResource RightIKTargetOverride}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding RightIKTargetBoneName}"/><CheckBox Margin="0,12,0,0" Content="{DynamicResource EnableLeftHand}" IsChecked="{Binding EnableLeftHandIK}"/><CheckBox Margin="0,8,0,0" Content="{DynamicResource EnableRightHand}" IsChecked="{Binding EnableRightHandIK}"/></StackPanel></DataTemplate></GridViewColumn.CellTemplate>
+                                    <GridViewColumn.CellTemplate><DataTemplate><StackPanel>
+                                        <TextBlock Text="{DynamicResource LeftIKTargetOverride}" TextWrapping="Wrap" Style="{StaticResource SettingsFieldLabel}" Margin="0,8,0,4"/>
+                                        <TextBox AutomationProperties.Name="{DynamicResource LeftIKTargetOverride}" Style="{StaticResource SettingsTextBox}" Text="{Binding LeftIKTargetBoneName}"/>
+                                        <TextBlock Text="{DynamicResource RightIKTargetOverride}" TextWrapping="Wrap" Style="{StaticResource SettingsFieldLabel}" Margin="0,8,0,4"/>
+                                        <TextBox AutomationProperties.Name="{DynamicResource RightIKTargetOverride}" Style="{StaticResource SettingsTextBox}" Text="{Binding RightIKTargetBoneName}"/>
+                                        <CheckBox MinHeight="32" Margin="0,8,0,0" Content="{DynamicResource EnableLeftHand}" IsChecked="{Binding EnableLeftHandIK}"/>
+                                        <CheckBox MinHeight="32" Content="{DynamicResource EnableRightHand}" IsChecked="{Binding EnableRightHandIK}"/>
+                                    </StackPanel></DataTemplate></GridViewColumn.CellTemplate>
                                 </GridViewColumn>
                                 <GridViewColumn Header="{DynamicResource LayersColumn}" Width="{Binding LayersColumnWith, FallbackValue=600}">
-                                    <GridViewColumn.CellTemplate><DataTemplate><ListBox Height="168" ItemsSource="{Binding Layers}" Background="#20000000" SelectionMode="Extended" SelectionChanged="ListBoxSelectionChanged" AutomationProperties.AutomationId="LayerList" AllowDrop="True" Tag="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=DataContext}">
+                                    <GridViewColumn.CellTemplate><DataTemplate><Grid><ListBox Height="244" ItemsSource="{Binding Layers}" Background="#20000000" SelectionMode="Extended" SelectionChanged="ListBoxSelectionChanged" AutomationProperties.AutomationId="LayerList" AllowDrop="True" ScrollViewer.HorizontalScrollBarVisibility="Disabled" Tag="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=DataContext}">
                                         <ListBox.ContextMenu>
                                             <ContextMenu DataContext="{Binding PlacementTarget, RelativeSource={RelativeSource Self}}">
                                                 <MenuItem Header="{DynamicResource ContextImportLayers}" AutomationProperties.Name="{DynamicResource ContextImportLayers}" AutomationProperties.AutomationId="ImportLayersContextMenuItem" Command="{Binding Tag.AddLayersForAnimationCommand}" CommandParameter="{Binding DataContext}">
@@ -445,18 +477,48 @@
                                                 </MenuItem>
                                             </ContextMenu>
                                         </ListBox.ContextMenu>
-                                        <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem" BasedOn="{StaticResource MaterialDesignListBoxItem}"><Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="Background" Value="{Binding ColorBrush}"/></Style></ListBox.ItemContainerStyle>
-                                        <ListBox.ItemTemplate><DataTemplate><Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="44"/><ColumnDefinition Width="112"/><ColumnDefinition Width="66"/><ColumnDefinition Width="44"/><ColumnDefinition Width="44"/><ColumnDefinition Width="44"/></Grid.ColumnDefinitions><TextBox Grid.Column="0" AutomationProperties.AutomationId="LayerPathTextBox" AutomationProperties.Name="{DynamicResource LayerPath}" Text="{Binding Name, UpdateSourceTrigger=LostFocus}" VerticalContentAlignment="Center" materialDesign:HintAssist.Hint="{DynamicResource LayerPath}" Style="{StaticResource EditablePathTextBox}"/><Button Grid.Column="1" Style="{StaticResource PathBrowseButton}" Click="BrowseLayerClick"><materialDesign:PackIcon Kind="FolderSearchOutline" Width="20" Height="20"/></Button><ComboBox Grid.Column="2" Margin="4,0" ItemsSource="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=DataContext.LayerTypeOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Value" SelectedValue="{Binding Type, Mode=TwoWay}"/><TextBox Grid.Column="3" Margin="4,0" materialDesign:HintAssist.Hint="{DynamicResource Offset}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding Offset, UpdateSourceTrigger=PropertyChanged}"/><Button Grid.Column="4" Style="{StaticResource PathBrowseButton}" Content="{materialDesign:PackIcon Kind=ArrowUpBold}" ToolTip="{DynamicResource TipMoveUp}" Command="{Binding MoveUpCommand}"/><Button Grid.Column="5" Style="{StaticResource PathBrowseButton}" Content="{materialDesign:PackIcon Kind=ArrowDownBold}" ToolTip="{DynamicResource TipMoveDown}" Command="{Binding MoveDownCommand}"/><Button Grid.Column="6" Style="{StaticResource PathBrowseButton}" Content="{materialDesign:PackIcon Kind=Delete}" ToolTip="{DynamicResource TipDelete}" Command="{Binding DeleteCommand}"/></Grid></DataTemplate></ListBox.ItemTemplate>
-                                    </ListBox></DataTemplate></GridViewColumn.CellTemplate>
+                                        <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem" BasedOn="{StaticResource MaterialDesignListBoxItem}"><Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="Padding" Value="8"/><Setter Property="Margin" Value="0,0,0,6"/><Setter Property="Background" Value="{DynamicResource AlchemyMutedSurfaceBrush}"/></Style></ListBox.ItemContainerStyle>
+                                        <ListBox.ItemTemplate><DataTemplate>
+                                            <Grid>
+                                                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="44"/></Grid.ColumnDefinitions>
+                                                    <TextBox AutomationProperties.AutomationId="LayerPathTextBox" AutomationProperties.Name="{DynamicResource LayerPath}" Text="{Binding Name, UpdateSourceTrigger=LostFocus}" materialDesign:HintAssist.Hint="{DynamicResource LayerPath}" Style="{StaticResource EditablePathTextBox}" Margin="0,0,6,0"/>
+                                                    <Button Grid.Column="1" Style="{StaticResource PathBrowseButton}" ToolTip="{DynamicResource ContextImportLayers}" Click="BrowseLayerClick"><materialDesign:PackIcon Kind="FolderSearchOutline" Width="20" Height="20"/></Button>
+                                                </Grid>
+                                                <Grid Grid.Row="1" Margin="0,6,0,0">
+                                                    <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="68"/><ColumnDefinition Width="126"/></Grid.ColumnDefinitions>
+                                                    <ComboBox AutomationProperties.AutomationId="LayerTypeComboBox" AutomationProperties.Name="{DynamicResource LayerType}" Style="{StaticResource RowComboBox}" Margin="0,0,6,0" ItemsSource="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=DataContext.LayerTypeOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Value" SelectedValue="{Binding Type, Mode=TwoWay}"/>
+                                                    <TextBox Grid.Column="1" Margin="0,0,6,0" materialDesign:HintAssist.Hint="{DynamicResource Offset}" Style="{StaticResource RowTextBox}" Text="{Binding Offset, UpdateSourceTrigger=PropertyChanged}"/>
+                                                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                                        <Button Style="{StaticResource PathBrowseButton}" Content="{materialDesign:PackIcon Kind=ArrowUpBold}" ToolTip="{DynamicResource TipMoveUp}" Command="{Binding MoveUpCommand}"/>
+                                                        <Button Style="{StaticResource PathBrowseButton}" Content="{materialDesign:PackIcon Kind=ArrowDownBold}" ToolTip="{DynamicResource TipMoveDown}" Command="{Binding MoveDownCommand}"/>
+                                                        <Button Style="{StaticResource PathBrowseButton}" Content="{materialDesign:PackIcon Kind=DeleteOutline}" ToolTip="{DynamicResource TipDelete}" Command="{Binding DeleteCommand}"/>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Grid>
+                                        </DataTemplate></ListBox.ItemTemplate>
+                                    </ListBox>
+                                    <TextBlock Text="{DynamicResource EmptyLayersHelp}" AutomationProperties.AutomationId="EmptyLayersHint" TextWrapping="Wrap" TextAlignment="Center" VerticalAlignment="Center" Margin="24" Opacity="0.78" IsHitTestVisible="False">
+                                        <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding Layers.Count}" Value="0"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+                                    </TextBlock>
+                                    </Grid></DataTemplate></GridViewColumn.CellTemplate>
                                 </GridViewColumn>
                                 <GridViewColumn Header="{DynamicResource OutputColumn}" Width="{Binding OutputColumnWith}">
-                                    <GridViewColumn.CellTemplate><DataTemplate><StackPanel><TextBox Margin="0,4,0,0" materialDesign:HintAssist.Hint="{DynamicResource OutputName}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding OutputName, UpdateSourceTrigger=PropertyChanged}"/><Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="44"/></Grid.ColumnDefinitions><TextBox Margin="0,4,4,0" AutomationProperties.AutomationId="OutputFolderTextBox" AutomationProperties.Name="{DynamicResource OutputFolder}" materialDesign:HintAssist.Hint="{DynamicResource OutputFolder}" Style="{StaticResource EditablePathTextBox}" Text="{Binding OutputFolder, UpdateSourceTrigger=LostFocus}"/><Button Grid.Column="1" Margin="0,4,0,0" Style="{StaticResource PathBrowseButton}" Click="BrowseOutputFolderClick"><materialDesign:PackIcon Kind="FolderSearchOutline" Width="20" Height="20"/></Button></Grid><TextBox Margin="0,4,0,0" materialDesign:HintAssist.Hint="{DynamicResource OutputFramerate}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding OutputFramerate, UpdateSourceTrigger=PropertyChanged}"/><CheckBox Content="{DynamicResource ExperimentalFeatures}" IsChecked="{Binding UseExperimentalFeatures}" Margin="0,12,0,0"/></StackPanel></DataTemplate></GridViewColumn.CellTemplate>
+                                    <GridViewColumn.CellTemplate><DataTemplate><StackPanel><TextBox Margin="0,4,0,0" materialDesign:HintAssist.Hint="{DynamicResource OutputName}" Style="{StaticResource RowTextBox}" Text="{Binding OutputName, UpdateSourceTrigger=PropertyChanged}"/><Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="44"/></Grid.ColumnDefinitions><TextBox Margin="0,4,4,0" AutomationProperties.AutomationId="OutputFolderTextBox" AutomationProperties.Name="{DynamicResource OutputFolder}" materialDesign:HintAssist.Hint="{DynamicResource OutputFolder}" Style="{StaticResource EditablePathTextBox}" Text="{Binding OutputFolder, UpdateSourceTrigger=LostFocus}"/><Button Grid.Column="1" Margin="0,4,0,0" Style="{StaticResource PathBrowseButton}" Click="BrowseOutputFolderClick"><materialDesign:PackIcon Kind="FolderSearchOutline" Width="20" Height="20"/></Button></Grid><TextBox Margin="0,4,0,0" materialDesign:HintAssist.Hint="{DynamicResource OutputFramerate}" Style="{StaticResource RowTextBox}" Text="{Binding OutputFramerate, UpdateSourceTrigger=PropertyChanged}"/><CheckBox Content="{DynamicResource ExperimentalFeatures}" IsChecked="{Binding UseExperimentalFeatures}" Margin="0,12,0,0"/></StackPanel></DataTemplate></GridViewColumn.CellTemplate>
                                 </GridViewColumn>
                             </GridView>
                         </ListView.View>
                     </ListView>
+                    <StackPanel IsHitTestVisible="False" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="460" Margin="24,60,24,24">
+                        <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding Animations.Count}" Value="0"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+                        <TextBlock Text="{DynamicResource EmptyAnimations}" FontSize="20" FontWeight="SemiBold" TextAlignment="Center"/>
+                        <TextBlock Text="{DynamicResource EmptyAnimationsHelp}" TextWrapping="Wrap" TextAlignment="Center" Margin="0,12,0,0" Opacity="0.78"/>
+                    </StackPanel>
+                    </Grid>
                 </TabItem>
                 <TabItem Header="{DynamicResource PartsTab}" AutomationProperties.AutomationId="PartsTab">
+                    <Grid>
                     <ListView x:Name="MainModelList" AutomationProperties.AutomationId="ModelPartsList" Visibility="{Binding IsVisible}" ItemsSource="{Binding Parts}" Background="#20000000" SelectionChanged="ListViewSelectionChanged" AllowDrop="True" Drop="ModelListDrop" PreviewMouseRightButtonUp="ImportSurfacePreviewMouseRightButtonUp" PreviewKeyDown="ImportSurfacePreviewKeyDown" d:ItemsSource="{d:SampleData ItemCount=5}" SelectionMode="Extended">
                         <ListView.ContextMenu>
                             <ContextMenu DataContext="{Binding PlacementTarget, RelativeSource={RelativeSource Self}}">
@@ -468,10 +530,16 @@
                         <ListView.ItemContainerStyle><Style TargetType="ListViewItem" BasedOn="{StaticResource MaterialDesignGridViewItem}"><Setter Property="HorizontalContentAlignment" Value="Stretch"/></Style></ListView.ItemContainerStyle>
                         <ListView.View><GridView>
                             <GridViewColumn Header="{DynamicResource FileColumn}" Width="{Binding PartsFileColumnWith, FallbackValue=560}"><GridViewColumn.CellTemplate><DataTemplate><Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="44"/></Grid.ColumnDefinitions><TextBox Margin="0,4,4,0" AutomationProperties.AutomationId="ModelPathTextBox" AutomationProperties.Name="{DynamicResource ModelPath}" materialDesign:HintAssist.Hint="{DynamicResource ModelPath}" Style="{StaticResource EditablePathTextBox}" Text="{Binding FilePath, UpdateSourceTrigger=LostFocus}"/><Button Grid.Column="1" Margin="0,4,0,0" Style="{StaticResource PathBrowseButton}" Click="BrowsePartClick"><materialDesign:PackIcon Kind="FolderSearchOutline" Width="20" Height="20"/></Button></Grid></DataTemplate></GridViewColumn.CellTemplate></GridViewColumn>
-                            <GridViewColumn Header="{DynamicResource SettingsColumn}" Width="{Binding PartsSettingsWidth, FallbackValue=420}"><GridViewColumn.CellTemplate><DataTemplate><StackPanel><TextBox Margin="0,4,0,0" materialDesign:HintAssist.Hint="{DynamicResource ParentBoneName}" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Text="{Binding ParentBoneTag, UpdateSourceTrigger=PropertyChanged}"/><ComboBox Margin="0,6,0,0" Height="38" ItemsSource="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=DataContext.PartTypeOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Value" SelectedValue="{Binding Type, Mode=TwoWay}"/></StackPanel></DataTemplate></GridViewColumn.CellTemplate></GridViewColumn>
+                            <GridViewColumn Header="{DynamicResource SettingsColumn}" Width="{Binding PartsSettingsWidth, FallbackValue=420}"><GridViewColumn.CellTemplate><DataTemplate><StackPanel><TextBox Margin="0,4,0,0" materialDesign:HintAssist.Hint="{DynamicResource ParentBoneName}" Style="{StaticResource RowTextBox}" Text="{Binding ParentBoneTag, UpdateSourceTrigger=PropertyChanged}"/><ComboBox AutomationProperties.Name="{DynamicResource PartType}" Style="{StaticResource RowComboBox}" Margin="0,6,0,0" MinHeight="44" ItemsSource="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=DataContext.PartTypeOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Value" SelectedValue="{Binding Type, Mode=TwoWay}"/></StackPanel></DataTemplate></GridViewColumn.CellTemplate></GridViewColumn>
                             <GridViewColumn Header="{DynamicResource SortColumn}" Width="{Binding PartsSortWidth, FallbackValue=220}"><GridViewColumn.CellTemplate><DataTemplate><StackPanel Orientation="Horizontal"><Button Style="{StaticResource PathBrowseButton}" Content="{materialDesign:PackIcon Kind=ArrowUpBold}" ToolTip="{DynamicResource TipMoveUp}" Command="{Binding MoveUpCommand}"/><Button Style="{StaticResource PathBrowseButton}" Content="{materialDesign:PackIcon Kind=ArrowDownBold}" ToolTip="{DynamicResource TipMoveDown}" Command="{Binding MoveDownCommand}"/><Button Style="{StaticResource PathBrowseButton}" Content="{materialDesign:PackIcon Kind=Delete}" ToolTip="{DynamicResource TipDelete}" Command="{Binding DeleteCommand}"/></StackPanel></DataTemplate></GridViewColumn.CellTemplate></GridViewColumn>
                         </GridView></ListView.View>
                     </ListView>
+                    <StackPanel IsHitTestVisible="False" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="460" Margin="24,60,24,24">
+                        <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding Parts.Count}" Value="0"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+                        <TextBlock Text="{DynamicResource EmptyParts}" FontSize="20" FontWeight="SemiBold" TextAlignment="Center"/>
+                        <TextBlock Text="{DynamicResource EmptyPartsHelp}" TextWrapping="Wrap" TextAlignment="Center" Margin="0,12,0,0" Opacity="0.78"/>
+                    </StackPanel>
+                    </Grid>
                 </TabItem>
             </TabControl>
         </Grid>

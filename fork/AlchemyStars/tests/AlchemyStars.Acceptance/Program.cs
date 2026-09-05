@@ -14,6 +14,11 @@ using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
 
+if (args.Length > 0 && args[0] == "--ui-layout-only")
+{
+    return UiLayoutRegression.Run(Path.GetFullPath(args[1]));
+}
+
 if (args.Contains("--weapon-root-only", StringComparer.OrdinalIgnoreCase))
 {
     TestWeaponRootCollision();

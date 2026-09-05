@@ -5,6 +5,7 @@
         Title="{DynamicResource AboutTitle}"
         Background="{DynamicResource MaterialDesignPaper}"
         Foreground="{DynamicResource MaterialDesignBody}"
+        FontSize="14" UseLayoutRounding="True" SnapsToDevicePixels="True"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         ShowInTaskbar="False"
@@ -17,14 +18,14 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Border Padding="28,24" Background="{DynamicResource PrimaryHueMidBrush}">
+        <Border Padding="28,24" Background="{DynamicResource AlchemyHeaderBrush}">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="72"/>
                     <ColumnDefinition/>
                 </Grid.ColumnDefinitions>
                 <Border Width="56" Height="56" CornerRadius="12" Background="#26000000">
-                    <Image Source="pack://application:,,,/Assets/AlchemyStarsIcon.png"
+                    <Image Source="pack://application:,,,/Alchemy Stars;component/Assets/AlchemyStarsIcon.png"
                            Width="50" Height="50" Stretch="Uniform"
                            AutomationProperties.Name="{DynamicResource AboutLogoDescription}"/>
                 </Border>

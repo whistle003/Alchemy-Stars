@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.9 — 2026-09-05
+
+- Fixed the partially clipped About icon with explicit icon sizing and padding. The toolbar now overflows before reaching the protected language/About controls.
+- Improved dark-theme icon and format-selection contrast, restored themed text inputs, and added accessible names to inline icon buttons.
+- Reflowed animation layers into separate path and operation rows. Animation and model columns adapt to window width; narrow windows scroll instead of crushing controls.
+- Arranged output formats in a readable two-column grid and kept settings, About, and message dialogs within their owner window, with scrollable content and fixed actions.
+- Added bilingual empty-list import hints, full-path tooltips, and a text-editing shortcut guard. Corrected the export tooltip to describe the existing whole-project export behavior.
+- Added real-WPF layout regression checks and renders for Chinese/English at 900, 1100, 1366, and 1920 DIPs, including icon bounds, dialog content, dropdowns, and keyboard-editing isolation.
+
 ## 1.1.8 — 2026-09-05
 
 - Fixed weapon offsets caused by collapsing a weapon-root `j_gun` into the view-hands wrist helper. Bone reuse now requires a matching parent and bind transform; distinct bones receive stable unique names.

@@ -10,7 +10,7 @@ Alchemy Stars 是 [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist) 
 
 Alchemy Stars 保留原版批处理、动画层、IK 与 RedFox 转换管线，在此基础上补齐面向实际 Maya 生产流程的闭环：
 
-| 对比项 | 原版 Alchemist | Alchemy Stars 1.1.8 |
+| 对比项 | 原版 Alchemist | Alchemy Stars 1.1.9 |
 | --- | --- | --- |
 | Maya 模型与动画 | 模型部件和动画的组合依赖导入行为，可能出现重复骨架或武器动画丢失 | 导出前按层级和绑定姿势区分同名骨骼，统一映射模型与蒙皮权重；每个文件只有一个已烘焙动画 |
 | 输出格式 | 主要为 CAST / SEAnim 管线 | 新增真实 FBX 与原生 SMD，并保留 CAST / SEAnim |
@@ -106,7 +106,9 @@ Alchemy Stars 保留原版批处理、动画层、IK 与 RedFox 转换管线，�
 
 `run-tests.ps1` 会编译改进后的原项目，先验证两份标准 MP5 示例没有被改写，再以 `fork\AlchemyStars\Example\Hawk\HawkSprint.aprj` 作为 Hawk 冲刺验证的唯一配置来源。验收会实际生成 CAST、仅动画 CAST、相关骨骼 CAST、SMD 和 FBX；逐帧比较精简与完整曲线，并把两类完整场景 CAST 和 FBX 重新导入 Maya 2025 检查骨架、网格、蒙皮、帧范围及武器动画；同时覆盖 Idle、批处理和“武器排在手臂之前”的回归。`build-release.ps1` 会生成不内置 .NET 运行环境的精简 Windows x64 单文件发布包和 ZIP。
 
-项目约定每次功能性发布改动至少迭代补丁版本；本次版本为 `1.1.8`。
+项目约定每次功能性发布改动至少迭代补丁版本；本次版本为 `1.1.9`。
+
+1.1.9 的 UI 检查修正了 About 图标裁切、工具栏挤压、动画层路径过窄及部分控件对比度不足的问题。检查范围和验证边界见 [UI 检查记录](design-system/alchemy-stars/pages/ui-audit-1.1.9.md)。
 
 ## 源码与许可
 

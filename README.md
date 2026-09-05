@@ -8,7 +8,7 @@ The maintained source lives in `fork/AlchemyStars` and pins the matching RedFox 
 
 ## Improvements over upstream Alchemist
 
-| Area | Upstream Alchemist | Alchemy Stars 1.1.8 |
+| Area | Upstream Alchemist | Alchemy Stars 1.1.9 |
 | --- | --- | --- |
 | Maya model and animation | Import behavior can leave duplicate skeletons or lose weapon motion | Uses hierarchy-aware bone identities, remaps skin weights, and emits one baked animation per file |
 | Output formats | Primarily CAST / SEAnim | Adds real FBX and native SMD while retaining CAST / SEAnim |
@@ -98,7 +98,9 @@ Development requires the .NET 9 SDK. The compact Windows x64 release is framewor
 
 `run-tests.ps1` builds the improved upstream project, verifies that the standard MP5 examples were not modified, generates actual Hawk CAST/SMD/FBX outputs, and reimports full and relevant-bone CAST plus FBX into Maya 2025 when available. It checks the skeleton, meshes, skinning, frame range, IK, weapon animation, animation-only CAST contents, retained-curve equivalence, weapon-first model ordering, and Chinese TEMP/output paths and names. The UI smoke suite checks centered dialogs, the protected language/About layout, settings clipping, four format choices, output-option accessibility, three language modes, toolbar controls, and context imports.
 
-Every functional release change increments at least the patch version; this release is `1.1.8`.
+Every functional release change increments at least the patch version; this version is `1.1.9`.
+
+The 1.1.9 UI audit fixes the clipped About icon, toolbar overflow, cramped layer paths, and low-contrast controls. See the [UI audit and validation notes](design-system/alchemy-stars/pages/ui-audit-1.1.9.md) for coverage and limitations.
 
 ## Source and licenses
 

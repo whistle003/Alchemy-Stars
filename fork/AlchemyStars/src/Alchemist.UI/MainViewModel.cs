@@ -28,7 +28,7 @@ namespace Alchemist.UI
 {
     public class MainViewModel : LoggableMVVMObject
     {
-        public string FileVersion { get; } = typeof(MainViewModel).Assembly.GetName().Version?.ToString(3) ?? "1.1.8";
+        public string FileVersion { get; } = typeof(MainViewModel).Assembly.GetName().Version?.ToString(3) ?? "1.1.9";
         public AnimationConverter Converter { get; set; } = new();
         public MVVMItemList<Animation> Animations { get; set; } = [];
         public MVVMItemList<Part> Parts { get; set; } = [];
@@ -81,6 +81,9 @@ namespace Alchemist.UI
         public int IKSettingsColumnWith { get => GetValue(0); set => SetValue(value); }
         public int LayersColumnWith { get => GetValue(0); set => SetValue(value); }
         public int OutputColumnWith { get => GetValue(0); set => SetValue(value); }
+        public int PartsFileColumnWith { get => GetValue(0); set => SetValue(value); }
+        public int PartsSettingsWidth { get => GetValue(0); set => SetValue(value); }
+        public int PartsSortWidth { get => GetValue(156); set => SetValue(value); }
 
         public Action<string> OnCommandFailure { get; set; }
         public bool EnableAnimationTrimming { get; set; }
@@ -603,12 +606,17 @@ namespace Alchemist.UI
 
         public void AutoAdjustColumns(double width)
         {
-            Logging.Logger.Info($"Auto-adjusting columns for width: {width}");
-
-            FileColumnWith = (int)(width * 0.26);
-            IKSettingsColumnWith = (int)(width * 0.13);
-            LayersColumnWith = (int)(width * 0.33);
-            OutputColumnWith = (int)(width * 0.24);
+            // Preserve usable editors on small windows; the list's horizontal
+            // scrollbar exposes the remainder instead of shrinking fields to zero.
+            var available = Math.Max(1180, width - 40);
+            FileColumnWith = (int)(available * 0.25);
+            IKSettingsColumnWith = (int)(available * 0.18);
+            LayersColumnWith = (int)(available * 0.34);
+            OutputColumnWith = (int)available - FileColumnWith - IKSettingsColumnWith - LayersColumnWith;
+            var partsAvailable = Math.Max(820, width - 40);
+            PartsSortWidth = 156;
+            PartsFileColumnWith = (int)((partsAvailable - PartsSortWidth) * 0.60);
+            PartsSettingsWidth = (int)partsAvailable - PartsFileColumnWith - PartsSortWidth;
         }
 
         public void Undo()

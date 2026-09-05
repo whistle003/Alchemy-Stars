@@ -15,7 +15,7 @@
     <sys:String x:Key="TipSaveProject">保存项目</sys:String>
     <sys:String x:Key="TipSaveProjectAs">项目另存为</sys:String>
     <sys:String x:Key="TipAddAnimations">选择并添加动画</sys:String>
-    <sys:String x:Key="TipExportAnimations">导出所选动画</sys:String>
+    <sys:String x:Key="TipExportAnimations">导出此工程中的全部动画</sys:String>
     <sys:String x:Key="TipRemoveAnimations">移除所选动画</sys:String>
     <sys:String x:Key="TipOutputFolder">选择所选动画的输出目录</sys:String>
     <sys:String x:Key="TipEnableLeftIK">启用左手 IK / 姿势</sys:String>
@@ -97,6 +97,13 @@
     <sys:String x:Key="EnableLeftHand">启用左手</sys:String>
     <sys:String x:Key="EnableRightHand">启用右手</sys:String>
     <sys:String x:Key="LayerPath">动画层文件</sys:String>
+    <sys:String x:Key="LayerType">动画层模式</sys:String>
+    <sys:String x:Key="PartType">模型部件类型</sys:String>
+    <sys:String x:Key="EmptyAnimations">尚未添加动画</sys:String>
+    <sys:String x:Key="EmptyAnimationsHelp">在此右键、拖入 CAST 文件，或使用工具栏的“添加动画”。</sys:String>
+    <sys:String x:Key="EmptyParts">尚未添加模型部件</sys:String>
+    <sys:String x:Key="EmptyPartsHelp">在此右键或拖入手臂、武器的 CAST 文件。</sys:String>
+    <sys:String x:Key="EmptyLayersHelp">在此右键或拖入 CAST 文件，添加动画层。</sys:String>
     <sys:String x:Key="ContextImportLayers">导入动画层…</sys:String>
     <sys:String x:Key="ContextImportAnimations">导入动画…</sys:String>
     <sys:String x:Key="ContextImportParts">导入模型部件…</sys:String>

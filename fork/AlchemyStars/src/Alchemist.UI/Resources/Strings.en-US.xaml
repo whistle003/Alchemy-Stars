@@ -15,7 +15,7 @@
     <sys:String x:Key="TipSaveProject">Save project</sys:String>
     <sys:String x:Key="TipSaveProjectAs">Save project as</sys:String>
     <sys:String x:Key="TipAddAnimations">Browse and add animations</sys:String>
-    <sys:String x:Key="TipExportAnimations">Export selected animations</sys:String>
+    <sys:String x:Key="TipExportAnimations">Export all animations in this project</sys:String>
     <sys:String x:Key="TipRemoveAnimations">Remove selected animations</sys:String>
     <sys:String x:Key="TipOutputFolder">Choose the output folder for selected animations</sys:String>
     <sys:String x:Key="TipEnableLeftIK">Enable left-hand IK / pose</sys:String>
@@ -97,6 +97,13 @@
     <sys:String x:Key="EnableLeftHand">Enable left hand</sys:String>
     <sys:String x:Key="EnableRightHand">Enable right hand</sys:String>
     <sys:String x:Key="LayerPath">Animation layer file</sys:String>
+    <sys:String x:Key="LayerType">Layer mode</sys:String>
+    <sys:String x:Key="PartType">Model part type</sys:String>
+    <sys:String x:Key="EmptyAnimations">No animations yet</sys:String>
+    <sys:String x:Key="EmptyAnimationsHelp">Right-click here, drop CAST files, or use Add animations in the toolbar.</sys:String>
+    <sys:String x:Key="EmptyParts">No model parts yet</sys:String>
+    <sys:String x:Key="EmptyPartsHelp">Right-click here or drop your view-hands and weapon CAST files.</sys:String>
+    <sys:String x:Key="EmptyLayersHelp">Right-click or drop a CAST file here to add a layer.</sys:String>
     <sys:String x:Key="ContextImportLayers">Import animation layers…</sys:String>
     <sys:String x:Key="ContextImportAnimations">Import animations…</sys:String>
     <sys:String x:Key="ContextImportParts">Import model parts…</sys:String>

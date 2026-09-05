@@ -99,6 +99,20 @@ namespace Alchemist.UI
 
         private static void OnLanguageChanged(object? sender, EventArgs e) => ViewModel.RefreshLocalization();
 
+        private void WindowLoaded(object sender, RoutedEventArgs e) => UpdateAdaptiveLayout();
+
+        private void WindowSizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            if (IsLoaded) UpdateAdaptiveLayout();
+        }
+
+        private void UpdateAdaptiveLayout()
+        {
+            ViewModel.AutoAdjustColumns(ActualWidth);
+            SettingsDialogBorder.Width = Math.Min(840, Math.Max(640, ActualWidth - 64));
+            SettingsDialogBorder.Height = Math.Min(620, Math.Max(360, ActualHeight - 100));
+        }
+
         private void OpenLanguageMenuClick(object sender, RoutedEventArgs e)
         {
             if (LanguageButton.ContextMenu is not ContextMenu menu)
@@ -555,9 +569,23 @@ namespace Alchemist.UI
             }
         }
 
+        internal static bool IsTextEditingSource(DependencyObject? source)
+        {
+            for (var current = source; current is not null; current = GetParent(current))
+                if (current is TextBoxBase || current is PasswordBox) return true;
+            return false;
+        }
+
         private void WindowKeyDown(object sender, KeyEventArgs e)
         {
-            if ((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            // Editing shortcuts belong to the focused editor, not the batch list.
+            if (e.Handled)
+                return;
+            var controlPressed = (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
+            if (IsTextEditingSource(e.OriginalSource as DependencyObject)
+                && (e.Key == Key.Delete || controlPressed && e.Key is Key.C or Key.V or Key.X or Key.Z or Key.Y))
+                return;
+            if (controlPressed)
             {
                 switch(e.Key)
                 {

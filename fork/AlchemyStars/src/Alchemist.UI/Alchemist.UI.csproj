@@ -9,10 +9,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>Assets\AlchemyStarsIcon.ico</ApplicationIcon>
-    <Version>1.1.8</Version>
-    <FileVersion>1.1.8.0</FileVersion>
-    <AssemblyVersion>1.1.8.0</AssemblyVersion>
-    <InformationalVersion>1.1.8</InformationalVersion>
+    <Version>1.1.9</Version>
+    <FileVersion>1.1.9.0</FileVersion>
+    <AssemblyVersion>1.1.9.0</AssemblyVersion>
+    <InformationalVersion>1.1.9</InformationalVersion>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
   </PropertyGroup>
 
@@ -76,6 +76,11 @@
     </Content>
     <Content Include="..\..\..\..\CHANGELOG.md">
       <Link>CHANGELOG.md</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="..\..\..\..\design-system\alchemy-stars\pages\ui-audit-1.1.9.md">
+      <Link>design-system\alchemy-stars\pages\ui-audit-1.1.9.md</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>

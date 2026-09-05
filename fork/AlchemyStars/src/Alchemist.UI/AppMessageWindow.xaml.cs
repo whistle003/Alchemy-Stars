@@ -19,12 +19,13 @@ public partial class AppMessageWindow : Window
         {
             MessageBoxImage.Error => (PackIconKind.AlertCircleOutline, "AlchemyDestructiveBrush"),
             MessageBoxImage.Warning => (PackIconKind.AlertOutline, "AlchemyAccentBrush"),
-            _ => (PackIconKind.InformationOutline, "AlchemyBorderBrush"),
+            _ => (PackIconKind.InformationOutline, "AlchemyInfoBrush"),
         };
         IconKind = iconKind;
         IconBrush = Application.Current.TryFindResource(brushKey) as Brush ?? SystemColors.ControlTextBrush;
         InitializeComponent();
         DataContext = this;
+        Loaded += (_, _) => UiDialogService.ConstrainToOwner(this);
     }
 
     private void CloseClick(object sender, RoutedEventArgs e) => Close();

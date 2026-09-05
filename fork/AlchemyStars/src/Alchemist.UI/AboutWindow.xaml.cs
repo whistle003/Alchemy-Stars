@@ -7,7 +7,7 @@ namespace Alchemist.UI;
 
 public partial class AboutWindow : Window
 {
-    public string AppVersion { get; } = typeof(AboutWindow).Assembly.GetName().Version?.ToString(3) ?? "1.1.7";
+    public string AppVersion { get; } = typeof(AboutWindow).Assembly.GetName().Version?.ToString(3) ?? "1.1.9";
     public string RuntimeVersion { get; } = RuntimeInformation.FrameworkDescription;
     public string OperatingSystem { get; } = RuntimeInformation.OSDescription;
 
@@ -15,6 +15,7 @@ public partial class AboutWindow : Window
     {
         InitializeComponent();
         DataContext = this;
+        Loaded += (_, _) => UiDialogService.ConstrainToOwner(this);
     }
 
     private void OpenUpstreamClick(object sender, RoutedEventArgs e)

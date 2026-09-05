@@ -87,7 +87,7 @@ def main() -> int:
         meshes = cmds.ls(type="mesh", long=True, noIntermediate=True) or []
         visible_meshes = [mesh for mesh in meshes if is_visible(cmds, mesh)]
         animation_curves = cmds.ls(type=["animCurveTA", "animCurveTL", "animCurveTU"]) or []
-        gun_roots = cmds.ls("j_gun", type="joint", long=True) or []
+        gun_roots = cmds.ls("j_gun__weapon", type="joint", long=True) or []
         wrist_keys = cmds.keyframe("j_wrist_le", attribute="rotateX", query=True, keyframeCount=True) or 0
         minimum = float(cmds.playbackOptions(query=True, minTime=True))
         maximum = float(cmds.playbackOptions(query=True, maxTime=True))
@@ -181,7 +181,9 @@ def main() -> int:
         full_curve_count = len(joints) * len(animated_transform_attributes)
         checks = {
             "maya2025": str(cmds.about(version=True)).startswith("2025"),
-            "singleMergedSkeleton": len(joints) == 214 and len(gun_roots) == 1 and len(skeleton_roots) == 1,
+            "singleMergedSkeleton": len(joints) == 215 and len(gun_roots) == 1 and len(skeleton_roots) == 1,
+            "weaponParent": (cmds.listRelatives("j_gun__weapon", parent=True) or []) == ["tag_weapon"],
+            "handHelperParent": (cmds.listRelatives("j_gun", parent=True) or []) == ["j_wrist_ri"],
             "allMeshesImportedAndVisible": len(meshes) == 21 and len(visible_meshes) == len(meshes),
             "animationCurvesCreated": (
                 0 < len(animation_curves) < full_curve_count
@@ -201,7 +203,7 @@ def main() -> int:
             ),
             "weaponAnimationPresent": (
                 len(gun_roots) == 1
-                and gun_transform_key_count == len(expected_key_times) * len(animated_transform_attributes)
+                and (selective_bake or gun_transform_key_count == len(expected_key_times) * len(animated_transform_attributes))
                 and maximum_gun_matrix_delta > 0.001
             ),
             "rightHandAnimationPresent": int(

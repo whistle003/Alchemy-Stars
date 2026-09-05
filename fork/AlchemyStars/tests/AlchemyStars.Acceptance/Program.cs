@@ -14,6 +14,19 @@ using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
 
+if (args.Contains("--weapon-root-only", StringComparer.OrdinalIgnoreCase))
+{
+    TestWeaponRootCollision();
+    Console.WriteLine("Weapon root collision regression passed.");
+    return 0;
+}
+
+if (args.Length > 0 && args[0] == "--weapon-regression")
+{
+    WeaponExportRegression.Run(Path.GetFullPath(args[1]));
+    return 0;
+}
+
 if (args.Contains("--drop-routing-only", StringComparer.OrdinalIgnoreCase))
 {
     TestLayerDropTargetPriority();
@@ -71,6 +84,8 @@ string? smdOutput = null;
 string? fbxOutput = null;
 
 Run("Animation.Clone preserves all per-animation settings", () => TestAnimationClone(sprintTemplate));
+Run("Weapon root stays separate from the same-name wrist helper", TestWeaponRootCollision);
+Run("Bone merging preserves topology, bind transforms and rotated mesh origins", () => WeaponExportRegression.TestStructure(Path.Combine(outputDirectory, "merge-fixtures")));
 Run("Export format choices include CAST, SEAnim, FBX, and SMD", () =>
 {
     var formats = new MainViewModel(_ => { }, string.Empty).OutputFormats;
@@ -534,19 +549,37 @@ static void TestMergedSkeleton(Skeleton skeleton)
     Assert(skeleton.Bones.Count > 100, "Merged skeleton is unexpectedly small.");
 }
 
+static void TestWeaponRootCollision()
+{
+    var project = new MainViewModel(_ => { }, string.Empty);
+    project.Parts.Add(new Part(project, @"D:\_tiqu\Files\viewhands_mp_base_iw8_LOD0.cast") { Type = PartType.ViewHands });
+    project.Parts.Add(new Part(project, @"D:\_tiqu\mergedmodels\sat_vm_pi_alcor_rec_LOD0.cast") { Type = PartType.Weapon });
+    var skeleton = AnimationConverter.LoadSkeletonFromParts(project.Parts, false);
+    var handGun = skeleton.FindBone("j_gun");
+    var weaponGun = skeleton.FindBone("j_gun__weapon");
+    Assert(weaponGun is not null, "Weapon j_gun was collapsed into the wrist helper; expected a separate j_gun__weapon.");
+    Assert(weaponGun!.Parent?.Name == "tag_weapon", "Weapon root must attach to tag_weapon.");
+    Assert(weaponGun.BaseLocalTranslation.Length() < 0.00001f, "Weapon root must retain its zero local bind position.");
+    Assert(handGun?.Parent?.Name == "j_wrist_ri", "Hand helper must retain its wrist parent.");
+    Assert(Vector3.Distance(handGun!.BaseLocalTranslation, new(-48.029152f, -21.405869f, -0.000441f)) < 0.00001f,
+        "Hand helper bind pose changed.");
+    Assert(skeleton.FindBone("j_slide")!.IsDescendantOf(weaponGun), "Slide was attached to the hand helper.");
+}
+
 static void TestRightHandIkCycle(Skeleton skeleton)
 {
-    var target = skeleton.FindBone("tag_ik_loc_ri") ?? throw new InvalidDataException("Missing tag_ik_loc_ri.");
+    var target = skeleton.FindBone("j_gun") ?? throw new InvalidDataException("Missing j_gun.");
     var start = skeleton.FindBone("j_shoulder_ri") ?? throw new InvalidDataException("Missing j_shoulder_ri.");
     Assert(target.IsDescendantOf(start), "Fixture no longer contains the expected unsafe right-hand IK hierarchy.");
 
     var player = new RedFox.Graphics3D.AnimationPlayer("IK safety acceptance");
     var solver = AnimationConverter.CreateIKSolver(
         "right",
-        new IKSettings("j_shoulder_ri", "j_elbow_ri", "j_wrist_ri", "tag_ik_loc_ri"),
+        new IKSettings("j_shoulder_ri", "j_elbow_ri", "j_wrist_ri", "j_gun"),
         skeleton,
         player);
     Assert(solver is null && player.Solvers.Count == 0, "Unsafe IK solver was added to the animation player.");
+    Assert(!skeleton.FindBone("tag_ik_loc_ri")!.IsDescendantOf(start), "Weapon IK target must not remain inside the wrist chain.");
 }
 
 static void TestExampleProject(MainViewModel viewModel, int expectedLayerCount)
@@ -743,6 +776,9 @@ static void ValidateMayaPackage(string path, IEnumerable<Part> sourceParts)
     Assert(skeleton.Bones.GroupBy(bone => bone.Name, StringComparer.OrdinalIgnoreCase).All(group => group.Count() == 1), "Merged CAST skeleton contains duplicate bone names.");
     Assert(skeleton.Bones.Count(bone => string.Equals(bone.Name, "j_gun", StringComparison.OrdinalIgnoreCase)) == 1, "Merged CAST skeleton must contain one j_gun.");
     Assert(nodes.OfType<CurveNode>().Count(curve => string.Equals(curve.NodeName, "j_gun", StringComparison.OrdinalIgnoreCase)) == 4, "Merged CAST animation must contain all j_gun transform curves.");
+    var weaponRoot = skeleton.Bones.Single(bone => bone.Name == "j_gun__weapon");
+    Assert(skeleton.Bones[weaponRoot.ParentIndex].Name == "tag_weapon", "Weapon root is not attached to tag_weapon.");
+    Assert(weaponRoot.LocalPosition.Length() < 0.00001f, "Weapon root lost its zero local transform.");
     Assert(model.Meshes.All(mesh => mesh.EnumerateBoneWeights().All(influence => influence.Item1 >= 0 && influence.Item1 < skeleton.Bones.Length)), "Merged CAST mesh contains an out-of-range bone influence.");
     var sourceModels = sourceParts
         .OrderBy(part => part.Type switch
@@ -769,7 +805,9 @@ static void ValidateMayaPackage(string path, IEnumerable<Part> sourceParts)
         {
             var sourceInfluence = sourceInfluences[influenceIndex];
             var mergedInfluence = mergedInfluences[influenceIndex];
-            var sourceBoneName = sourceSkeleton.Bones[sourceInfluence.Item1].Name;
+            var sourceBone = sourceSkeleton.Bones[sourceInfluence.Item1];
+            var sourceBoneName = sourceBone.ParentIndex < 0 && sourceBone.Name == "j_gun"
+                ? "j_gun__weapon" : sourceBone.Name;
             var mergedBoneName = skeleton.Bones[mergedInfluence.Item1].Name;
             Assert(string.Equals(sourceBoneName, mergedBoneName, StringComparison.OrdinalIgnoreCase), $"Merged CAST mesh {meshIndex} remapped influence {influenceIndex} to the wrong bone.");
             Assert(Math.Abs(sourceInfluence.Item2 - mergedInfluence.Item2) < 0.000001f, $"Merged CAST mesh {meshIndex} changed influence {influenceIndex} weight.");
@@ -915,7 +953,7 @@ static void ValidateSmdAnimation(string path, int expectedBoneCount, int expecte
     Assert(nodesStart >= 0 && nodesEnd > nodesStart && skeletonStart > nodesEnd, "SMD sections are malformed.");
     var nodeLines = lines[(nodesStart + 1)..nodesEnd];
     Assert(nodeLines.Length == expectedBoneCount, "SMD did not retain every skeleton bone.");
-    var gunNode = nodeLines.FirstOrDefault(line => line.Contains("\"j_gun\"", StringComparison.OrdinalIgnoreCase));
+    var gunNode = nodeLines.FirstOrDefault(line => line.Contains("\"j_gun__weapon\"", StringComparison.OrdinalIgnoreCase));
     Assert(gunNode is not null, "SMD skeleton does not contain j_gun.");
     var gunIndex = int.Parse(gunNode!.Split(' ', StringSplitOptions.RemoveEmptyEntries)[0], CultureInfo.InvariantCulture);
     var parents = nodeLines.ToDictionary(

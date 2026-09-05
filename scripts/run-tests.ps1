@@ -124,6 +124,13 @@ if (-not [string]::IsNullOrWhiteSpace($mayaPython) -and (Test-Path -LiteralPath 
     Test-CastInMaya $weaponFirstSprintCast 'weapon-first sprint'
     $sprintFbx = Resolve-AcceptanceArtifact ([string]$report.artifacts.sprintFbx) 'sprint FBX' $acceptanceStartedUtc
     Test-FbxInMaya $sprintFbx
+    $weaponOutput = Join-Path $output 'weapon-regression'
+    dotnet run --project $acceptanceProject -c Release --no-build -- --weapon-regression $weaponOutput
+    if ($LASTEXITCODE -ne 0) { throw 'Weapon regression export failed.' }
+    & $mayaPython (Join-Path $projectRoot 'maya\verify_weapon_regression.py') `
+        (Join-Path $weaponOutput 'weapon-regression.json') `
+        $acceptanceReport (Join-Path $exampleDirectory 'Hawk\HawkSprint.aprj')
+    if ($LASTEXITCODE -ne 0) { throw 'Maya weapon reference regression failed.' }
 } else {
     Write-Warning 'Maya 2025 was not found; CAST and FBX Maya verification was explicitly skipped.'
 }

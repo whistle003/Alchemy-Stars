@@ -63,7 +63,7 @@
     },
     {
       "FilePath": "D:\\_tiqu\\Saluki\\exported_files\\Merged Models\\sat_vm_ar_hawk_rec_LOD0.cast",
-      "ParentBoneTag": "j_gun",
+      "ParentBoneTag": "tag_weapon",
       "Type": 1
     }
   ]

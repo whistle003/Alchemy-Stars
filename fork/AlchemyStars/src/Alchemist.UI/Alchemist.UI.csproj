@@ -9,10 +9,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>Assets\AlchemyStarsIcon.ico</ApplicationIcon>
-    <Version>1.1.7</Version>
-    <FileVersion>1.1.7.0</FileVersion>
-    <AssemblyVersion>1.1.7.0</AssemblyVersion>
-    <InformationalVersion>1.1.7</InformationalVersion>
+    <Version>1.1.8</Version>
+    <FileVersion>1.1.8.0</FileVersion>
+    <AssemblyVersion>1.1.8.0</AssemblyVersion>
+    <InformationalVersion>1.1.8</InformationalVersion>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
   </PropertyGroup>
 

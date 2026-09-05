@@ -8,22 +8,22 @@ The maintained source lives in `fork/AlchemyStars` and pins the matching RedFox 
 
 ## Improvements over upstream Alchemist
 
-| Area | Upstream Alchemist | Alchemy Stars 1.1.7 |
+| Area | Upstream Alchemist | Alchemy Stars 1.1.8 |
 | --- | --- | --- |
-| Maya model and animation | Import behavior can leave duplicate skeletons or lose weapon motion | Physically merges parts, same-name bones, skin weights, and emits one baked animation per file |
+| Maya model and animation | Import behavior can leave duplicate skeletons or lose weapon motion | Uses hierarchy-aware bone identities, remaps skin weights, and emits one baked animation per file |
 | Output formats | Primarily CAST / SEAnim | Adds real FBX and native SMD while retaining CAST / SEAnim |
 | FBX workflow | Not provided | Detects the local Maya installation and uses the official `fbxmaya` plug-in without bundling a large conversion runtime |
 | Asset import | Primarily the original UI controls | System file dialogs, editable/pasteable path fields, targeted path drops, blank-area context menus, and `Shift+F10`; drops over animation layers are routed there first |
 | Localization | Original UI capability | Follows the system language by default, can be pinned to Simplified Chinese or English, and refreshes open About content |
 | Continuity | Project files retain absolute paths | Also remembers recent animation, layer, model, project, and output folders by category |
 | UI and distribution | Original settings layout and icons | Purpose-specific icons, unclipped tabbed settings, protected language/About controls, and a compact framework-dependent package |
-| Regression validation | Upstream examples | Preserves the original MP5 examples byte-for-byte and validates CAST, FBX, SMD, IK, skinning, and weapon motion with real Hawk assets |
+| Regression validation | Upstream examples | Preserves the original MP5 examples byte-for-byte and validates CAST, FBX, SMD, IK, skinning, and weapon motion with real Hawk, 1911 and P27 assets |
 
 Alchemy Stars keeps the upstream animation-layer concepts intact. Attribution and licenses for Alchemist, RedFox, and the CAST components are included in every release package.
 
 ## Highlights
 
-- Merges view hands and weapons by same-name bones so the shared `j_gun` is not renamed or split into a second skeleton.
+- Preserves distinct same-name bones: the wrist helper remains `j_gun`, while the weapon root becomes `j_gun__weapon` under `tag_weapon`. Model, skin and animation exports share one mapping.
 - Normalizes model order as ViewHands → Weapon → Attachment and physically combines all parts before export.
 - Keeps every mesh, material, and remapped skin weight in each CAST while including exactly one selected baked animation.
 - Preserves Normal, Additive, Gesture, GesturePose, positive offsets, and negative offsets through the RedFox sampling pipeline.
@@ -72,14 +72,16 @@ For FBX, Alchemy Stars locates the local Maya installation and invokes `fbxmaya`
 
 The Hawk sprint release artifact has been tested headlessly in Maya 2025 with:
 
-- 214 joints, one skeleton root, and one `j_gun`;
+- 215 joints, one skeleton root, and separate wrist-helper and weapon-root joints;
 - 21 imported and visible skinned meshes;
-- 1,284 translation/rotation curves with every transform channel keyed on every frame;
+- 1,290 translation/rotation curves with every transform channel keyed on every frame;
 - 30 FPS and a 0–66 playback range;
-- maximum left-hand IK positional error of about 0.050;
-- preserved right-hand and weapon motion, while unsafe cyclic right-hand IK is skipped.
+- left-hand IK validated against the physically reachable target;
+- preserved right-hand and weapon motion, with the weapon root following `tag_weapon`.
 
-The relevant-bone Hawk variant retains 121 of 214 bones. Every retained transform curve is compared with the full bake, every omitted target is confirmed to remain at bind pose, and the reduced full-scene CAST is imported separately in Maya 2025.
+The relevant-bone Hawk variant retains 121 of 215 bones. Every retained transform curve is compared with the full bake, every omitted target is confirmed to remain at bind pose, and the reduced full-scene CAST is imported separately in Maya 2025.
+
+For weapon parts with an empty parent, a unique `tag_weapon` is resolved during export; otherwise export asks for a parent. Existing explicit parents are honored. Set older Hawk projects that used `j_gun` to `tag_weapon` and re-export into a new destination. Animation-only files must be used with the matching 1.1.8 skeleton; old merged scenes need to be regenerated.
 
 The generated report is `fork/AlchemyStars/output/sat_vm_ar_hawk_sprint_alchemy_stars.maya2025.json`.
 
@@ -94,7 +96,7 @@ Development requires the .NET 9 SDK. The compact Windows x64 release is framewor
 
 `run-tests.ps1` builds the improved upstream project, verifies that the standard MP5 examples were not modified, generates actual Hawk CAST/SMD/FBX outputs, and reimports full and relevant-bone CAST plus FBX into Maya 2025 when available. It checks the skeleton, meshes, skinning, frame range, IK, weapon animation, animation-only CAST contents, retained-curve equivalence, weapon-first model ordering, and Chinese TEMP/output paths and names. The UI smoke suite checks centered dialogs, the protected language/About layout, settings clipping, four format choices, output-option accessibility, three language modes, toolbar controls, and context imports.
 
-Every functional release change increments at least the patch version; this release is `1.1.7`.
+Every functional release change increments at least the patch version; this release is `1.1.8`.
 
 ## Source and licenses
 

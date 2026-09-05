@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.8 — 2026-09-05
+
+- Fixed weapon offsets caused by collapsing a weapon-root `j_gun` into the view-hands wrist helper. Bone reuse now requires a matching parent and bind transform; distinct bones receive stable unique names.
+- Sampling, CAST bones, mesh weights and hash references now use one merge plan. The weapon root `j_gun__weapon` follows `tag_weapon` while hand animation still targets the wrist helper `j_gun`.
+- Empty weapon parents resolve to a unique `tag_weapon`; missing or ambiguous parents/animation targets produce actionable errors. Explicit parents remain honored.
+- Corrected the Hawk examples to use `tag_weapon`. Re-export old merged scenes; animation-only files require the matching new skeleton.
+- Corrected rigid mesh alignment for rotated, non-zero source roots and improved SMD Euler conversion precision near 90-degree pitch.
+- Added 1911/P27/Hawk regression checks for weapon ancestry, skin weights and world-space playback, including separate-source Maya comparisons and full/selective/animation-only CAST, FBX and SMD.
+- Updated English/Chinese guides and About content. The original MP5 example files remain unchanged.
+
 ## 1.1.7 — 2026-09-05
 
 - Left the output folder blank for every newly imported animation, requiring an explicit destination before export so a same-named CAST cannot silently overwrite its source.

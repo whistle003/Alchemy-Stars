@@ -65,20 +65,16 @@ internal static class SmdAnimationExporter
 
     internal static Vector3 ToEulerXyz(Quaternion rotation)
     {
-        rotation = Quaternion.Normalize(rotation);
-        var sinXCosY = 2 * (rotation.W * rotation.X + rotation.Y * rotation.Z);
-        var cosXCosY = 1 - 2 * (rotation.X * rotation.X + rotation.Y * rotation.Y);
-        var x = MathF.Atan2(sinXCosY, cosXCosY);
-
-        var sinY = 2 * (rotation.W * rotation.Y - rotation.Z * rotation.X);
-        var y = MathF.Abs(sinY) >= 1
-            ? MathF.CopySign(MathF.PI / 2, sinY)
-            : MathF.Asin(sinY);
-
-        var sinZCosY = 2 * (rotation.W * rotation.Z + rotation.X * rotation.Y);
-        var cosZCosY = 1 - 2 * (rotation.Y * rotation.Y + rotation.Z * rotation.Z);
-        var z = MathF.Atan2(sinZCosY, cosZCosY);
-        return new Vector3(x, y, z);
+        // Double precision avoids amplified float cancellation near a 90-degree
+        // pitch, which otherwise moves distant descendants after SMD import.
+        double qx = rotation.X, qy = rotation.Y, qz = rotation.Z, qw = rotation.W;
+        var norm = Math.Sqrt(qx * qx + qy * qy + qz * qz + qw * qw);
+        qx /= norm; qy /= norm; qz /= norm; qw /= norm;
+        var sinY = Math.Clamp(2 * (qw * qy - qz * qx), -1, 1);
+        var x = Math.Atan2(2 * (qw * qx + qy * qz), 1 - 2 * (qx * qx + qy * qy));
+        var y = Math.Asin(sinY);
+        var z = Math.Atan2(2 * (qw * qz + qx * qy), 1 - 2 * (qy * qy + qz * qz));
+        return new Vector3((float)x, (float)y, (float)z);
     }
 
     private static int GetFrameCount(SkeletonAnimation animation)

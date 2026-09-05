@@ -28,7 +28,7 @@ namespace Alchemist.UI
 {
     public class MainViewModel : LoggableMVVMObject
     {
-        public string FileVersion { get; } = typeof(MainViewModel).Assembly.GetName().Version?.ToString(3) ?? "1.1.7";
+        public string FileVersion { get; } = typeof(MainViewModel).Assembly.GetName().Version?.ToString(3) ?? "1.1.8";
         public AnimationConverter Converter { get; set; } = new();
         public MVVMItemList<Animation> Animations { get; set; } = [];
         public MVVMItemList<Part> Parts { get; set; } = [];
@@ -357,7 +357,7 @@ namespace Alchemist.UI
             if (Parts.Count == 0)
                 throw new InvalidOperationException(LocalizationManager.Get("NeedPart"));
 
-            var skeleton = AnimationConverter.LoadSkeletonFromParts(Parts, MatchOldCallOfDuty);
+            var mergePlan = SkeletonMergePlan.Build(Parts, MatchOldCallOfDuty);
             var outputs = new List<string>(Animations.Count);
             foreach (var anim in Animations)
             {
@@ -378,7 +378,7 @@ namespace Alchemist.UI
                     rightHandIKSettings.TargetBoneName = anim.RightIKTargetBoneName;
 
                 outputs.Add(AnimationConverter.Convert(
-                    skeleton,
+                    mergePlan,
                     anim,
                     leftHandIKSettings,
                     rightHandIKSettings,
@@ -387,8 +387,7 @@ namespace Alchemist.UI
                     OutputFormat,
                     CastAnimationOnly,
                     BakeRelevantBonesOnly,
-                    MatchOldCallOfDuty,
-                    Parts));
+                    MatchOldCallOfDuty));
             }
 
             return outputs;

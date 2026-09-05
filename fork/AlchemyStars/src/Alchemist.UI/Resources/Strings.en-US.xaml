@@ -150,10 +150,10 @@
     <sys:String x:Key="AboutFeaturesTitle">Key capabilities</sys:String>
     <sys:String x:Key="AboutFeatureFiles">Import through file browsers, editable or pasteable path fields, targeted drag and drop, or context menus; new animations keep output blank until explicitly chosen, preventing accidental source replacement</sys:String>
     <sys:String x:Key="AboutFeatureLayers">Normal, Additive, Gesture, and Gesture Pose layers, frame offsets, and left/right hand IK</sys:String>
-    <sys:String x:Key="AboutFeatureModels">Canonical View Hands → Weapon → Attachment order is physically merged into one model without relying on Maya Import Merge</sys:String>
+    <sys:String x:Key="AboutFeatureModels">One merged model with hierarchy-aware bone identities: weapon roots stay separate from same-name wrist helpers; skinning and animation share the mapping</sys:String>
     <sys:String x:Key="AboutFeatureMaya">Exports full-scene or animation-only CAST, FBX, SMD, and SEAnim; supports relevant-bone-only baking; includes the Maya CAST importer, standard MP5/Hawk examples, and bilingual guides</sys:String>
     <sys:String x:Key="AboutValidationTitle">Compatibility and validation</sys:String>
-    <sys:String x:Key="AboutValidation">This version verifies full and relevant-bone CAST plus FBX in Autodesk Maya 2025: one skeleton, retained skinned meshes, baked animation, and an animated weapon. Selective curves are compared with the full bake; Hawk sprint, SMD data, and weapon-before-hands ordering are automated.</sys:String>
+    <sys:String x:Key="AboutValidation">Maya 2025 regression covers Hawk, 1911 and P27: weapon parenting, skinning, full/selective/animation-only CAST, FBX and SMD. Weapon transforms are compared with separately imported source rigs and animations.</sys:String>
     <sys:String x:Key="AboutBuildTitle">Version and environment</sys:String>
     <sys:String x:Key="AboutVersion">Application version</sys:String>
     <sys:String x:Key="AboutRuntime">Current .NET runtime</sys:String>
@@ -165,4 +165,7 @@
     <sys:String x:Key="AboutUpstream">Upstream project</sys:String>
     <sys:String x:Key="AboutOpenUpstream">Open the Alchemist project page</sys:String>
     <sys:String x:Key="AboutCopyright">Alchemy Stars is a community improvement of Alchemist. Alchemist, RedFox, and Maya CAST remain subject to their respective copyrights and licenses; complete license texts and third-party notices are included in the package.</sys:String>
+    <sys:String x:Key="MergeNeedsParent">Choose a parent bone for this model part. A unique weapon attachment (tag_weapon) could not be resolved.</sys:String>
+    <sys:String x:Key="MergeUnknownParent">Parent bone '{0}' was not found. Choose an existing bone in an earlier model part.</sys:String>
+    <sys:String x:Key="MergeAmbiguousAnimation">Animation target '{0}' matches different bones. Choose unique bone names before exporting.</sys:String>
 </ResourceDictionary>

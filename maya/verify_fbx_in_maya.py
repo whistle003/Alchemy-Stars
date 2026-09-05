@@ -53,7 +53,7 @@ def main() -> int:
         joints = cmds.ls(type="joint", long=True) or []
         meshes = cmds.ls(type="mesh", long=True, noIntermediate=True) or []
         skin_clusters = cmds.ls(type="skinCluster") or []
-        gun_roots = cmds.ls("j_gun", type="joint", long=True) or []
+        gun_roots = cmds.ls("j_gun__weapon", type="joint", long=True) or []
         skeleton_roots = sorted({top_joint(cmds, joint) for joint in joints})
         minimum = float(cmds.playbackOptions(query=True, minTime=True))
         maximum = float(cmds.playbackOptions(query=True, maxTime=True))
@@ -88,7 +88,8 @@ def main() -> int:
 
         checks = {
             "maya2025": str(cmds.about(version=True)).startswith("2025"),
-            "singleMergedSkeleton": len(joints) == 214 and len(gun_roots) == 1 and len(skeleton_roots) == 1,
+            "singleMergedSkeleton": len(joints) == 215 and len(gun_roots) == 1 and len(skeleton_roots) == 1,
+            "weaponParent": (cmds.listRelatives("j_gun__weapon", parent=True) or []) == ["tag_weapon"],
             "allSkinnedMeshesImported": len(meshes) == 21 and len(skin_clusters) == 21,
             "playbackRange": minimum == 0.0 and maximum == 66.0,
             "weaponAnimationPresent": (

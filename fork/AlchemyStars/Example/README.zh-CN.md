@@ -60,7 +60,7 @@
 | 第 1 层 | Sprint Loop | `sat_vm_ar_hawk_sprint_loop.cast` | Additive，偏移留空 |
 | 第 2 层 | Sprint Offset | `sat_vm_ar_hawk_sprint_offset_additive.cast` | Additive，偏移留空 |
 
-该示例输出 30 FPS 的 `sat_vm_ar_hawk_sprint_alchemy_stars.cast`。手臂为 ViewHands；Hawk 是已经合并好的武器模型，使用 Weapon 并挂到 `j_gun`。左手 IK 启用。右手 IK 明确关闭，因为现有 Hawk 骨架中的右手目标位于右臂链的后代层级，求解会形成循环依赖；这是针对素材安全性的改进，不改变原版冲刺分层方式。
+该示例输出 30 FPS 的 `sat_vm_ar_hawk_sprint_alchemy_stars.cast`。手臂为 ViewHands；Hawk 是已经合并好的武器模型，使用 Weapon 并挂到 `tag_weapon`。导出武器根为 `j_gun__weapon`，右腕辅助骨骼仍为 `j_gun`。示例启用左手 IK，保持右手 IK 关闭。旧项目请检查武器父节点并重新导出。
 
 `Hawk\HawkIdle.aprj` 不含动画层并关闭左右手 IK。`Hawk\HawkBatch.aprj` 复用完全相同的项目级设置和模型部件，同时包含 Sprint 与 Idle 两行，分别输出两个名称唯一、各自只有一个动画的 CAST。
 
@@ -77,7 +77,7 @@ Hawk 示例保存了当前机器上的绝对素材路径。素材位置改变时
 
 也可在设置中选择 `.fbx`。软件会自动调用本机 Maya 的 `mayapy.exe` 与官方 `fbxmaya` 插件，不需要手动安装额外转换器；在 Maya 的 FBX Import 选项中启用 **Fill Timeline** 即可自动采用 0–66 播放范围。没有安装 Maya 时仍可直接输出 CAST、SMD 或 SEAnim。SMD 保存骨骼层级和每帧局部变换，不包含材质与网格。
 
-当前 Hawk 冲刺基准已在本机 Maya 2025 无界面模式验证 CAST 与 FBX：214 个关节、21 个可见且带蒙皮的网格、30 FPS、0–66 帧，并且场景中只有一个骨架根和一个 `j_gun`。相关骨骼 CAST 保留 121 根骨骼，其保留曲线与完整烘焙逐帧对比，并单独导入 Maya 2025。FBX 中 `j_gun` 的 6 个变换通道各有 67 个关键帧且世界变换发生变化；两个 Additive 层已经烘焙进唯一动画。SMD 另外验证 214 个节点、67 帧及武器世界空间运动。
+当前 Hawk 冲刺基准已在本机 Maya 2025 无界面模式验证 CAST 与 FBX：215 个关节、21 个可见且带蒙皮的网格、30 FPS、0–66 帧，并且场景中只有一个骨架根，并分别保留 `j_gun` 与 `j_gun__weapon`。相关骨骼 CAST 保留 121 根骨骼，其保留曲线与完整烘焙逐帧对比，并单独导入 Maya 2025。FBX 中 `j_gun__weapon` 的 6 个变换通道各有 67 个关键帧且世界变换发生变化；两个 Additive 层已经烘焙进唯一动画。SMD 另外验证 215 个节点、67 帧及武器世界空间运动。
 
 ## 发布与自动验证
 

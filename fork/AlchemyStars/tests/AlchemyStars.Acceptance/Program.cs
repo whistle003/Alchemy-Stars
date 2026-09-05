@@ -125,6 +125,25 @@ Run("Standard MP5 examples load in the current project format", () =>
 Run("Standard MP5 examples remain byte-identical to the source", () => TestStandardExampleHashes(exampleDirectory, exampleManifest.StandardExamples));
 Run("Hawk sprint follows the upstream idle-plus-two-additive-layers pattern", () => TestHawkSprintPattern(sprintProject, mp5BaseProject));
 Run("Example manifest is complete", () => TestExampleManifest(exampleDirectory, exampleManifest));
+Run("Avalonia workspace store reads and round-trips the standard Hawk project", () =>
+{
+    var store = new WorkspaceProjectStore();
+    var sourcePath = Path.Combine(exampleDirectory, improvedExamples["hawk-sprint"].Path);
+    var workspace = store.Load(sourcePath);
+    Assert(workspace.Parts.Count == 2, "Avalonia workspace should load both Hawk model parts.");
+    Assert(workspace.Animations.Count == 1 && workspace.Animations[0].Layers.Count == 2,
+        "Avalonia workspace should preserve the idle base and two sprint layers.");
+    Assert(workspace.Animations[0].Layers.All(layer => layer.Type == AnimationLayerKind.Additive),
+        "Both Hawk sprint layers should remain additive.");
+    var roundtripDirectory = Path.Combine(outputDirectory, "workspace-store");
+    Directory.CreateDirectory(roundtripDirectory);
+    var roundtripPath = Path.Combine(roundtripDirectory, "HawkSprint-Avalonia.aprj");
+    store.Save(workspace, roundtripPath);
+    var reloaded = store.Load(roundtripPath);
+    Assert(reloaded.Parts[1].ParentBoneTag == "tag_weapon", "Avalonia project round-trip should preserve weapon parenting.");
+    Assert(reloaded.Animations[0].OutputFolder == workspace.Animations[0].OutputFolder,
+        "Avalonia project round-trip should preserve explicit output folders.");
+});
 
 var requiredFiles = sprintProject.Parts.Select(part => part.FilePath)
     .Concat(sprintProject.Animations.Select(animation => animation.Name))
@@ -183,6 +202,36 @@ if (requiredFiles.All(File.Exists))
         Assert(result.OutputFiles.Count == 1, "Engine seam should export exactly one Hawk sprint file.");
         engineSprintOutput = Path.GetFullPath(result.OutputFiles.Single());
         ValidateMayaPackage(engineSprintOutput, sprintProject.Parts);
+    });
+
+    Run("Engine blocks an export that would overwrite any input file", () =>
+    {
+        var safetyDirectory = Path.Combine(outputDirectory, "overwrite-guard");
+        Directory.CreateDirectory(safetyDirectory);
+        var duplicateInput = Path.Combine(safetyDirectory, "collision.cast");
+        File.Copy(sprintProject.Animations.Single().Name, duplicateInput, overwrite: true);
+        var before = SHA256.HashData(File.ReadAllBytes(duplicateInput));
+        var request = new AnimationExportRequest(
+            sprintProject.Parts.Select(part => new ModelPartSpec(
+                part.FilePath,
+                part.Type == PartType.ViewHands ? ModelPartKind.ViewHands : ModelPartKind.Weapon,
+                part.ParentBoneTag)).ToArray(),
+            [new AnimationExportJob(duplicateInput, "collision", safetyDirectory)],
+            new AnimationExportOptions(
+                new IkChainSpec("j_shoulder_le", "j_elbow_le", "j_wrist_le", "tag_ik_loc_le"),
+                new IkChainSpec("j_shoulder_ri", "j_elbow_ri", "j_wrist_ri", "tag_ik_loc_ri")));
+        try
+        {
+            new AnimationExportEngine().Export(request);
+            throw new InvalidOperationException("Input overwrite request was accepted.");
+        }
+        catch (ExportValidationException exception)
+        {
+            Assert(exception.Code == ExportErrorCode.OutputWouldOverwriteInput,
+                "Input overwrite should return the structured OutputWouldOverwriteInput error.");
+        }
+        Assert(before.SequenceEqual(SHA256.HashData(File.ReadAllBytes(duplicateInput))),
+            "Overwrite guard must leave the input byte-identical.");
     });
 
     Run("Sprint and additive offset bake into one Maya CAST", () =>

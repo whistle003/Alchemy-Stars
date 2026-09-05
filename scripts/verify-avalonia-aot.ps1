@@ -7,10 +7,13 @@ $ErrorActionPreference = 'Stop'
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $project = Join-Path $repositoryRoot 'fork\AlchemyStars\src\AlchemyStars.Avalonia\AlchemyStars.Avalonia.csproj'
 $outputRoot = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'output'))
-$publishDirectory = [System.IO.Path]::GetFullPath((Join-Path $outputRoot 'avalonia-aot-preview1'))
-if (-not $publishDirectory.StartsWith($outputRoot + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)) {
-    throw "Refusing to clean a publish path outside the repository output directory: $publishDirectory"
+$publishDirectory = [System.IO.Path]::GetFullPath((Join-Path $outputRoot 'avalonia-aot-preview6'))
+function Assert-OutputChild([string]$Path) {
+    if (-not $Path.StartsWith($outputRoot + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Refusing to clean a path outside the repository output directory: $Path"
+    }
 }
+Assert-OutputChild $publishDirectory
 if (Test-Path -LiteralPath $publishDirectory) {
     Remove-Item -LiteralPath $publishDirectory -Recurse -Force
 }
@@ -18,6 +21,7 @@ if (Test-Path -LiteralPath $publishDirectory) {
 
 $env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'
 $env:AVALONIA_TELEMETRY_OPTOUT = '1'
+$env:ALCHEMY_STARS_SETTINGS_PATH = Join-Path $outputRoot 'avalonia-aot-verification-settings.json'
 
 dotnet publish $project `
     -c $Configuration `
@@ -43,4 +47,61 @@ if ($selfTest.ExitCode -ne 0) {
 }
 
 & (Join-Path $PSScriptRoot 'test-avalonia-aot-startup.ps1') -PublishDirectory $publishDirectory
+& (Join-Path $PSScriptRoot 'test-avalonia-accessibility.ps1') -PublishDirectory $publishDirectory
+
+$standardProject = Join-Path $repositoryRoot 'fork\AlchemyStars\Example\Hawk\HawkSprint.aprj'
+$projectSmokeDirectory = [System.IO.Path]::GetFullPath((Join-Path $outputRoot 'avalonia-aot-project-smoke'))
+Assert-OutputChild $projectSmokeDirectory
+if (Test-Path -LiteralPath $projectSmokeDirectory) {
+    Remove-Item -LiteralPath $projectSmokeDirectory -Recurse -Force
+}
+[System.IO.Directory]::CreateDirectory($projectSmokeDirectory) | Out-Null
+
+$projectData = Get-Content -LiteralPath $standardProject -Raw | ConvertFrom-Json
+$projectInputs = @($projectData.Parts | ForEach-Object FilePath)
+$projectInputs += @($projectData.Animations | ForEach-Object Name)
+$projectInputs += @($projectData.Animations | ForEach-Object { $_.Layers | ForEach-Object Name })
+if (@($projectInputs | Where-Object { -not (Test-Path -LiteralPath $_) }).Count -eq 0) {
+    $arguments = '--project-smoke "' + $standardProject + '" "' + $projectSmokeDirectory + '"'
+    $projectSmoke = Start-Process -FilePath $executable -ArgumentList $arguments -WorkingDirectory $publishDirectory -WindowStyle Hidden -Wait -PassThru
+    if ($projectSmoke.ExitCode -ne 0) {
+        throw "Native AOT standard-project export failed with exit code $($projectSmoke.ExitCode)."
+    }
+    $projectOutputs = @(Get-ChildItem -LiteralPath $projectSmokeDirectory -File)
+    if ($projectOutputs.Count -ne $projectData.Animations.Count -or @($projectOutputs | Where-Object Length -le 0).Count -ne 0) {
+        throw 'Native AOT standard-project export produced an invalid output set.'
+    }
+    Write-Output 'Native AOT standard Hawk project export: PASS'
+} else {
+    Write-Output 'Native AOT standard Hawk project export: SKIPPED (source assets unavailable)'
+}
+
+$renderDirectory = [System.IO.Path]::GetFullPath((Join-Path $outputRoot 'avalonia-aot-ui-smoke'))
+Assert-OutputChild $renderDirectory
+if (Test-Path -LiteralPath $renderDirectory) {
+    Remove-Item -LiteralPath $renderDirectory -Recurse -Force
+}
+[System.IO.Directory]::CreateDirectory($renderDirectory) | Out-Null
+$renderCases = @(
+    @{ Page = 'animations'; Culture = 'en-US'; Dialog = '' },
+    @{ Page = 'parts'; Culture = 'zh-CN'; Dialog = '' },
+    @{ Page = 'settings'; Culture = 'en-US'; Dialog = '' },
+    @{ Page = 'about'; Culture = 'zh-CN'; Dialog = 'success' }
+)
+foreach ($renderCase in $renderCases) {
+    $renderPath = Join-Path $renderDirectory ($renderCase.Page + '.png')
+    $arguments = '--culture "' + $renderCase.Culture + '" --window-size 900x600 --page "' + $renderCase.Page + '" --render-smoke "' + $renderPath + '" "' + $standardProject + '"'
+    if ($renderCase.Dialog) {
+        $arguments += ' --dialog "' + $renderCase.Dialog + '"'
+    }
+    $renderProcess = Start-Process -FilePath $executable -ArgumentList $arguments -WorkingDirectory $publishDirectory -WindowStyle Hidden -Wait -PassThru
+    if ($renderProcess.ExitCode -ne 0 -or -not (Test-Path -LiteralPath $renderPath) -or (Get-Item -LiteralPath $renderPath).Length -eq 0) {
+        throw "Native AOT render smoke failed for page '$($renderCase.Page)'."
+    }
+}
+Write-Output 'Native AOT four-page and centered-dialog render smoke: PASS'
+
+if (Get-ChildItem -LiteralPath $publishDirectory -Filter '*.pdb' -File -Recurse) {
+    throw 'Native AOT publish unexpectedly contains PDB files.'
+}
 Get-Item -LiteralPath $executable | Select-Object FullName, Length, LastWriteTime

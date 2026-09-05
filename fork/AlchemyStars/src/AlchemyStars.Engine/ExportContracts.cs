@@ -84,6 +84,7 @@ public enum ExportErrorCode
     MissingOutputFolder,
     MissingOutputName,
     InvalidFramerate,
+    OutputWouldOverwriteInput,
 }
 
 public sealed class ExportValidationException : ArgumentException

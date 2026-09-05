@@ -2,11 +2,11 @@
 
 # Alchemy Stars
 
-> **Avalonia AOT preview branch:** this test line targets .NET 11 Preview 7, Avalonia 12.1.2 and version `1.3.0-preview.1`. Production remains v1.1.9 on `main`; the existing WPF application is still the stable baseline. Do not distribute this build as a stable release.
+> **Avalonia AOT preview branch:** this test line targets .NET 11 Preview 7, Avalonia 12.1.2 and version `1.3.0-preview.6`. The complete desktop workflow now runs as a self-contained Native AOT application. Production remains v1.1.9 on `main`; the existing WPF application is still the stable baseline until .NET 11 GA. Do not distribute this build as a stable release.
 
-See the [Avalonia AOT migration report](docs/avalonia-aot-migration.md) and the [.NET 11 preview compatibility report](docs/dotnet11-preview.md).
+See the [Avalonia preview quick guide](docs/avalonia-aot-user-guide.md), [migration report](docs/avalonia-aot-migration.md) and [.NET 11 preview compatibility report](docs/dotnet11-preview.md).
 
-Alchemy Stars (炼金之星) is a production-focused improvement of [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist) for Windows, first-person CAST weapon assets, and Autodesk Maya 2025. It retains Alchemist's WPF batch interface and RedFox animation pipeline while completing a reliable model-and-animation export workflow.
+Alchemy Stars (炼金之星) is a production-focused improvement of [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist) for Windows, first-person CAST weapon assets, and Autodesk Maya 2025. The stable line retains Alchemist's WPF interface, while this test branch moves the complete workflow to Avalonia and Native AOT without forking the proven RedFox animation pipeline.
 
 The maintained source lives in `fork/AlchemyStars` and pins the matching RedFox revision to keep builds reproducible. The earlier standalone rewrite remains preserved on the `independent-rewrite-v1` branch and is no longer the active implementation.
 
@@ -20,7 +20,7 @@ The maintained source lives in `fork/AlchemyStars` and pins the matching RedFox 
 | Asset import | Primarily the original UI controls | System file dialogs, editable/pasteable path fields, targeted path drops, blank-area context menus, and `Shift+F10`; drops over animation layers are routed there first |
 | Localization | Original UI capability | Follows the system language by default, can be pinned to Simplified Chinese or English, and refreshes open About content |
 | Continuity | Project files retain absolute paths | Also remembers recent animation, layer, model, project, and output folders by category |
-| UI and distribution | Original settings layout and icons | Purpose-specific icons, unclipped tabbed settings, protected language/About controls, and a compact framework-dependent package |
+| UI and distribution | Original settings layout and icons | Reference-driven creative workbench with an asset library, composition canvas, layer tracks and inspector; AtomBox-informed forms and lists; accessible rounded-stroke icons; centered in-window dialogs; and an optional self-contained Native AOT package |
 | Regression validation | Upstream examples | Preserves the original MP5 examples byte-for-byte and validates CAST, FBX, SMD, IK, skinning, and weapon motion with real Hawk, 1911 and P27 assets |
 
 Alchemy Stars keeps the upstream animation-layer concepts intact. Attribution and licenses for Alchemist, RedFox, and the CAST components are included in every release package.
@@ -41,6 +41,8 @@ Alchemy Stars keeps the upstream animation-layer concepts intact. Attribution an
 - Offers Follow System, Simplified Chinese, and English interface modes.
 - Keeps all completion, warning, and error dialogs centered over the application; long diagnostics are scrollable and copyable.
 - Uses a redesigned alchemy-flask-and-star application icon and function-specific toolbar icons.
+- The Avalonia preview adapts Beutl's editor hierarchy into a functional asset-library / composition / layer-track / inspector workspace. AtomBox informs the restrained form spacing and list treatment without adding either project's UI dependencies.
+- Persistent labels, 44 DIP targets, visible focus, localized UI Automation names, keyboard shortcuts and button alternatives cover every drop/reorder operation.
 
 ## Download and use
 
@@ -93,16 +95,16 @@ The generated report is `fork/AlchemyStars/output/sat_vm_ar_hawk_sprint_alchemy_
 
 ## Build and validation
 
-This preview branch requires .NET SDK `11.0.100-preview.7.26381.103`. Its test package is framework-dependent and requires the matching [.NET 11 Preview Desktop Runtime (x64)](https://dotnet.microsoft.com/download/dotnet/11.0); it does not bundle .NET or Maya. .NET 11 no longer compresses framework-dependent single-file bundles, so the test EXE is uncompressed inside the normally compressed distribution ZIP. Stable users should continue using v1.1.9 from `main` with the .NET 9 Desktop Runtime.
+This preview branch requires .NET SDK `11.0.100-preview.7.26381.103` to build. `verify-avalonia-aot.ps1` produces a self-contained `win-x64` Native AOT package, so that test executable does not require a separately installed .NET runtime; Maya itself is still not bundled and remains required for FBX conversion. Stable users should continue using v1.1.9 from `main` with the .NET 9 Desktop Runtime until the .NET 11 GA gate is passed.
 
 ```powershell
 .\scripts\run-tests.ps1
-.\scripts\build-release.ps1
+.\scripts\verify-avalonia-aot.ps1
 ```
 
-`run-tests.ps1` builds the improved upstream project, verifies that the standard MP5 examples were not modified, generates actual Hawk CAST/SMD/FBX outputs, and reimports full and relevant-bone CAST plus FBX into Maya 2025 when available. It checks the skeleton, meshes, skinning, frame range, IK, weapon animation, animation-only CAST contents, retained-curve equivalence, weapon-first model ordering, and Chinese TEMP/output paths and names. The UI smoke suite checks centered dialogs, the protected language/About layout, settings clipping, four format choices, output-option accessibility, three language modes, toolbar controls, and context imports.
+`run-tests.ps1` builds the stable WPF baseline and runs the Maya-backed conversion regressions. `verify-avalonia-aot.ps1` publishes the trimmed native application, runs its AOT contract/project export checks, starts a real Win32 window, validates Windows UI Automation names/focus/target bounds, and renders all four pages plus a centered dialog at the 900 × 600 minimum size.
 
-Every functional release change increments at least the patch version; this version is `1.1.9`.
+Every functional preview change increments the prerelease revision; this test version is `1.3.0-preview.6`. The stable release remains `1.1.9`.
 
 The 1.1.9 UI audit fixes the clipped About icon, toolbar overflow, cramped layer paths, and low-contrast controls. See the [UI audit and validation notes](design-system/alchemy-stars/pages/ui-audit-1.1.9.md) for coverage and limitations.
 

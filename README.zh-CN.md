@@ -2,11 +2,11 @@
 
 # Alchemy Stars（炼金之星）
 
-> **Avalonia AOT 预览测试分支：** 本测试线使用 .NET 11 Preview 7、Avalonia 12.1.2，版本为 `1.3.0-preview.1`。正式版仍是 `main` 上的 v1.1.9，现有 WPF 程序仍是稳定基线，请勿把本分支构建作为稳定版分发。
+> **Avalonia AOT 预览测试分支：** 本测试线使用 .NET 11 Preview 7、Avalonia 12.1.2，版本为 `1.3.0-preview.6`，完整桌面工作流已可作为自包含 Native AOT 程序运行。正式版仍是 `main` 上的 v1.1.9；在 .NET 11 GA 前，现有 WPF 程序仍是稳定基线，请勿把本分支构建作为稳定版分发。
 
-详细结果见 [Avalonia AOT 迁移报告](docs/avalonia-aot-migration.md)与 [.NET 11 Preview 兼容性报告](docs/dotnet11-preview.md)。
+使用方法见 [Avalonia 预览版快速指南](docs/avalonia-aot-user-guide.zh-CN.md)；详细结果见 [Avalonia AOT 迁移报告](docs/avalonia-aot-migration.md)与 [.NET 11 Preview 兼容性报告](docs/dotnet11-preview.md)。
 
-Alchemy Stars 是 [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist) 的可用化改进版，面向 Windows、CAST 第一人称武器资产与 Autodesk Maya 2025。项目保留原版 Alchemist 的 WPF 批处理界面和 RedFox 动画管线，并补齐了原仓库尚未完成的模型/动画一体化导出。
+Alchemy Stars 是 [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist) 的可用化改进版，面向 Windows、CAST 第一人称武器资产与 Autodesk Maya 2025。稳定版保留原版 Alchemist 的 WPF 界面；本测试分支在不分叉已验证 RedFox 动画管线的前提下，把完整工作流迁移到 Avalonia 与 Native AOT。
 
 主源码位于 `fork/AlchemyStars`，固定使用与原项目同期的 RedFox 提交，避免上游变动破坏构建。先前的独立重写已保存在 Git 分支 `independent-rewrite-v1`，不再是当前实现。
 
@@ -22,7 +22,7 @@ Alchemy Stars 保留原版批处理、动画层、IK 与 RedFox 转换管线，�
 | 素材导入 | 以原界面操作为主 | 文件浏览器、可编辑/粘贴路径框、定向拖放、列表空白处右键、`Shift+F10`；动画层悬停区域优先路由 |
 | 本地化 | 原版界面能力 | 自动检测系统语言，可固定简体中文或 English，并即时刷新 About 等窗口 |
 | 使用连续性 | 项目保存绝对路径 | 额外按动画、层、模型、项目与输出类别记忆最近目录 |
-| UI 与发布 | 原版设置布局和图标 | 重做功能图标、无截断设置页、受保护的语言/About 区、精简无内置 .NET 运行时发布 |
+| UI 与发布 | 原版设置布局和图标 | 参考创作软件重构的资源库、合成工作区、动画层轨道与属性检查器，结合 AtomBox 表单和列表细节、统一无障碍描边图标、软件内居中对话框，以及可选的自包含 Native AOT 发布 |
 | 回归验证 | 上游示例 | 原版 MP5 示例逐字节保留，并以 Hawk、1911 和 P27 实际素材验证 CAST、FBX、SMD、IK、蒙皮和武器运动 |
 
 这些改进没有替换上游核心的动画混合思想；标准 MP5 项目仍作为兼容基准，原项目、RedFox 与 CAST 组件的署名和许可证均随发布包保留。
@@ -47,6 +47,8 @@ Alchemy Stars 保留原版批处理、动画层、IK 与 RedFox 转换管线，�
 - 主界面、对话框和 About 窗口支持“跟随系统 / 简体中文 / English”，首次启动自动检测系统语言并记忆手动选择。
 - 设置窗口按“输出 / IK 骨骼”重新分区，在最小窗口尺寸下仍可滚动使用；语言与 About 固定在受保护的右侧区域，不再被工具栏遮挡。
 - 使用“炼金术瓶 + 星芒”主题的新应用图标。
+- Avalonia 预览界面把 Beutl 的编辑器层级改造为可实际操作的“资源库 / 合成工作区 / 动画层轨道 / 属性检查器”；表单间距和列表细节参考 AtomBox，但不引入两个项目的 UI 依赖。
+- 控件保留常驻标签、44 DIP 操作区、明显的键盘焦点、双语 UI Automation 名称和快捷键；拖放与排序均有按钮替代操作。
 
 ## 直接使用
 
@@ -101,16 +103,16 @@ Alchemy Stars 保留原版批处理、动画层、IK 与 RedFox 转换管线，�
 
 ## 构建与验证
 
-本预览分支需要 .NET SDK `11.0.100-preview.7.26381.103`；运行测试构建需要匹配的 [.NET 11 Preview Desktop Runtime (x64)](https://dotnet.microsoft.com/download/dotnet/11.0)。.NET 11 已不允许对框架依赖的单文件包启用内部压缩，因此测试 EXE 本身不压缩，但外层发布 ZIP 仍正常压缩且不会内置运行时。稳定用户应继续使用 `main` 分支的 v1.1.9 和 .NET 9 Desktop Runtime：
+本预览分支需要 .NET SDK `11.0.100-preview.7.26381.103` 才能构建。`verify-avalonia-aot.ps1` 会生成自包含的 `win-x64` Native AOT 测试包，因此该测试程序不要求另装 .NET 运行时；Maya 不会打包进去，FBX 转换仍需本机 Maya。在通过 .NET 11 GA 门禁前，稳定用户应继续使用 `main` 分支的 v1.1.9 和 .NET 9 Desktop Runtime：
 
 ```powershell
 .\scripts\run-tests.ps1
-.\scripts\build-release.ps1
+.\scripts\verify-avalonia-aot.ps1
 ```
 
-`run-tests.ps1` 会编译改进后的原项目，先验证两份标准 MP5 示例没有被改写，再以 `fork\AlchemyStars\Example\Hawk\HawkSprint.aprj` 作为 Hawk 冲刺验证的唯一配置来源。验收会实际生成 CAST、仅动画 CAST、相关骨骼 CAST、SMD 和 FBX；逐帧比较精简与完整曲线，并把两类完整场景 CAST 和 FBX 重新导入 Maya 2025 检查骨架、网格、蒙皮、帧范围及武器动画；同时覆盖 Idle、批处理和“武器排在手臂之前”的回归。`build-release.ps1` 会生成不内置 .NET 运行环境的精简 Windows x64 单文件发布包和 ZIP。
+`run-tests.ps1` 会编译稳定 WPF 基线并执行 Maya 转换回归。`verify-avalonia-aot.ps1` 会发布裁剪后的本机程序，执行 AOT 契约与标准工程导出，启动真实 Win32 窗口，通过 Windows UI Automation 检查控件名称、焦点和操作区，并在 900 × 600 最小尺寸渲染四个页面与居中对话框。
 
-项目约定每次功能性发布改动至少迭代补丁版本；本次版本为 `1.1.9`。
+项目约定每次功能性改动都迭代版本；本次测试版本为 `1.3.0-preview.6`，稳定版本仍为 `1.1.9`。
 
 1.1.9 的 UI 检查修正了 About 图标裁切、工具栏挤压、动画层路径过窄及部分控件对比度不足的问题。检查范围和验证边界见 [UI 检查记录](design-system/alchemy-stars/pages/ui-audit-1.1.9.md)。
 

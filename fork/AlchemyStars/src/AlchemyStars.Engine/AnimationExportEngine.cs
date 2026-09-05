@@ -11,7 +11,7 @@ namespace AlchemyStars.Engine;
 
 public sealed class AnimationExportEngine : IAnimationExportEngine
 {
-    public const string EngineVersion = "1.3.0-preview.1";
+    public const string EngineVersion = "1.3.0-preview.6";
 
     public EngineCapabilities Capabilities { get; } = new(
         EngineVersion,
@@ -73,6 +73,24 @@ public sealed class AnimationExportEngine : IAnimationExportEngine
                 throw new ExportValidationException(ExportErrorCode.MissingOutputName, "An output name is required.", nameof(job.OutputName));
             if (!float.IsFinite(job.Framerate) || job.Framerate <= 0)
                 throw new ExportValidationException(ExportErrorCode.InvalidFramerate, "Framerate must be a finite value greater than zero.", nameof(job.Framerate));
+
+            var outputPath = Path.GetFullPath(Path.Combine(
+                job.OutputFolder,
+                request.Options.OutputPrefix + job.OutputName + request.Options.OutputSuffix + ToExtension(request.Options.Format)));
+            var inputPaths = request.Parts.Select(part => part.FilePath)
+                .Append(job.SourceFile)
+                .Concat(job.Layers?.Select(layer => layer.FilePath) ?? [])
+                .Append(job.LeftHandPoseFile)
+                .Append(job.RightHandPoseFile)
+                .Where(path => !string.IsNullOrWhiteSpace(path))
+                .Select(Path.GetFullPath);
+            if (inputPaths.Any(path => string.Equals(path, outputPath, StringComparison.OrdinalIgnoreCase)))
+            {
+                throw new ExportValidationException(
+                    ExportErrorCode.OutputWouldOverwriteInput,
+                    $"The output would overwrite an input file: {outputPath}",
+                    nameof(job.OutputFolder));
+            }
         }
     }
 

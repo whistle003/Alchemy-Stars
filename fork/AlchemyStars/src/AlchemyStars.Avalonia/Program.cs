@@ -8,6 +8,10 @@ internal static class Program
     internal static bool StartupSmokeRequested { get; private set; }
     internal static string? RenderSmokePath { get; private set; }
     internal static PixelSize? RenderSmokeSize { get; private set; }
+    internal static WorkspacePage? RenderSmokePage { get; private set; }
+    internal static string? RenderDialogKind { get; private set; }
+    internal static string? StartupProjectPath { get; private set; }
+    internal static bool AccessibilitySmokeRequested { get; private set; }
 
     [STAThread]
     public static int Main(string[] args)
@@ -28,12 +32,23 @@ internal static class Program
         if (hawkArgumentIndex >= 0)
             return SelfTest.RunHawk(args.Skip(hawkArgumentIndex + 1).ToArray());
 
+        var projectArgumentIndex = Array.FindIndex(args, argument =>
+            argument.Equals("--project-smoke", StringComparison.OrdinalIgnoreCase));
+        if (projectArgumentIndex >= 0)
+            return SelfTest.RunProject(args.Skip(projectArgumentIndex + 1).ToArray());
+
         var renderPath = GetOption(args, "--render-smoke");
         RenderSmokePath = renderPath is not null
             ? Path.GetFullPath(renderPath)
             : null;
         var renderSize = GetOption(args, "--window-size");
         RenderSmokeSize = renderSize is null ? null : ParseSize(renderSize);
+        RenderSmokePage = ParsePage(GetOption(args, "--page"));
+        RenderDialogKind = GetOption(args, "--dialog");
+        AccessibilitySmokeRequested = args.Contains("--accessibility-smoke", StringComparer.OrdinalIgnoreCase);
+        StartupProjectPath = args
+            .Where(argument => !argument.StartsWith("--", StringComparison.Ordinal))
+            .FirstOrDefault(argument => string.Equals(Path.GetExtension(argument), ".aprj", StringComparison.OrdinalIgnoreCase) && File.Exists(argument));
         StartupSmokeRequested = RenderSmokePath is not null
             || args.Contains("--startup-smoke", StringComparer.OrdinalIgnoreCase);
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
@@ -68,4 +83,13 @@ internal static class Program
         }
         return new PixelSize(width, height);
     }
+
+    private static WorkspacePage? ParsePage(string? value) => value?.ToLowerInvariant() switch
+    {
+        "animations" => WorkspacePage.Animations,
+        "parts" => WorkspacePage.ModelParts,
+        "settings" => WorkspacePage.Settings,
+        "about" => WorkspacePage.About,
+        _ => null,
+    };
 }

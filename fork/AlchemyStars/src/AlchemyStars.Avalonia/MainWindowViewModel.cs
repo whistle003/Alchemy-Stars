@@ -1,106 +1,667 @@
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
 using System.Runtime.CompilerServices;
-using System.Windows.Input;
 
 namespace AlchemyStars.Avalonia;
+
+public enum WorkspacePage
+{
+    Animations,
+    ModelParts,
+    Settings,
+    About,
+}
 
 public sealed class MainWindowViewModel : INotifyPropertyChanged
 {
     private readonly IAnimationExportEngine engine;
-    private bool chinese;
-    private string verificationStatus = string.Empty;
+    private readonly WorkspaceProjectStore projectStore;
+    private readonly ApplicationPreferencesStore preferences;
+    private readonly IWorkspaceFilePicker picker;
+    private WorkspaceDocument workspace;
+    private WorkspaceAnimation? selectedAnimation;
+    private WorkspacePart? selectedPart;
+    private WorkspaceLayer? selectedLayer;
+    private WorkspacePage selectedPage = WorkspacePage.Animations;
+    private string? currentProjectPath;
+    private string languageMode;
+    private UiText text;
+    private bool isBusy;
+    private string busyMessage = string.Empty;
+    private bool isDialogOpen;
+    private string dialogTitle = string.Empty;
+    private string dialogMessage = string.Empty;
+    private bool dialogIsError;
+    private string footerStatus;
 
-    public MainWindowViewModel(IAnimationExportEngine engine)
+    public MainWindowViewModel(
+        IAnimationExportEngine engine,
+        WorkspaceProjectStore projectStore,
+        ApplicationPreferencesStore preferences,
+        IWorkspaceFilePicker picker)
     {
         this.engine = engine;
-        chinese = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.Equals("zh", StringComparison.OrdinalIgnoreCase);
-        ToggleLanguageCommand = new DelegateCommand(ToggleLanguage);
-        RunContractCheckCommand = new DelegateCommand(RunContractCheck);
-        NoOpCommand = new DelegateCommand(static () => { });
+        this.projectStore = projectStore;
+        this.preferences = preferences;
+        this.picker = picker;
+        var preferenceSnapshot = preferences.Snapshot();
+        languageMode = NormalizeLanguageMode(preferenceSnapshot.Language);
+        text = new UiText(ResolveChinese(languageMode));
+        workspace = preferences.CreateWorkspace();
+        selectedAnimation = workspace.Animations.FirstOrDefault();
+        selectedPart = workspace.Parts.FirstOrDefault();
+        footerStatus = text.Ready;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    public ICommand ToggleLanguageCommand { get; }
-    public ICommand RunContractCheckCommand { get; }
-    public ICommand NoOpCommand { get; }
-
-    public string WindowTitle => Chinese("炼金之星 | Avalonia AOT 迁移预览", "Alchemy Stars | Avalonia AOT migration preview");
-    public string ProductName => Chinese("炼金之星", "Alchemy Stars");
-    public string BranchSubtitle => Chinese("Avalonia + Native AOT 试验线", "Avalonia + Native AOT experimental line");
-    public string PreviewBadge => "1.3.0-preview.1";
-    public string LanguageButtonLabel => chinese ? "EN" : "中文";
-    public string LanguageButtonAccessibleName => Chinese("切换到英文界面", "Switch to Chinese interface");
-    public string WorkspaceLabel => Chinese("迁移工作台", "MIGRATION WORKSPACE");
-    public string OverviewLabel => Chinese("迁移概览", "Migration overview");
-    public string ModelPartsLabel => Chinese("模型部件", "Model parts");
-    public string AnimationsLabel => Chinese("动画", "Animations");
-    public string SettingsLabel => Chinese("设置", "Settings");
-    public string ProductionNoticeTitle => Chinese("生产版仍可用", "Production app remains available");
-    public string ProductionNoticeBody => Chinese("当前 WPF 程序保持不变；此分支只用于验证迁移与 AOT。", "The current WPF app is unchanged. This branch is only for migration and AOT validation.");
-    public string MilestoneEyebrow => Chinese("里程碑 01 · 内核分离与窗口壳", "MILESTONE 01 · ENGINE SEAM AND WINDOW SHELL");
-    public string PageTitle => Chinese("更快启动，更清晰的迁移路径", "Faster startup, with a migration path you can inspect");
-    public string PageDescription => Chinese("已把动画转换能力放到不依赖 WPF 的内核接口后面，并建立可由 Native AOT 发布的 Avalonia 12 桌面入口。", "Animation conversion now sits behind a WPF-free engine interface, with an Avalonia 12 desktop entry point designed for Native AOT publishing.");
-    public string ArchitectureTitle => Chinese("同一份已验证算法，两种界面适配", "One proven algorithm, two UI adapters");
-    public string ArchitectureBody => Chinese("WPF 继续作为稳定基线；Avalonia 通过强类型请求调用相同的合并、IK、动画层、选择性烘焙和输出实现。", "WPF remains the stable baseline while Avalonia calls the same merge, IK, animation-layer, selective-bake and export implementation through typed requests.");
-    public string EngineCardTitle => Chinese("转换内核已分离", "Conversion engine extracted");
-    public string EngineCardBody => Chinese("不引用 WPF 或 MaterialDesign；支持 CAST、FBX、SMD 与 SEAnim。", "No WPF or MaterialDesign reference; CAST, FBX, SMD and SEAnim remain available.");
-    public string AvaloniaCardTitle => "Avalonia 12.1.2";
-    public string AvaloniaCardBody => Chinese("使用编译绑定、系统语言检测与键盘可见焦点。", "Compiled bindings, system-language detection and keyboard-visible focus are enabled.");
-    public string AotCardTitle => "Native AOT";
-    public string AotCardBody => Chinese("项目已开启裁剪和 AOT 兼容分析，发布产物不依赖托管运行时。", "Trimming and AOT analysis are enabled so published builds do not require a managed runtime.");
-    public string VerificationTitle => Chinese("内核契约检查", "Engine contract check");
-    public string VerificationBody => Chinese("确认输出格式、纯动画 CAST 与相关骨骼烘焙能力均从新接口公开。", "Confirms that output formats, animation-only CAST and relevant-bone baking are exposed by the new interface.");
-    public string VerifyButtonLabel => Chinese("运行检查", "Run check");
-    public string VerifyButtonAccessibleName => Chinese("运行转换内核契约检查", "Run conversion engine contract check");
-    public string VerificationStatus => verificationStatus;
-    public string FooterStatus => Chinese("转换内核就绪 · Avalonia 界面迁移进行中", "Engine ready · Avalonia UI migration in progress");
-    public string VersionLabel => $"Engine {engine.Capabilities.Version}";
-
-    internal bool IsChinese => chinese;
-
-    private void ToggleLanguage()
+    public WorkspaceDocument Workspace
     {
-        chinese = !chinese;
-        verificationStatus = string.Empty;
-        RaiseAll();
+        get => workspace;
+        private set
+        {
+            workspace = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(Animations));
+            OnPropertyChanged(nameof(Parts));
+            OnPropertyChanged(nameof(OutputFormatIndex));
+            OnPropertyChanged(nameof(IsCastOutput));
+        }
     }
 
-    private void RunContractCheck()
+    public ObservableCollection<WorkspaceAnimation> Animations => Workspace.Animations;
+    public ObservableCollection<WorkspacePart> Parts => Workspace.Parts;
+    public UiText Text { get => text; private set { text = value; OnPropertyChanged(); } }
+    public string Version => AnimationExportEngine.EngineVersion;
+    public string RuntimeDescription => $"{System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription} · {System.Runtime.InteropServices.RuntimeInformation.OSArchitecture}";
+    public string CurrentProjectLabel => string.IsNullOrWhiteSpace(CurrentProjectPath) ? Text.Untitled : CurrentProjectPath;
+    public string CurrentPageTitle => SelectedPage switch
     {
-        var capabilities = engine.Capabilities;
-        var allFormats = Enum.GetValues<ExportFormat>().All(capabilities.OutputFormats.Contains);
-        var passed = allFormats
-            && capabilities.SupportsAnimationOnlyCast
-            && capabilities.SupportsSelectiveBoneBake
-            && capabilities.SupportsNativeAot;
-        verificationStatus = passed
-            ? Chinese("检查通过：转换接口能力完整。", "Check passed: the conversion interface is complete.")
-            : Chinese("检查失败：转换接口能力不完整。", "Check failed: the conversion interface is incomplete.");
-        OnPropertyChanged(nameof(VerificationStatus));
+        WorkspacePage.ModelParts => Text.ModelParts,
+        WorkspacePage.Settings => Text.Settings,
+        WorkspacePage.About => Text.About,
+        _ => Text.Animations,
+    };
+    public string WindowTitle => $"{Text.ProductName} | {CurrentProjectLabel} | {Version}";
+    public string LanguageButtonLabel => IsChinese ? "EN" : "中文";
+    public string LanguageButtonAccessibleName => IsChinese ? Text.SwitchToEnglish : Text.SwitchToChinese;
+    public bool IsChinese => ResolveChinese(languageMode);
+    public string LanguageMode => languageMode;
+    public string? CurrentProjectPath { get => currentProjectPath; private set { currentProjectPath = value; OnPropertyChanged(); OnPropertyChanged(nameof(CurrentProjectLabel)); OnPropertyChanged(nameof(WindowTitle)); } }
+    public WorkspaceAnimation? SelectedAnimation { get => selectedAnimation; set { selectedAnimation = value; SelectedLayer = null; OnPropertyChanged(); OnPropertyChanged(nameof(HasSelectedAnimation)); } }
+    public WorkspacePart? SelectedPart { get => selectedPart; set { selectedPart = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasSelectedPart)); } }
+    public WorkspaceLayer? SelectedLayer { get => selectedLayer; set { selectedLayer = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasSelectedLayer)); } }
+    public bool HasSelectedAnimation => SelectedAnimation is not null;
+    public bool HasSelectedPart => SelectedPart is not null;
+    public bool HasSelectedLayer => SelectedLayer is not null;
+    public WorkspacePage SelectedPage { get => selectedPage; private set { selectedPage = value; OnPropertyChanged(); RaisePageState(); } }
+    public bool IsAnimationsPage => SelectedPage == WorkspacePage.Animations;
+    public bool IsModelPartsPage => SelectedPage == WorkspacePage.ModelParts;
+    public bool IsSettingsPage => SelectedPage == WorkspacePage.Settings;
+    public bool IsAboutPage => SelectedPage == WorkspacePage.About;
+    public bool IsBusy { get => isBusy; private set { isBusy = value; OnPropertyChanged(); } }
+    public string BusyMessage { get => busyMessage; private set { busyMessage = value; OnPropertyChanged(); } }
+    public bool IsDialogOpen { get => isDialogOpen; private set { isDialogOpen = value; OnPropertyChanged(); } }
+    public string DialogTitle { get => dialogTitle; private set { dialogTitle = value; OnPropertyChanged(); } }
+    public string DialogMessage { get => dialogMessage; private set { dialogMessage = value; OnPropertyChanged(); } }
+    public bool DialogIsError { get => dialogIsError; private set { dialogIsError = value; OnPropertyChanged(); } }
+    public string FooterStatus { get => footerStatus; private set { footerStatus = value; OnPropertyChanged(); } }
+    public IReadOnlyList<string> OutputFormats => AlchemyStars.Engine.OutputFormats.All;
+    public int OutputFormatIndex
+    {
+        get => Math.Max(0, AlchemyStars.Engine.OutputFormats.All.ToList().FindIndex(format => string.Equals(format, Workspace.OutputFormat, StringComparison.OrdinalIgnoreCase)));
+        set
+        {
+            if (value >= 0 && value < AlchemyStars.Engine.OutputFormats.All.Count)
+                Workspace.OutputFormat = AlchemyStars.Engine.OutputFormats.All[value];
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsCastOutput));
+        }
+    }
+    public bool IsCastOutput => string.Equals(Workspace.OutputFormat, ".cast", StringComparison.OrdinalIgnoreCase);
+
+    public void SelectPage(WorkspacePage page) => SelectedPage = page;
+
+    public void NewProject()
+    {
+        Workspace = preferences.CreateWorkspace();
+        CurrentProjectPath = null;
+        SelectedAnimation = null;
+        SelectedPart = null;
+        FooterStatus = Text.NewProjectCreated;
+        SelectPage(WorkspacePage.Animations);
     }
 
-    private string Chinese(string zh, string en) => chinese ? zh : en;
-
-    private void RaiseAll()
+    public async Task OpenProjectAsync()
     {
-        OnPropertyChanged(string.Empty);
+        var paths = await picker.PickFilesAsync(FilePickerPurpose.Project, false);
+        if (paths.Count > 0)
+            LoadProject(paths[0]);
     }
 
-    private void OnPropertyChanged([CallerMemberName] string? name = null) =>
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+    public void LoadProject(string filePath)
+    {
+        try
+        {
+            Workspace = projectStore.Load(filePath);
+            CurrentProjectPath = Path.GetFullPath(filePath);
+            preferences.RememberDirectory("project", CurrentProjectPath);
+            SelectedAnimation = Animations.FirstOrDefault();
+            SelectedPart = Parts.FirstOrDefault();
+            FooterStatus = string.Format(CultureInfo.CurrentCulture, Text.ProjectLoaded, Path.GetFileName(CurrentProjectPath));
+            SelectPage(WorkspacePage.Animations);
+        }
+        catch (Exception exception)
+        {
+            ShowDialog(Text.ProjectLoadFailed, exception.Message, true);
+        }
+    }
+
+    public async Task SaveProjectAsync(bool saveAs)
+    {
+        var destination = saveAs || string.IsNullOrWhiteSpace(CurrentProjectPath)
+            ? await picker.PickProjectDestinationAsync(CurrentProjectPath)
+            : CurrentProjectPath;
+        if (string.IsNullOrWhiteSpace(destination))
+            return;
+        try
+        {
+            projectStore.Save(Workspace, destination);
+            CurrentProjectPath = Path.GetFullPath(destination);
+            preferences.RememberDirectory("project", CurrentProjectPath);
+            FooterStatus = string.Format(CultureInfo.CurrentCulture, Text.ProjectSaved, Path.GetFileName(CurrentProjectPath));
+        }
+        catch (Exception exception)
+        {
+            ShowDialog(Text.ProjectSaveFailed, exception.Message, true);
+        }
+    }
+
+    public async Task AddAnimationsAsync() => AddAnimationPaths(await picker.PickFilesAsync(FilePickerPurpose.Animation, true));
+
+    public int AddAnimationPaths(IEnumerable<string> paths)
+    {
+        var added = 0;
+        foreach (var path in NormalizeCastPaths(paths))
+        {
+            var animation = new WorkspaceAnimation { Name = path, OutputFolder = string.Empty };
+            Animations.Add(animation);
+            SelectedAnimation = animation;
+            added++;
+        }
+        if (added > 0)
+        {
+            preferences.RememberDirectory("animation", SelectedAnimation?.Name);
+            FooterStatus = string.Format(CultureInfo.CurrentCulture, Text.AnimationsAdded, added);
+        }
+        return added;
+    }
+
+    public async Task AddPartsAsync() => AddPartPaths(await picker.PickFilesAsync(FilePickerPurpose.ModelPart, true));
+
+    public int AddPartPaths(IEnumerable<string> paths)
+    {
+        var added = 0;
+        foreach (var path in NormalizeCastPaths(paths))
+        {
+            var part = new WorkspacePart { FilePath = path, Type = Parts.Count == 0 ? ModelPartKind.ViewHands : ModelPartKind.Weapon };
+            if (part.Type == ModelPartKind.Weapon)
+                part.ParentBoneTag = "tag_weapon";
+            Parts.Add(part);
+            SelectedPart = part;
+            added++;
+        }
+        if (added > 0)
+        {
+            preferences.RememberDirectory("part", SelectedPart?.FilePath);
+            FooterStatus = string.Format(CultureInfo.CurrentCulture, Text.PartsAdded, added);
+        }
+        return added;
+    }
+
+    public async Task AddLayersAsync()
+    {
+        if (SelectedAnimation is null)
+        {
+            ShowDialog(Text.NoAnimationSelected, Text.SelectAnimationForLayers, true);
+            return;
+        }
+        AddLayerPaths(await picker.PickFilesAsync(FilePickerPurpose.AnimationLayer, true));
+    }
+
+    public int AddLayerPaths(IEnumerable<string> paths)
+    {
+        if (SelectedAnimation is null)
+            return 0;
+        var added = 0;
+        foreach (var path in NormalizeCastPaths(paths))
+        {
+            var layer = new WorkspaceLayer { Name = path, Type = AnimationLayerKind.Additive };
+            SelectedAnimation.Layers.Add(layer);
+            SelectedLayer = layer;
+            added++;
+        }
+        if (added > 0)
+        {
+            preferences.RememberDirectory("layer", SelectedLayer?.Name);
+            FooterStatus = string.Format(CultureInfo.CurrentCulture, Text.LayersAdded, added);
+        }
+        return added;
+    }
+
+    public void RemoveSelectedAnimation()
+    {
+        if (SelectedAnimation is null)
+            return;
+        var index = Animations.IndexOf(SelectedAnimation);
+        Animations.Remove(SelectedAnimation);
+        SelectedAnimation = Animations.Count == 0 ? null : Animations[Math.Min(index, Animations.Count - 1)];
+    }
+
+    public void RemoveSelectedPart()
+    {
+        if (SelectedPart is null)
+            return;
+        var index = Parts.IndexOf(SelectedPart);
+        Parts.Remove(SelectedPart);
+        SelectedPart = Parts.Count == 0 ? null : Parts[Math.Min(index, Parts.Count - 1)];
+    }
+
+    public void RemoveSelectedLayer()
+    {
+        if (SelectedAnimation is null || SelectedLayer is null)
+            return;
+        var index = SelectedAnimation.Layers.IndexOf(SelectedLayer);
+        SelectedAnimation.Layers.Remove(SelectedLayer);
+        SelectedLayer = SelectedAnimation.Layers.Count == 0 ? null : SelectedAnimation.Layers[Math.Min(index, SelectedAnimation.Layers.Count - 1)];
+    }
+
+    public void MoveSelectedPart(int delta) => Move(Parts, SelectedPart, delta);
+    public void MoveSelectedLayer(int delta)
+    {
+        if (SelectedAnimation is not null)
+            Move(SelectedAnimation.Layers, SelectedLayer, delta);
+    }
+
+    public async Task ReplaceAnimationSourceAsync(WorkspaceAnimation animation)
+    {
+        var path = (await picker.PickFilesAsync(FilePickerPurpose.Animation, false)).FirstOrDefault();
+        if (path is not null)
+            animation.Name = path;
+    }
+
+    public async Task ReplacePartSourceAsync(WorkspacePart part)
+    {
+        var path = (await picker.PickFilesAsync(FilePickerPurpose.ModelPart, false)).FirstOrDefault();
+        if (path is not null)
+            part.FilePath = path;
+    }
+
+    public async Task ReplaceLayerSourceAsync(WorkspaceLayer layer)
+    {
+        var path = (await picker.PickFilesAsync(FilePickerPurpose.AnimationLayer, false)).FirstOrDefault();
+        if (path is not null)
+            layer.Name = path;
+    }
+
+    public async Task SetPoseAsync(WorkspaceAnimation animation, bool left)
+    {
+        var path = (await picker.PickFilesAsync(left ? FilePickerPurpose.LeftPose : FilePickerPurpose.RightPose, false)).FirstOrDefault();
+        if (path is null)
+            return;
+        if (left)
+            animation.LeftHandPoseFile = path;
+        else
+            animation.RightHandPoseFile = path;
+    }
+
+    public async Task SetOutputFolderAsync(WorkspaceAnimation animation)
+    {
+        var folder = await picker.PickFolderAsync(animation.OutputFolder);
+        if (folder is not null)
+            animation.OutputFolder = folder;
+    }
+
+    public async Task ExportAsync()
+    {
+        if (IsBusy)
+            return;
+        try
+        {
+            IsBusy = true;
+            BusyMessage = Text.Exporting;
+            FooterStatus = Text.Exporting;
+            var request = projectStore.CreateExportRequest(Workspace);
+            var result = await Task.Run(() => engine.Export(request));
+            FooterStatus = string.Format(CultureInfo.CurrentCulture, Text.ExportComplete, result.OutputFiles.Count);
+            ShowDialog(Text.ExportCompleteTitle, string.Format(CultureInfo.CurrentCulture, Text.ExportCompleteBody, result.OutputFiles.Count) + Environment.NewLine + string.Join(Environment.NewLine, result.OutputFiles), false);
+        }
+        catch (Exception exception)
+        {
+            FooterStatus = Text.ExportFailed;
+            ShowDialog(Text.ExportFailedTitle, LocalizeExportError(exception), true);
+        }
+        finally
+        {
+            IsBusy = false;
+            BusyMessage = string.Empty;
+        }
+    }
+
+    public void SaveDefaults()
+    {
+        preferences.SaveDefaults(languageMode, Workspace);
+        FooterStatus = Text.DefaultsSaved;
+        ShowDialog(Text.SettingsSavedTitle, Text.SettingsSavedBody, false);
+    }
+
+    public void ToggleLanguage()
+    {
+        languageMode = IsChinese ? "en-US" : "zh-CN";
+        preferences.SaveLanguage(languageMode);
+        ApplyLanguage();
+    }
+
+    public void UseSystemLanguage()
+    {
+        languageMode = "system";
+        preferences.SaveLanguage(languageMode);
+        ApplyLanguage();
+    }
+
+    public void GenerateSprintBatch()
+    {
+        var source = SelectedAnimation ?? Animations.FirstOrDefault(animation =>
+            animation.OutputName.Contains("_idle", StringComparison.OrdinalIgnoreCase));
+        if (source is null || !source.OutputName.Contains("_idle", StringComparison.OrdinalIgnoreCase))
+        {
+            ShowDialog(Text.SprintGeneratorTitle, Text.SprintGeneratorNeedsIdle, true);
+            return;
+        }
+
+        var suffixes = new[]
+        {
+            "_sprint_in", "_sprint_loop", "_sprint_out",
+            "_super_sprint_in", "_super_sprint_loop", "_super_sprint_out",
+            "_slide_in", "_slide_sprint_in", "_slide_loop", "_slide_out",
+        };
+        var insertionIndex = Animations.IndexOf(source) + 1;
+        foreach (var suffix in suffixes)
+        {
+            var clone = CloneAnimation(source);
+            clone.OutputName = ReplaceIdle(source.OutputName, suffix);
+            Animations.Insert(insertionIndex++, clone);
+        }
+        FooterStatus = string.Format(CultureInfo.CurrentCulture, Text.SprintGeneratorComplete, suffixes.Length);
+    }
+
+    public void ShowDiagnosticDialog(bool error) => ShowDialog(
+        error ? Text.ExportFailedTitle : Text.ExportCompleteTitle,
+        error ? Text.OutputWouldOverwrite : Text.SettingsSavedBody,
+        error);
+
+    public void CloseDialog() => IsDialogOpen = false;
+
+    public Task OpenUpstreamAsync() => picker.OpenUriAsync(new Uri("https://github.com/Scobalula/Alchemist"));
+
+    public void SetPathFromDrop(object target, string path, string role)
+    {
+        var normalized = PathInput.Normalize(path);
+        switch (target)
+        {
+            case WorkspaceAnimation animation when role == "animation": animation.Name = normalized; preferences.RememberDirectory("animation", normalized); break;
+            case WorkspaceAnimation animation when role == "leftPose": animation.LeftHandPoseFile = normalized; preferences.RememberDirectory("pose", normalized); break;
+            case WorkspaceAnimation animation when role == "rightPose": animation.RightHandPoseFile = normalized; preferences.RememberDirectory("pose", normalized); break;
+            case WorkspaceAnimation animation when role == "output": animation.OutputFolder = Directory.Exists(normalized) ? normalized : Path.GetDirectoryName(normalized) ?? string.Empty; preferences.RememberDirectory("output", normalized); break;
+            case WorkspacePart part when role == "part": part.FilePath = normalized; preferences.RememberDirectory("part", normalized); break;
+            case WorkspaceLayer layer when role == "layer": layer.Name = normalized; preferences.RememberDirectory("layer", normalized); break;
+        }
+    }
+
+    private void ApplyLanguage()
+    {
+        Text = new UiText(IsChinese);
+        FooterStatus = Text.Ready;
+        OnPropertyChanged(nameof(IsChinese));
+        OnPropertyChanged(nameof(LanguageMode));
+        OnPropertyChanged(nameof(LanguageButtonLabel));
+        OnPropertyChanged(nameof(LanguageButtonAccessibleName));
+        OnPropertyChanged(nameof(CurrentProjectLabel));
+        OnPropertyChanged(nameof(WindowTitle));
+        RaisePageState();
+    }
+
+    private string LocalizeExportError(Exception exception)
+    {
+        if (exception is not ExportValidationException validation)
+            return exception.Message;
+        return validation.Code switch
+        {
+            ExportErrorCode.NoModelParts => Text.NeedPart,
+            ExportErrorCode.NoAnimations => Text.NeedAnimation,
+            ExportErrorCode.MissingOutputFolder => Text.NeedOutputFolder,
+            ExportErrorCode.MissingOutputName => Text.NeedOutputName,
+            ExportErrorCode.InvalidFramerate => Text.InvalidFramerate,
+            ExportErrorCode.OutputWouldOverwriteInput => Text.OutputWouldOverwrite,
+            _ => validation.Message,
+        };
+    }
+
+    private void ShowDialog(string title, string message, bool error)
+    {
+        DialogTitle = title;
+        DialogMessage = message;
+        DialogIsError = error;
+        IsDialogOpen = true;
+    }
+
+    private void RaisePageState()
+    {
+        OnPropertyChanged(nameof(CurrentPageTitle));
+        OnPropertyChanged(nameof(IsAnimationsPage));
+        OnPropertyChanged(nameof(IsModelPartsPage));
+        OnPropertyChanged(nameof(IsSettingsPage));
+        OnPropertyChanged(nameof(IsAboutPage));
+    }
+
+    private static string NormalizeLanguageMode(string? value) => value switch
+    {
+        "zh-CN" => "zh-CN",
+        "en-US" => "en-US",
+        _ => "system",
+    };
+
+    private static bool ResolveChinese(string mode) => mode == "zh-CN"
+        || mode == "system" && CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.Equals("zh", StringComparison.OrdinalIgnoreCase);
+
+    private static IEnumerable<string> NormalizeCastPaths(IEnumerable<string> paths) => paths
+        .Select(PathInput.Normalize)
+        .Where(path => !string.IsNullOrWhiteSpace(path) && string.Equals(Path.GetExtension(path), ".cast", StringComparison.OrdinalIgnoreCase));
+
+    private static void Move<T>(ObservableCollection<T> collection, T? item, int delta) where T : class
+    {
+        if (item is null)
+            return;
+        var current = collection.IndexOf(item);
+        var target = current + delta;
+        if (current >= 0 && target >= 0 && target < collection.Count)
+            collection.Move(current, target);
+    }
+
+    private static WorkspaceAnimation CloneAnimation(WorkspaceAnimation source)
+    {
+        var clone = new WorkspaceAnimation
+        {
+            Name = source.Name,
+            OutputName = source.OutputName,
+            OutputFolder = source.OutputFolder,
+            OutputFramerate = source.OutputFramerate,
+            EnableLeftHandIK = source.EnableLeftHandIK,
+            EnableRightHandIK = source.EnableRightHandIK,
+            UseExperimentalFeatures = source.UseExperimentalFeatures,
+            LeftHandPoseFile = source.LeftHandPoseFile,
+            RightHandPoseFile = source.RightHandPoseFile,
+            LeftIKTargetBoneName = source.LeftIKTargetBoneName,
+            RightIKTargetBoneName = source.RightIKTargetBoneName,
+        };
+        foreach (var layer in source.Layers)
+            clone.Layers.Add(new WorkspaceLayer { Name = layer.Name, Offset = layer.Offset, Color = layer.Color, Type = layer.Type });
+        return clone;
+    }
+
+    private static string ReplaceIdle(string value, string replacement)
+    {
+        var index = value.IndexOf("_idle", StringComparison.OrdinalIgnoreCase);
+        return index < 0 ? value + replacement : value[..index] + replacement + value[(index + 5)..];
+    }
+
+    private void OnPropertyChanged([CallerMemberName] string? propertyName = null) =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 }
 
-internal sealed class DelegateCommand(Action action) : ICommand
+public sealed class UiText
 {
-    public event EventHandler? CanExecuteChanged
-    {
-        add { }
-        remove { }
-    }
+    private readonly bool zh;
+    public UiText(bool chinese) => zh = chinese;
+    private string L(string chinese, string english) => zh ? chinese : english;
 
-    public bool CanExecute(object? parameter) => true;
-
-    public void Execute(object? parameter) => action();
+    public string ProductName => L("炼金之星", "Alchemy Stars");
+    public string Project => L("项目", "Project");
+    public string Workspace => L("工作区", "Workspace");
+    public string PreviewLine => L("Avalonia · Native AOT 完整迁移测试", "Avalonia · Native AOT full migration test");
+    public string Untitled => L("未命名批处理", "Untitled batch");
+    public string SwitchToEnglish => "切换到英文界面";
+    public string SwitchToChinese => "Switch to Chinese interface";
+    public string NewProject => L("新建", "New");
+    public string OpenProject => L("打开", "Open");
+    public string SaveProject => L("保存", "Save");
+    public string SaveProjectAs => L("另存为", "Save as");
+    public string Export => L("导出全部", "Export all");
+    public string Animations => L("动画", "Animations");
+    public string ModelParts => L("模型部件", "Model parts");
+    public string Settings => L("设置", "Settings");
+    public string About => L("关于", "About");
+    public string AnimationWorkspace => L("动画工作区", "Animation workspace");
+    public string AnimationWorkspaceHelp => L("选择基础动画，编辑 IK、姿势、输出与动画层。动画层区域优先接收拖入文件。", "Select a base animation, then edit IK, poses, output and layers. Files dropped on the layer area are always imported as layers.");
+    public string AddAnimation => L("添加动画", "Add animation");
+    public string Remove => L("删除", "Remove");
+    public string EmptyAnimations => L("尚未添加动画", "No animations yet");
+    public string EmptyAnimationsHelp => L("右键此区域、拖入 CAST，或点击“添加动画”。", "Right-click this area, drop CAST files, or choose Add animation.");
+    public string AnimationFile => L("动画文件", "Animation file");
+    public string AnimationDetails => L("动画属性", "Animation properties");
+    public string AssetLibrary => L("资源库", "Asset library");
+    public string Composition => L("合成工作区", "Composition");
+    public string Inspector => L("属性检查器", "Inspector");
+    public string TrackEditor => L("动画层轨道", "Layer tracks");
+    public string SelectedLayer => L("所选动画层", "Selected layer");
+    public string ProjectAssets => L("项目模型资源", "Project model assets");
+    public string HandPoses => L("手部姿势", "Hand poses");
+    public string IkControls => L("IK 控制", "IK controls");
+    public string ExportTarget => L("导出目标", "Export target");
+    public string HierarchyOrder => L("骨架层级顺序", "Skeleton hierarchy order");
+    public string AttachmentTarget => L("当前挂接目标", "Current attachment target");
+    public string Browse => L("浏览…", "Browse…");
+    public string LeftPose => L("左手姿势文件（可选）", "Left-hand pose (optional)");
+    public string RightPose => L("右手姿势文件（可选）", "Right-hand pose (optional)");
+    public string EnableLeftIk => L("启用左手 IK", "Enable left-hand IK");
+    public string EnableRightIk => L("启用右手 IK", "Enable right-hand IK");
+    public string LeftTargetOverride => L("左手目标覆盖", "Left target override");
+    public string RightTargetOverride => L("右手目标覆盖", "Right target override");
+    public string OutputName => L("输出名称", "Output name");
+    public string OutputFolder => L("输出目录（必须明确选择）", "Output folder (explicit selection required)");
+    public string Framerate => L("输出帧率", "Output framerate");
+    public string Layers => L("动画层", "Animation layers");
+    public string AddLayer => L("添加动画层", "Add layer");
+    public string EmptyLayers => L("右键或拖入 CAST 添加动画层", "Right-click or drop CAST files to add layers");
+    public string LayerFile => L("动画层文件", "Layer file");
+    public string LayerMode => L("模式", "Mode");
+    public string Offset => L("帧偏移", "Frame offset");
+    public string MoveUp => L("上移", "Move up");
+    public string MoveDown => L("下移", "Move down");
+    public string ModelWorkspace => L("模型部件", "Model parts");
+    public string ModelWorkspaceHelp => L("按层级顺序排列手臂、武器和附件。首个部件默认为手臂，后续部件默认为挂接到 tag_weapon 的武器。", "Order view hands, weapons and attachments by hierarchy. The first part defaults to view hands; later parts default to weapons attached to tag_weapon.");
+    public string AddPart => L("添加模型部件", "Add model part");
+    public string EmptyParts => L("尚未添加模型部件", "No model parts yet");
+    public string EmptyPartsHelp => L("右键此区域、拖入 CAST，或点击“添加模型部件”。", "Right-click this area, drop CAST files, or choose Add model part.");
+    public string ModelFile => L("模型文件", "Model file");
+    public string PartType => L("部件类型", "Part type");
+    public string ParentBone => L("父骨骼", "Parent bone");
+    public string PartDetails => L("部件属性", "Part properties");
+    public string PartOrderHelp => L("模型顺序会影响骨架挂接：手臂应在武器之前，附件应位于其目标父级之后。", "Model order controls skeleton attachment: place view hands before the weapon and attachments after their intended parent.");
+    public string OutputSettings => L("输出设置", "Output settings");
+    public string OutputSettingsHelp => L("项目保留自己的设置；“保存为默认值”会用于以后新建的项目。", "Each project keeps its own settings; Save as defaults applies them to future projects.");
+    public string DefaultOutputFormat => L("输出格式", "Output format");
+    public string FormatHelp => L("为当前项目选择目标管线和烘焙策略。", "Choose the target pipeline and bake strategy for this project.");
+    public string AnimationOnlyCast => L("仅输出合并动画 CAST", "Animation-only merged CAST");
+    public string AnimationOnlyHelp => L("移除网格、材质和蒙皮，只保留完整骨架与唯一动画。", "Removes meshes, materials and skinning while retaining the complete skeleton and one animation.");
+    public string SelectiveBake => L("仅烘焙相关骨骼", "Bake relevant bones only");
+    public string SelectiveBakeHelp => L("减小动画曲线数量；目标骨架必须与绑定姿势完全匹配。", "Reduces animation curves; the target skeleton must exactly match the bind pose.");
+    public string OldCod => L("兼容旧版 Call of Duty", "Legacy Call of Duty compatibility");
+    public string Prefix => L("输出前缀", "Output prefix");
+    public string Suffix => L("输出后缀", "Output suffix");
+    public string NamingAndLanguage => L("命名与语言", "Naming and language");
+    public string NamingHelp => L("统一批处理名称并控制界面语言。", "Keep batch names consistent and control the interface language.");
+    public string IkDefaults => L("IK 骨骼默认值", "IK bone defaults");
+    public string IkHelp => L("左右手链分区显示，屏幕阅读器名称也保持唯一。", "Left and right chains stay visually grouped and expose unique screen-reader names.");
+    public string LeftIk => L("左手 IK", "Left-hand IK");
+    public string RightIk => L("右手 IK", "Right-hand IK");
+    public string StartBone => L("起始骨骼", "Start bone");
+    public string MiddleBone => L("中间骨骼", "Middle bone");
+    public string EndBone => L("末端骨骼", "End bone");
+    public string TargetBone => L("目标骨骼", "Target bone");
+    public string LeftStartBone => L("左手 IK 起始骨骼", "Left-hand IK start bone");
+    public string LeftMiddleBone => L("左手 IK 中间骨骼", "Left-hand IK middle bone");
+    public string LeftEndBone => L("左手 IK 末端骨骼", "Left-hand IK end bone");
+    public string LeftTargetBone => L("左手 IK 目标骨骼", "Left-hand IK target bone");
+    public string RightStartBone => L("右手 IK 起始骨骼", "Right-hand IK start bone");
+    public string RightMiddleBone => L("右手 IK 中间骨骼", "Right-hand IK middle bone");
+    public string RightEndBone => L("右手 IK 末端骨骼", "Right-hand IK end bone");
+    public string RightTargetBone => L("右手 IK 目标骨骼", "Right-hand IK target bone");
+    public string Language => L("界面语言", "Interface language");
+    public string FollowSystem => L("跟随系统", "Follow system");
+    public string SaveDefaults => L("保存为默认值", "Save as defaults");
+    public string GenerateSprintBatch => L("生成冲刺批次", "Generate sprint batch");
+    public string SprintGeneratorTitle => L("冲刺批次生成", "Sprint batch generator");
+    public string SprintGeneratorNeedsIdle => L("请选择输出名称中包含“_idle”的基础动画。", "Select a base animation whose output name contains '_idle'.");
+    public string SprintGeneratorComplete => L("已从 idle 模板生成 {0} 个冲刺与滑铲条目。", "Generated {0} sprint and slide entries from the idle template.");
+    public string AboutTitle => L("关于 炼金之星", "About Alchemy Stars");
+    public string AboutSubtitle => L("面向第一人称武器资产的 CAST 动画合并与 Maya 2025 工作流", "CAST animation merging and Maya 2025 workflow for first-person weapon assets");
+    public string AboutOverview => L("炼金之星改进自 Scobalula/Alchemist。本测试版已将完整工作流迁移至 Avalonia，并通过 Native AOT 发布；WPF 版本在 .NET 11 正式版迁移前继续作为生产基线。", "Alchemy Stars improves Scobalula/Alchemist. This preview migrates the complete workflow to Avalonia and publishes with Native AOT; WPF remains the production baseline until the .NET 11 GA migration.");
+    public string Capabilities => L("支持完整或仅动画 CAST、FBX、SMD、SEAnim、普通/叠加/手势动画层、左右手 IK、相关骨骼烘焙，以及兼容旧项目的 .aprj 读写。", "Supports full-scene or animation-only CAST, FBX, SMD, SEAnim, normal/additive/gesture layers, left/right IK, relevant-bone baking and legacy-compatible .aprj project files.");
+    public string Build => L("版本与环境", "Build and environment");
+    public string UpstreamTitle => L("来源与致谢", "Origin and attribution");
+    public string UpstreamHelp => L("炼金之星保留 Alchemist 与 RedFox 的转换基础，并在其上改进生产工作流。", "Alchemy Stars retains the Alchemist and RedFox conversion foundation and improves its production workflow.");
+    public string Upstream => L("打开原项目", "Open upstream project");
+    public string License => L("主程序遵循 MIT 许可证；Alchemist、RedFox、CAST 与 Maya 组件保留各自版权和许可证。", "The application uses the MIT license; Alchemist, RedFox, CAST and Maya assets retain their respective copyrights and licenses.");
+    public string Close => L("关闭", "Close");
+    public string Notification => L("通知", "Notification");
+    public string Ready => L("工作区就绪", "Workspace ready");
+    public string NewProjectCreated => L("已新建项目；动画输出目录保持为空。", "New project created; animation output folders remain blank.");
+    public string ProjectLoaded => L("已打开项目：{0}", "Project opened: {0}");
+    public string ProjectSaved => L("已保存项目：{0}", "Project saved: {0}");
+    public string ProjectLoadFailed => L("项目打开失败", "Project open failed");
+    public string ProjectSaveFailed => L("项目保存失败", "Project save failed");
+    public string AnimationsAdded => L("已添加 {0} 个动画。", "Added {0} animation(s).");
+    public string PartsAdded => L("已添加 {0} 个模型部件。", "Added {0} model part(s).");
+    public string LayersAdded => L("已添加 {0} 个动画层。", "Added {0} animation layer(s).");
+    public string NoAnimationSelected => L("未选择动画", "No animation selected");
+    public string SelectAnimationForLayers => L("请先选择一个动画，再添加动画层。", "Select an animation before adding layers.");
+    public string Exporting => L("正在合并并导出动画…", "Merging and exporting animations…");
+    public string ExportComplete => L("已成功导出 {0} 个动画。", "Successfully exported {0} animation(s).");
+    public string ExportCompleteTitle => L("导出成功", "Export complete");
+    public string ExportCompleteBody => L("已导出 {0} 个文件：", "Exported {0} file(s):");
+    public string ExportFailed => L("导出失败", "Export failed");
+    public string ExportFailedTitle => L("导出失败", "Export failed");
+    public string NeedPart => L("请至少添加一个模型部件。", "Add at least one model part.");
+    public string NeedAnimation => L("请至少添加一个动画。", "Add at least one animation.");
+    public string NeedOutputFolder => L("请为每个动画明确选择输出目录。", "Explicitly select an output folder for every animation.");
+    public string NeedOutputName => L("请填写输出名称。", "Enter an output name.");
+    public string InvalidFramerate => L("输出帧率必须大于零。", "Output framerate must be greater than zero.");
+    public string OutputWouldOverwrite => L("输出路径与输入文件相同，已阻止覆盖。请选择其他输出目录或名称。", "The output matches an input file. Choose another output folder or name.");
+    public string DefaultsSaved => L("默认设置已保存。", "Default settings saved.");
+    public string SettingsSavedTitle => L("设置已保存", "Settings saved");
+    public string SettingsSavedBody => L("当前输出和语言设置将用于以后新建的项目。", "The current output and language settings will apply to future projects.");
+    public string[] PartTypes => zh ? ["手臂", "武器", "附件"] : ["View hands", "Weapon", "Attachment"];
+    public string[] LayerTypes => zh ? ["普通", "叠加", "手势", "手势姿势"] : ["Normal", "Additive", "Gesture", "Gesture pose"];
 }

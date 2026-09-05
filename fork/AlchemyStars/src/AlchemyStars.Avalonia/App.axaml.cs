@@ -15,11 +15,26 @@ public sealed partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            var mainWindow = new MainWindow
+            var preferences = new ApplicationPreferencesStore();
+            var mainWindow = new MainWindow();
+            var viewModel = mainWindow.InitializeWorkspace(new AnimationExportEngine(), new WorkspaceProjectStore(), preferences);
+            if (Program.StartupProjectPath is not null)
+                viewModel.LoadProject(Program.StartupProjectPath);
+            if (Program.RenderSmokePage is { } smokePage)
+                viewModel.SelectPage(smokePage);
+            if (Program.RenderDialogKind is { } dialogKind)
+                viewModel.ShowDiagnosticDialog(dialogKind.Equals("error", StringComparison.OrdinalIgnoreCase));
+            if (Program.AccessibilitySmokeRequested)
             {
-                DataContext = new MainWindowViewModel(new AnimationExportEngine()),
-            };
-            if (Program.StartupSmokeRequested)
+                // Keep a fully rendered, real Win32 window alive for external UI Automation.
+                // It stays offscreen and out of the taskbar so verification never interrupts the user.
+                mainWindow.ShowInTaskbar = false;
+                mainWindow.Width = Program.RenderSmokeSize?.Width ?? 900;
+                mainWindow.Height = Program.RenderSmokeSize?.Height ?? 600;
+                mainWindow.WindowStartupLocation = WindowStartupLocation.Manual;
+                mainWindow.Position = new PixelPoint(-32000, -32000);
+            }
+            else if (Program.StartupSmokeRequested)
             {
                 mainWindow.ShowInTaskbar = false;
                 mainWindow.Opacity = Program.RenderSmokePath is null ? 0 : 1;

@@ -1,5 +1,37 @@
 # Changelog
 
+## 1.3.0-preview.6 — 2026-09-05
+
+- Rebuilt the Avalonia workspace from the supplied Beutl editor reference: project breadcrumbs, a compact activity rail, asset library, central composition canvas, animation-layer tracks and a dedicated property inspector.
+- Adapted the reference to real Alchemy Stars workflows instead of adding placeholder playback or 3D controls; animation-layer drop priority, right-click import, editable paths and all export settings remain functional.
+- Applied the same library/canvas/inspector grammar to model assembly and retained 44 DIP command targets, keyboard focus, screen-reader names and owner-centered dialogs.
+
+## 1.3.0-preview.5 — 2026-09-05
+
+- Reworked the Avalonia shell into a Beutl-inspired creative workbench: compact activity rail, flat dock-like asset and property panels, low-noise dividers, active-tab accent lines and a full-width status strip.
+- Kept AtomBox-informed 20/14 DIP form spacing, compact lists and restrained control surfaces while avoiding new AtomUI, Beutl or Dock.Avalonia dependencies in the Native AOT package.
+- Raised essential input/control boundaries to 3:1 non-text contrast, retained 44 DIP command targets, localized UI Automation names, visible keyboard focus and centered window-owned dialogs.
+
+## 1.3.0-preview.4 — 2026-09-05
+
+- Introduced a resource-list/inspector workspace and consolidated shared visual tokens while evaluating the Lunacy and AtomBox references.
+- Added page-level project context, compact command actions and scroll-safe settings/About layouts without changing the export workflow.
+
+## 1.3.0-preview.3 — 2026-09-05
+
+- Replaced ambiguous filled toolbar glyphs with a consistent 20 DIP, 1.8 DIP rounded-stroke icon family for New, Open, Save, Save As, Export and primary navigation.
+- Preserved 44 × 44 DIP command targets, visible tooltips and localized UI Automation names so the icon-only commands remain keyboard- and screen-reader-accessible.
+- Added an external Windows UI Automation smoke test that verifies required button names, keyboard focus, centered-dialog focus and minimum key-target bounds against the published Native AOT executable.
+
+## 1.3.0-preview.2 — 2026-09-05
+
+- Completed the Avalonia vertical workflow: legacy-compatible project open/save, model parts, base animations, poses, ordered layers, IK, output settings, remembered directories and batch export.
+- Added source-generated AOT-safe JSON metadata for existing `.aprj` files, including old `$id` / `$values` reference-preserved projects.
+- Added system file dialogs, editable and pasteable path fields, direct file drops, blank-area right-click imports and a dedicated animation-layer drop target that takes priority over its parent page.
+- Kept new output folders blank and added a final engine guard that rejects any output path matching a model, animation, layer or pose input.
+- Added full-scene and animation-only CAST, FBX, SMD and SEAnim controls, selective-bone baking, system/Chinese/English language modes, centered in-window progress/result dialogs and an unclipped About page.
+- Extended acceptance coverage to 32 checks and added an actual Native AOT export from the standard Hawk project. The managed and AOT CAST files remain byte-identical.
+
 ## 1.3.0-preview.1 — 2026-09-05
 
 - Added a test-only Avalonia 12.1.2 desktop shell that publishes as a 38 MB-class self-contained Native AOT package on .NET 11 Preview 7, including Skia, HarfBuzz and ANGLE rendering libraries.

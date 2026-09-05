@@ -1,64 +1,86 @@
 # Avalonia + Native AOT migration
 
-Status: test-only on `codex/avalonia-aot`; do not merge into `main` or publish as a stable release.
+Status: complete test implementation on `codex/avalonia-aot`; do not merge into `main` or publish as a stable release before .NET 11 GA.
 
-Version: `1.3.0-preview.1`<br>
-Runtime: .NET 11 Preview 7<br>
+Version: `1.3.0-preview.6`
+Runtime: .NET 11 Preview 7
 UI framework: Avalonia 12.1.2
+Production baseline: WPF v1.1.9 on `main`
 
-## Milestone 1 result
+## Result
 
-- `AlchemyStars.Engine` defines the WPF-free export interface, immutable request records, capabilities and structured validation errors.
-- The engine adapter compiles the same proven conversion implementation used by WPF. It retains skeleton merging, IK, animation layers, selective bone baking, animation-only CAST, CAST, FBX, SMD and SEAnim output.
-- `AlchemyStars.Avalonia` is a compiled-binding desktop shell with automatic system-language selection, Chinese/English switching, keyboard-visible focus and no WPF or MaterialDesign reference.
-- The Avalonia project publishes as a self-contained `win-x64` Native AOT executable. The current WPF app remains the production baseline and is unchanged by this milestone.
+The test branch now contains the complete Alchemy Stars desktop workflow rather than a migration shell:
 
-The shared implementation is linked into the engine during the transition so there is one algorithm source, not a fork. Its historical `Alchemist.UI` internal namespace is intentionally hidden behind `IAnimationExportEngine`; move those internal files into the engine namespace after the WPF adapter switches to the new interface.
+- create, open, save and save-as legacy-compatible `.aprj` projects;
+- add, edit, reorder and remove view-hand, weapon and attachment model parts;
+- add base animations, optional hand poses and ordered Normal/Additive/Gesture/GesturePose layers;
+- configure left/right IK, frame rate, output names and an explicitly selected output folder;
+- export full-scene or animation-only CAST, FBX, SMD and SEAnim through the existing proven conversion implementation;
+- choose full or relevant-bones-only baking, old Call of Duty compatibility, prefixes and suffixes;
+- remember per-purpose file-browser locations and follow system, Chinese or English UI language;
+- use file browsers, editable/pasteable paths, direct path drops, list drop zones and blank-area context menus;
+- keep progress, success and error feedback centered inside the owning window.
 
-## Module seam
+New animation output folders stay blank. The engine also rejects an output that resolves to any model, animation, pose or layer input, so a same-named export cannot overwrite source data.
+
+## Architecture
 
 ```text
-WPF view models ── existing adapter ─┐
-                                    ├── shared conversion implementation
-Avalonia views ─ IAnimationExportEngine ─ typed request records
+Avalonia views and adapters
+        │
+        ├── WorkspaceProjectStore + source-generated JSON metadata
+        ├── ApplicationPreferencesStore
+        └── IAnimationExportEngine
+                    │
+                    └── shared Alchemist/RedFox conversion implementation
+
+WPF production view models ─────────┘
 ```
 
-`IAnimationExportEngine` is the migration seam. UI state, file pickers, drag/drop, localization and dialogs stay in each UI adapter. Skeleton topology, animation composition and export rules stay in the engine implementation.
+The UI layer owns presentation, localization, file pickers and drag/drop. The engine owns skeleton identity, model composition, animation sampling, IK, validation and output formats. Legacy JSON uses source-generated `System.Text.Json` metadata, including the old `$id` / `$values` shape, so Native AOT does not depend on runtime reflection.
+
+## Accessibility and visual behavior
+
+- The minimum supported window is 900 × 600 DIP; each page scrolls vertically without horizontal clipping.
+- The main shell adapts the supplied Beutl editor reference into a compact activity rail, project breadcrumb, asset library, composition canvas, functional animation-layer tracks, property inspector and 30 DIP full-width status strip. AtomBox contributes the restrained form/list spacing model.
+- All primary controls use persistent labels, at least 44 DIP command targets and visible focus rings.
+- Icon-only toolbar commands use a consistent 20 DIP rounded-stroke family, localized tooltips and UI Automation names.
+- `Ctrl+O`, `Ctrl+S`, `Ctrl+Shift+S`, `Ctrl+E` and `Esc` cover project/export/dialog actions.
+- Every drag or reorder workflow also has a file-browser, context-menu or button alternative.
+- Windows UI Automation checks the published native executable for required names, keyboard focus, 44 × 44 key targets and initial dialog focus.
+- The About icon is displayed inside a padded 112 × 112 region and is not clipped.
+- Motion is intentionally absent, so reduced-motion users do not lose information or controls.
 
 ## Verification
 
 Completed on 2026-09-05:
 
-- Release solution build: 0 warnings, 0 errors (excluding the expected .NET preview-support notice).
-- Existing and new acceptance suite: all 30 checks passed, including CAST, animation-only CAST, selective baking, SMD, Maya-backed FBX and the engine seam.
-- Native AOT logic self-test and repeated real-window startup smoke: passed.
-- Native AOT Hawk export: byte-identical to the managed engine output, SHA-256 `DB5940259349C1952E2049C27D55853B0A26A94C8AD30E8730B122C372287C81`.
-- Native AOT UI preview: rendered from the published executable and visually checked for clipping, icon visibility, contrast and scroll safety.
+- Release solution build: 0 warnings and 0 errors, excluding the expected preview-support notice.
+- Acceptance suite: all 32 checks passed, including CAST, animation-only CAST, selective baking, SMD, Maya-backed FBX, the workspace store and source-overwrite prevention.
+- Native AOT self-test, real Win32 startup, Windows UI Automation and four-page off-screen rendering: passed.
+- Native AOT standard `HawkSprint.aprj` export: passed.
+- Native AOT and managed Hawk CAST outputs are byte-identical: SHA-256 `DB5940259349C1952E2049C27D55853B0A26A94C8AD30E8730B122C372287C81`.
+- The clean `win-x64` publish is 7 files / 38.17 MiB. The application executable is 21,006,336 bytes; PDB files are rejected.
 
-From a shell using the SDK pinned by `global.json`:
+Run the complete native verification with the pinned preview SDK:
 
 ```powershell
 ./scripts/verify-avalonia-aot.ps1
 ```
 
-The verification publishes the native executable, runs its contract self-test, creates a real Avalonia/Win32 window off-screen, waits for layout and rendering initialization, and checks the process exits successfully.
-
-The complete acceptance suite also invokes the engine interface with the standard Hawk sprint recipe (idle base plus sprint loop and sprint offset as additive layers). It validates the generated one-animation Maya CAST alongside every existing WPF regression.
-
-During development, the AOT Hawk path can be exercised directly:
+The standard-project path can also be exercised directly:
 
 ```powershell
-./output/avalonia-aot-preview1/AlchemyStars.Avalonia.exe --hawk-smoke <hands.cast> <weapon.cast> <idle.cast> <sprint_loop.cast> <sprint_offset_additive.cast> <output-folder>
+./output/avalonia-aot-preview6/AlchemyStars.Avalonia.exe --project-smoke ./fork/AlchemyStars/Example/Hawk/HawkSprint.aprj <output-folder>
 ```
 
 ## Native AOT notes
 
-- Build output can contain two Avalonia DirectComposition ILC diagnostics about non-blittable `bool` callbacks. They are emitted by Avalonia 12.1.2 even though the actual Win32 window startup regression passes repeatedly; keep the real startup test as the release gate.
-- The current clean `win-x64` publish is approximately 38.4 MB across seven files: a 19.4 MB application executable plus Avalonia's Skia, HarfBuzz and ANGLE native rendering libraries and the Maya bridge scripts. Package PDB files are explicitly excluded.
-- Application-level styles use deferred resource lookup. Static lookups from styles declared before the resource dictionary caused a deterministic AOT startup failure and are covered by the window startup regression.
-- Runtime image and icon resources use explicit `avares://AlchemyStars.Avalonia/...` URIs so they remain resolvable after trimming.
-- Avalonia build telemetry is disabled in verification scripts to make restricted and CI builds deterministic.
+- Avalonia 12.1.2 currently emits two DirectComposition ILC diagnostics about non-blittable `bool` callbacks. Real Win32 startup, rendering and UI Automation pass; those executable checks remain release gates.
+- Runtime assets use explicit `avares://` URIs and compiled bindings so trimming preserves the required UI metadata.
+- The published app is self-contained and does not require a separate .NET runtime. Maya is not bundled and remains an external requirement for FBX conversion.
+- Build telemetry is disabled in verification to keep restricted and CI runs deterministic.
 
-## Next milestone
+## Remaining production gate
 
-Migrate one complete vertical workflow: model-part import, animation/layer import, request construction, export progress and centered result/error dialogs. Keep project serialization in an adapter until source-generated JSON metadata is added and verified under trimming.
+No implementation phase remains on the test branch. Production migration waits only for the final .NET 11 SDK, an updated dependency audit, a repeat of all 32 engine/Maya checks, Native AOT startup/UI Automation checks on the GA runtime, and explicit approval to merge. Until then, WPF v1.1.9 remains the supported release.

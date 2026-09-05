@@ -64,8 +64,16 @@ internal static class SelfTest
                 var viewModel = new MainWindowViewModel(engine, projectStore, preferences, new SelfTestFilePicker());
                 Require(viewModel.IsChinese, "Chinese system language was not detected.");
                 Require(viewModel.Text.ProductName == "炼金之星", "Chinese product name mismatch.");
+                Require(viewModel.Text.ImportAnimationsMenu == "导入动画…"
+                    && viewModel.Text.ImportLayersMenu == "导入动画层…"
+                    && viewModel.Text.ImportPartsMenu == "导入模型部件…"
+                    && viewModel.Text.FitSubjectMenu == "适应主体 (F)", "Chinese context menus are not localized.");
                 viewModel.ToggleLanguage();
                 Require(!viewModel.IsChinese && viewModel.Text.ProductName == "Alchemy Stars", "Language toggle failed.");
+                Require(viewModel.Text.ImportAnimationsMenu == "Import animations…"
+                    && viewModel.Text.ImportLayersMenu == "Import animation layers…"
+                    && viewModel.Text.ImportPartsMenu == "Import model parts…"
+                    && viewModel.Text.FitSubjectMenu == "Fit subject (F)", "English context menus are not localized.");
 
                 Require(viewModel.AddAnimationPaths([Path.Combine(testDirectory, "idle.cast")]) == 1, "Animation import routing failed.");
                 Require(viewModel.SelectedAnimation?.OutputFolder == string.Empty, "New animation output folder must stay blank.");

@@ -2,7 +2,7 @@
 
 Status: complete test implementation on `codex/avalonia-aot`; do not merge into `main` or publish as a stable release before .NET 11 GA.
 
-Version: `1.3.0-preview.7`
+Version: `1.3.0-preview.8`
 Runtime: .NET 11 Preview 7
 UI framework: Avalonia 12.1.2
 Production baseline: WPF v1.1.9 on `main`
@@ -62,7 +62,7 @@ Completed on 2026-09-06:
 - Native AOT standard `HawkSprint.aprj` export: passed.
 - CAST preview regression: visible geometry, distinct sampled frames, deterministic reverse scrubbing and unchanged input SHA-256; animation-only files also pass using the canonical project's matching skeleton. Preview uses a separate scene and does not alter the export pipeline.
 - Native AOT and managed Hawk CAST outputs are byte-identical: SHA-256 `DB5940259349C1952E2049C27D55853B0A26A94C8AD30E8730B122C372287C81`.
-- The clean `win-x64` publish is 7 files / 38.46 MiB (40,325,337 bytes). The application executable is 21,310,976 bytes; PDB files are rejected.
+- The clean `win-x64` publish is 7 files / 38.47 MiB (40,341,209 bytes). The application executable is 21,326,848 bytes; PDB files are rejected.
 
 Run the complete native verification with the pinned preview SDK:
 
@@ -73,7 +73,7 @@ Run the complete native verification with the pinned preview SDK:
 The standard-project path can also be exercised directly:
 
 ```powershell
-./output/avalonia-aot-preview7/AlchemyStars.Avalonia.exe --project-smoke ./fork/AlchemyStars/Example/Hawk/HawkSprint.aprj <output-folder>
+./output/avalonia-aot-preview8/AlchemyStars.Avalonia.exe --project-smoke ./fork/AlchemyStars/Example/Hawk/HawkSprint.aprj <output-folder>
 ```
 
 ## Native AOT notes

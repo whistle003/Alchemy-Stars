@@ -16,6 +16,15 @@ public sealed partial class CastPreviewView : UserControl
         FrameSlider.AddHandler(KeyDownEvent, (_, _) => Preview?.Pause(), RoutingStrategies.Tunnel);
     }
     private CastPreviewViewModel? Preview => DataContext as CastPreviewViewModel;
+    internal void VerifyContextMenuLocalization()
+    {
+        var menu = FitButton.ContextMenu ?? throw new InvalidOperationException("The CAST framing menu is missing.");
+        menu.Open(FitButton);
+        var labels = menu.Items.OfType<MenuItem>().Select(item => item.Header?.ToString()).ToArray();
+        menu.Close();
+        if (Preview is null || !labels.SequenceEqual(new[] { Preview.Text.FitSubjectMenu, Preview.Text.FitAllGeometryMenu }))
+            throw new InvalidOperationException("The CAST framing menu does not follow the active UI language.");
+    }
     private void FitClick(object? sender, RoutedEventArgs e) => Preview?.Fit();
     private void FitAllClick(object? sender, RoutedEventArgs e) => Preview?.FitAll();
     private void ZoomInClick(object? sender, RoutedEventArgs e) => Preview?.Zoom(1);

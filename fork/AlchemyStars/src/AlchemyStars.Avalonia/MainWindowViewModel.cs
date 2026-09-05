@@ -590,6 +590,9 @@ public sealed class UiText
     public string AnimationWorkspace => L("动画工作区", "Animation workspace");
     public string AnimationWorkspaceHelp => L("选择基础动画，编辑 IK、姿势、输出与动画层。动画层区域优先接收拖入文件。", "Select a base animation, then edit IK, poses, output and layers. Files dropped on the layer area are always imported as layers.");
     public string AddAnimation => L("添加动画", "Add animation");
+    public string ImportAnimationsMenu => L("导入动画…", "Import animations…");
+    public string ImportLayersMenu => L("导入动画层…", "Import animation layers…");
+    public string ImportPartsMenu => L("导入模型部件…", "Import model parts…");
     public string Remove => L("删除", "Remove");
     public string EmptyAnimations => L("尚未添加动画", "No animations yet");
     public string EmptyAnimationsHelp => L("右键此区域、拖入 CAST，或点击“添加动画”。", "Right-click this area, drop CAST files, or choose Add animation.");
@@ -618,6 +621,8 @@ public sealed class UiText
     public string NextFrame => L("下一帧", "Next frame");
     public string PreviewFrame => L("预览帧", "Preview frame");
     public string FitPreview => L("适应主体 / F；右键查看全部几何体", "Fit subject / F; right-click to fit all geometry");
+    public string FitSubjectMenu => L("适应主体 (F)", "Fit subject (F)");
+    public string FitAllGeometryMenu => L("适应全部几何体 (Shift+F)", "Fit all geometry (Shift+F)");
     public string ZoomIn => L("放大 / +", "Zoom in / +");
     public string ZoomOut => L("缩小 / −", "Zoom out / −");
     public string ShowBones => L("显示 / 隐藏骨架", "Show / hide skeleton");
@@ -699,6 +704,7 @@ public sealed class UiText
     public string SprintGeneratorNeedsIdle => L("请选择输出名称中包含“_idle”的基础动画。", "Select a base animation whose output name contains '_idle'.");
     public string SprintGeneratorComplete => L("已从 idle 模板生成 {0} 个冲刺与滑铲条目。", "Generated {0} sprint and slide entries from the idle template.");
     public string AboutTitle => L("关于 炼金之星", "About Alchemy Stars");
+    public string ApplicationIcon => L("炼金之星应用图标", "Alchemy Stars application icon");
     public string AboutSubtitle => L("面向第一人称武器资产的 CAST 动画合并与 Maya 2025 工作流", "CAST animation merging and Maya 2025 workflow for first-person weapon assets");
     public string AboutOverview => L("炼金之星改进自 Scobalula/Alchemist。本测试版已将完整工作流迁移至 Avalonia，并通过 Native AOT 发布；WPF 版本在 .NET 11 正式版迁移前继续作为生产基线。", "Alchemy Stars improves Scobalula/Alchemist. This preview migrates the complete workflow to Avalonia and publishes with Native AOT; WPF remains the production baseline until the .NET 11 GA migration.");
     public string Capabilities => L("支持完整或仅动画 CAST、FBX、SMD、SEAnim、普通/叠加/手势动画层、左右手 IK、相关骨骼烘焙和旧版 .aprj。合成工作区可进行真实 CAST 灰模预览、骨架显示和逐帧播放。", "Supports full-scene or animation-only CAST, FBX, SMD, SEAnim, normal/additive/gesture layers, IK, relevant-bone baking and legacy .aprj files. The composition workspace previews real CAST geometry, skeletons and animation frames.");

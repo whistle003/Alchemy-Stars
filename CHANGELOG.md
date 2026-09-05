@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.0-preview.8 — 2026-09-06
+
+- Localized every workspace context-menu command through the active UI language. Animation, animation-layer, model-part and CAST framing menus now show Chinese or English exclusively and update with the global language switch.
+- Added localization contract checks so bilingual hard-coded menu labels cannot silently return.
+
 ## 1.3.0-preview.7 — 2026-09-06
 
 - Rebuilt the supplied reference's panel geometry: a 48 DIP activity rail, resizable library/viewport/inspector, a full-width lower layer area, and flat collapsible properties.

@@ -76,6 +76,22 @@ public sealed partial class MainWindow : Window
                 || origin.X + ink.Right > button.Bounds.Width - 2 || origin.Y + ink.Bottom > button.Bounds.Height - 2)
                 throw new InvalidOperationException("A toolbar icon or hit target is clipped.");
         }
+        VerifyContextMenuLocalization(AnimationDropZone, ViewModel.Text.ImportAnimationsMenu);
+        VerifyContextMenuLocalization(LayerDropZone, ViewModel.Text.ImportLayersMenu);
+        VerifyContextMenuLocalization(PartDropZone, ViewModel.Text.ImportPartsMenu);
+        foreach (var preview in this.GetVisualDescendants().OfType<CastPreviewView>())
+            preview.VerifyContextMenuLocalization();
+    }
+
+    private static void VerifyContextMenuLocalization(Control target, string expected)
+    {
+        var menu = target.ContextMenu ?? throw new InvalidOperationException("A workspace context menu is missing.");
+        menu.Open(target);
+        var item = menu.Items.OfType<MenuItem>().Single();
+        var actual = item.Header?.ToString();
+        menu.Close();
+        if (!string.Equals(actual, expected, StringComparison.Ordinal))
+            throw new InvalidOperationException($"A workspace context menu is not localized: '{actual}'.");
     }
 
     private void NewProjectClick(object? sender, RoutedEventArgs e) => ViewModel.NewProject();

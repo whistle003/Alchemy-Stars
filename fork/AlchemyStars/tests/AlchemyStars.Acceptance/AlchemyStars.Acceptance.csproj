@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Alchemist.UI\Alchemist.UI.csproj" />
+    <ProjectReference Include="..\..\src\AlchemyStars.Engine\AlchemyStars.Engine.csproj" />
     <ProjectReference Include="..\..\..\RedFox\ext\Cast.NET\src\Cast.NET\Cast.NET.csproj" />
   </ItemGroup>
 

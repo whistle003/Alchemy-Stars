@@ -1,5 +1,6 @@
 using Alchemist.InverseKinematics;
 using Alchemist.UI;
+using AlchemyStars.Engine;
 using Cast.NET;
 using Cast.NET.Nodes;
 using RedFox.Graphics3D.Skeletal;
@@ -81,6 +82,7 @@ var mp5GripProject = LoadExampleProject(exampleDirectory, standardExamples["mp5-
 var sprintTemplate = sprintProject.Animations.Single();
 var idleTemplate = idleProject.Animations.Single();
 string? sprintOutput = null;
+string? engineSprintOutput = null;
 string? animationOnlyCastOutput = null;
 string? selectiveBakeCastOutput = null;
 string? weaponFirstSprintOutput = null;
@@ -138,6 +140,50 @@ if (requiredFiles.All(File.Exists))
 
     Run("View hands and weapon share one merged skeleton", () => TestMergedSkeleton(skeleton));
     Run("Unsafe right-hand IK target is rejected", () => TestRightHandIkCycle(skeleton));
+
+    Run("AOT engine seam exports the standard Hawk sprint pattern", () =>
+    {
+        var source = sprintProject.Animations.Single();
+        var engine = new AnimationExportEngine();
+        var request = new AnimationExportRequest(
+            sprintProject.Parts.Select(part => new ModelPartSpec(
+                part.FilePath,
+                part.Type switch
+                {
+                    PartType.ViewHands => ModelPartKind.ViewHands,
+                    PartType.Weapon => ModelPartKind.Weapon,
+                    _ => ModelPartKind.Attachment,
+                },
+                part.ParentBoneTag)).ToArray(),
+            [new AnimationExportJob(
+                source.Name,
+                "sat_vm_ar_hawk_sprint_engine_aot",
+                Path.Combine(outputDirectory, "engine-seam"),
+                source.OutputFramerate,
+                source.EnableLeftHandIK,
+                source.EnableRightHandIK,
+                source.LeftHandPoseFile,
+                source.RightHandPoseFile,
+                source.LeftIKTargetBoneName,
+                source.RightIKTargetBoneName,
+                source.Layers.Select(layer => new AnimationLayerSpec(
+                    layer.Name,
+                    layer.Type switch
+                    {
+                        AnimationLayerType.Normal => AnimationLayerKind.Normal,
+                        AnimationLayerType.Gesture => AnimationLayerKind.Gesture,
+                        AnimationLayerType.GesturePose => AnimationLayerKind.GesturePose,
+                        _ => AnimationLayerKind.Additive,
+                    },
+                    layer.Offset)).ToArray())],
+            new AnimationExportOptions(
+                new IkChainSpec(sprintProject.LeftIKStartBoneName, sprintProject.LeftIKMidBoneName, sprintProject.LeftIKEndBoneName, sprintProject.LeftIKTargetBoneName),
+                new IkChainSpec(sprintProject.RightIKStartBoneName, sprintProject.RightIKMidBoneName, sprintProject.RightIKEndBoneName, sprintProject.RightIKTargetBoneName)));
+        var result = engine.Export(request);
+        Assert(result.OutputFiles.Count == 1, "Engine seam should export exactly one Hawk sprint file.");
+        engineSprintOutput = Path.GetFullPath(result.OutputFiles.Single());
+        ValidateMayaPackage(engineSprintOutput, sprintProject.Parts);
+    });
 
     Run("Sprint and additive offset bake into one Maya CAST", () =>
     {
@@ -273,6 +319,7 @@ var report = new
     artifacts = new
     {
         sprintCast = sprintOutput,
+        engineSprintCast = engineSprintOutput,
         animationOnlyCast = animationOnlyCastOutput,
         selectiveBakeCast = selectiveBakeCastOutput,
         weaponFirstSprintCast = weaponFirstSprintOutput,

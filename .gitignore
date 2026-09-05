@@ -2,10 +2,7 @@ bin/
 obj/
 .vs/
 release/
-output/*.cast
-output/*.ma
-output/*.json
-output/*.png
+output/**
 fork/AlchemyStars/output/*
 fork/alchemist-upstream.tar
 *.user

@@ -2,9 +2,9 @@
 
 # Alchemy Stars
 
-> **.NET 11 preview branch:** this branch is an isolated compatibility test targeting .NET 11 Preview 7 and versioned `1.2.0-preview.1`. Production remains v1.1.9 on `main`. Do not distribute this build as a stable release.
+> **Avalonia AOT preview branch:** this test line targets .NET 11 Preview 7, Avalonia 12.1.2 and version `1.3.0-preview.1`. Production remains v1.1.9 on `main`; the existing WPF application is still the stable baseline. Do not distribute this build as a stable release.
 
-See the [preview compatibility report and GA migration gate](docs/dotnet11-preview.md).
+See the [Avalonia AOT migration report](docs/avalonia-aot-migration.md) and the [.NET 11 preview compatibility report](docs/dotnet11-preview.md).
 
 Alchemy Stars (炼金之星) is a production-focused improvement of [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist) for Windows, first-person CAST weapon assets, and Autodesk Maya 2025. It retains Alchemist's WPF batch interface and RedFox animation pipeline while completing a reliable model-and-animation export workflow.
 

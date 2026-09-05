@@ -1,0 +1,142 @@
+<Window
+    x:Class="AlchemyStars.Avalonia.MainWindow"
+    x:DataType="local:MainWindowViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:AlchemyStars.Avalonia"
+    Title="{Binding WindowTitle}"
+    Icon="avares://AlchemyStars.Avalonia/Assets/AlchemyStarsIcon.ico"
+    Width="1180"
+    Height="760"
+    MinWidth="900"
+    MinHeight="600"
+    WindowStartupLocation="CenterScreen"
+    AutomationProperties.Name="{Binding WindowTitle}">
+
+  <Grid RowDefinitions="72,*,36">
+    <Border Grid.Row="0" Background="{StaticResource AlchemySidebarBrush}" BorderBrush="{StaticResource AlchemyBorderBrush}" BorderThickness="0,0,0,1">
+      <Grid Margin="20,10" ColumnDefinitions="Auto,12,*,Auto">
+        <Image Grid.Column="0" Width="44" Height="44" Source="avares://AlchemyStars.Avalonia/Assets/AlchemyStarsIcon.png" Stretch="Uniform" AutomationProperties.AccessibilityView="Raw" />
+        <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="2">
+          <TextBlock Text="{Binding ProductName}" FontSize="19" FontWeight="SemiBold" />
+          <TextBlock Text="{Binding BranchSubtitle}" Classes="muted" FontSize="12" />
+        </StackPanel>
+        <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+          <Border Background="#2AF97316" BorderBrush="{StaticResource AlchemyAccentBrush}" BorderThickness="1" CornerRadius="12" Padding="10,4">
+            <TextBlock Text="{Binding PreviewBadge}" Classes="eyebrow" />
+          </Border>
+          <Button
+              Command="{Binding ToggleLanguageCommand}"
+              Content="{Binding LanguageButtonLabel}"
+              AutomationProperties.Name="{Binding LanguageButtonAccessibleName}"
+              ToolTip.Tip="{Binding LanguageButtonAccessibleName}" />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <Grid Grid.Row="1" ColumnDefinitions="224,*">
+      <Border Grid.Column="0" Background="{StaticResource AlchemySidebarBrush}" BorderBrush="{StaticResource AlchemyBorderBrush}" BorderThickness="0,0,1,0">
+        <Grid RowDefinitions="Auto,*,Auto" Margin="14,18">
+          <TextBlock Text="{Binding WorkspaceLabel}" Classes="muted" FontSize="11" FontWeight="SemiBold" Margin="10,0,0,8" />
+          <StackPanel Grid.Row="1">
+            <Button Classes="nav selected" Command="{Binding NoOpCommand}" AutomationProperties.Name="{Binding OverviewLabel}">
+              <StackPanel Orientation="Horizontal" Spacing="12">
+                <PathIcon Width="18" Height="18" Data="M3,3 H9 V9 H3 Z M11,3 H17 V9 H11 Z M3,11 H9 V17 H3 Z M11,11 H17 V17 H11 Z" />
+                <TextBlock Text="{Binding OverviewLabel}" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+            <Button Classes="nav" Command="{Binding NoOpCommand}" AutomationProperties.Name="{Binding ModelPartsLabel}">
+              <StackPanel Orientation="Horizontal" Spacing="12">
+                <PathIcon Width="18" Height="18" Data="M10,2 L18,6 L10,10 L2,6 Z M2,9 L10,13 L18,9 M2,13 L10,17 L18,13" />
+                <TextBlock Text="{Binding ModelPartsLabel}" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+            <Button Classes="nav" Command="{Binding NoOpCommand}" AutomationProperties.Name="{Binding AnimationsLabel}">
+              <StackPanel Orientation="Horizontal" Spacing="12">
+                <PathIcon Width="18" Height="18" Data="M3,4 H17 V16 H3 Z M7,2 V6 M13,2 V6 M3,8 H17 M7,11 L11,13 L7,15 Z" />
+                <TextBlock Text="{Binding AnimationsLabel}" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+            <Button Classes="nav" Command="{Binding NoOpCommand}" AutomationProperties.Name="{Binding SettingsLabel}">
+              <StackPanel Orientation="Horizontal" Spacing="12">
+                <PathIcon Width="18" Height="18" Data="M8,2 H12 L13,5 L16,4 L18,8 L15,10 L18,12 L16,16 L13,15 L12,18 H8 L7,15 L4,16 L2,12 L5,10 L2,8 L4,4 L7,5 Z M10,7 A3,3 0 1 0 10,13 A3,3 0 1 0 10,7" />
+                <TextBlock Text="{Binding SettingsLabel}" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+          </StackPanel>
+          <Border Grid.Row="2" Classes="card" Padding="14">
+            <StackPanel Spacing="6">
+              <TextBlock Text="{Binding ProductionNoticeTitle}" FontWeight="SemiBold" TextWrapping="Wrap" />
+              <TextBlock Text="{Binding ProductionNoticeBody}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+            </StackPanel>
+          </Border>
+        </Grid>
+      </Border>
+
+      <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="32,28,32,36" Spacing="22" MaxWidth="1040" HorizontalAlignment="Stretch">
+          <StackPanel Spacing="6">
+            <TextBlock Text="{Binding MilestoneEyebrow}" Classes="eyebrow" />
+            <TextBlock Text="{Binding PageTitle}" FontSize="30" FontWeight="SemiBold" TextWrapping="Wrap" />
+            <TextBlock Text="{Binding PageDescription}" Classes="muted" FontSize="14" TextWrapping="Wrap" MaxWidth="780" />
+          </StackPanel>
+
+          <Border Classes="card" BorderBrush="{StaticResource AlchemyAccentBrush}" Background="#18292937">
+            <Grid ColumnDefinitions="Auto,16,*">
+              <Border Width="42" Height="42" CornerRadius="21" Background="#2AF97316">
+                <PathIcon Width="22" Height="22" Foreground="{StaticResource AlchemyAccentBrush}" Data="M10,2 L12,7 L17,9 L12,11 L10,18 L8,11 L3,9 L8,7 Z" />
+              </Border>
+              <StackPanel Grid.Column="2" Spacing="4">
+                <TextBlock Text="{Binding ArchitectureTitle}" FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding ArchitectureBody}" Classes="muted" TextWrapping="Wrap" />
+              </StackPanel>
+            </Grid>
+          </Border>
+
+          <Grid ColumnDefinitions="*,16,*,16,*">
+            <Border Grid.Column="0" Classes="card" MinHeight="168">
+              <StackPanel Spacing="10">
+                <PathIcon Width="24" Height="24" HorizontalAlignment="Left" Foreground="{StaticResource AlchemySuccessBrush}" Data="M3,10 L8,15 L17,4 L19,6 L8,18 L1,12 Z" />
+                <TextBlock Text="{Binding EngineCardTitle}" FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding EngineCardBody}" Classes="muted" TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+            <Border Grid.Column="2" Classes="card" MinHeight="168">
+              <StackPanel Spacing="10">
+                <PathIcon Width="24" Height="24" HorizontalAlignment="Left" Foreground="{StaticResource AlchemyFocusBrush}" Data="M2,3 H18 V16 H2 Z M2,7 H18 M6,5 H7 M9,5 H10" />
+                <TextBlock Text="{Binding AvaloniaCardTitle}" FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding AvaloniaCardBody}" Classes="muted" TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+            <Border Grid.Column="4" Classes="card" MinHeight="168">
+              <StackPanel Spacing="10">
+                <PathIcon Width="24" Height="24" HorizontalAlignment="Left" Foreground="{StaticResource AlchemyAccentBrush}" Data="M10,1 L16,4 V10 C16,14 13,17 10,19 C7,17 4,14 4,10 V4 Z M7,10 L9,12 L13,7" />
+                <TextBlock Text="{Binding AotCardTitle}" FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding AotCardBody}" Classes="muted" TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+          </Grid>
+
+          <Border Classes="card">
+            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+              <StackPanel Grid.Row="0" Grid.Column="0" Spacing="5">
+                <TextBlock Text="{Binding VerificationTitle}" FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding VerificationBody}" Classes="muted" TextWrapping="Wrap" />
+              </StackPanel>
+              <Button Grid.RowSpan="2" Grid.Column="1" Classes="primary" Command="{Binding RunContractCheckCommand}" Content="{Binding VerifyButtonLabel}" AutomationProperties.Name="{Binding VerifyButtonAccessibleName}" Margin="22,0,0,0" />
+              <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding VerificationStatus}" Foreground="{StaticResource AlchemySuccessBrush}" Margin="0,14,0,0" FontWeight="SemiBold" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
+            </Grid>
+          </Border>
+        </StackPanel>
+      </ScrollViewer>
+    </Grid>
+
+    <Border Grid.Row="2" Background="{StaticResource AlchemySidebarBrush}" BorderBrush="{StaticResource AlchemyBorderBrush}" BorderThickness="0,1,0,0">
+      <Grid Margin="18,0" ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+        <Ellipse Width="8" Height="8" Fill="{StaticResource AlchemySuccessBrush}" />
+        <TextBlock Grid.Column="1" Text="{Binding FooterStatus}" Classes="muted" FontSize="12" Margin="8,0" />
+        <TextBlock Grid.Column="2" Text="{Binding VersionLabel}" Classes="muted" FontSize="12" />
+      </Grid>
+    </Border>
+  </Grid>
+</Window>

@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.3.0-preview.1 — 2026-09-05
+
+- Added a test-only Avalonia 12.1.2 desktop shell that publishes as a 38 MB-class self-contained Native AOT package on .NET 11 Preview 7, including Skia, HarfBuzz and ANGLE rendering libraries.
+- Introduced the WPF-free `IAnimationExportEngine` seam, immutable export requests, capability discovery, and structured validation errors.
+- Reused the single proven conversion implementation across the WPF and AOT adapters, retaining CAST, FBX, SMD, SEAnim, IK, animation layers, selective baking, and animation-only CAST.
+- Added a Native AOT contract self-test, deterministic real-window startup regression, off-screen UI rendering, and direct AOT Hawk export verification.
+- Verified the new engine against the standard Hawk idle-plus-two-additive-layers recipe; Native AOT and managed CAST outputs are byte-identical.
+- Kept the existing WPF application and production release line unchanged. This preview is a migration milestone, not a stable release.
+
 ## 1.2.0-preview.1 — 2026-09-05
 
 - Created an isolated .NET 11 Preview test line; the production `main` branch and v1.1.9 release remain on .NET 9.

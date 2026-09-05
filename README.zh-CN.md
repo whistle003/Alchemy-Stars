@@ -2,9 +2,9 @@
 
 # Alchemy Stars（炼金之星）
 
-> **.NET 11 预览测试分支：** 本分支仅用于 .NET 11 Preview 7 兼容性验证，版本标记为 `1.2.0-preview.1`。正式版仍是 `main` 上的 v1.1.9，请勿把本分支构建作为稳定版分发。
+> **Avalonia AOT 预览测试分支：** 本测试线使用 .NET 11 Preview 7、Avalonia 12.1.2，版本为 `1.3.0-preview.1`。正式版仍是 `main` 上的 v1.1.9，现有 WPF 程序仍是稳定基线，请勿把本分支构建作为稳定版分发。
 
-详细结果及正式版迁移门槛见 [.NET 11 Preview 兼容性报告](docs/dotnet11-preview.md)。
+详细结果见 [Avalonia AOT 迁移报告](docs/avalonia-aot-migration.md)与 [.NET 11 Preview 兼容性报告](docs/dotnet11-preview.md)。
 
 Alchemy Stars 是 [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist) 的可用化改进版，面向 Windows、CAST 第一人称武器资产与 Autodesk Maya 2025。项目保留原版 Alchemist 的 WPF 批处理界面和 RedFox 动画管线，并补齐了原仓库尚未完成的模型/动画一体化导出。
 

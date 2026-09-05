@@ -15,7 +15,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\RedFox\src\cs\RedFox.Graphics3D.Translation\RedFox.Graphics3D.Translation.csproj" />
     <ProjectReference Include="..\..\..\RedFox\src\cs\RedFox.Graphics3D\RedFox.Graphics3D.csproj" />
-    <ProjectReference Include="..\..\..\RedFox\src\cs\RedFox.UI\RedFox.UI.csproj" />
     <ProjectReference Include="..\..\..\RedFox\src\cs\RedFox.Zenith\RedFox.Zenith.csproj" />
   </ItemGroup>
 

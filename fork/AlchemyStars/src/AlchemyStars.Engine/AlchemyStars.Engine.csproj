@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <AssemblyName>AlchemyStars.Engine</AssemblyName>
+    <RootNamespace>AlchemyStars.Engine</RootNamespace>
+    <Product>Alchemy Stars</Product>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsAotCompatible>true</IsAotCompatible>
+    <IsTrimmable>true</IsTrimmable>
+    <DefineConstants>$(DefineConstants);ALCHEMYSTARS_ENGINE</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Alchemist\Alchemist.csproj" />
+    <ProjectReference Include="..\..\..\RedFox\src\cs\RedFox.Graphics3D.Translation\RedFox.Graphics3D.Translation.csproj" />
+    <ProjectReference Include="..\..\..\RedFox\src\cs\RedFox.Graphics3D\RedFox.Graphics3D.csproj" />
+    <ProjectReference Include="..\..\..\RedFox\ext\Cast.NET\src\Cast.NET\Cast.NET.csproj" />
+  </ItemGroup>
+
+  <!--
+    The WPF and Avalonia adapters compile the same proven conversion implementation.
+    The compatibility model below keeps WPF view-model types outside the AOT closure.
+  -->
+  <ItemGroup>
+    <Compile Include="..\Alchemist.UI\AnimationConverter.cs" Link="Shared\AnimationConverter.cs" />
+    <Compile Include="..\Alchemist.UI\CastNodeTraversal.cs" Link="Shared\CastNodeTraversal.cs" />
+    <Compile Include="..\Alchemist.UI\MayaCastPackage.cs" Link="Shared\MayaCastPackage.cs" />
+    <Compile Include="..\Alchemist.UI\MayaFbxExporter.cs" Link="Shared\MayaFbxExporter.cs" />
+    <Compile Include="..\Alchemist.UI\OutputFormatCatalog.cs" Link="Shared\OutputFormatCatalog.cs" />
+    <Compile Include="..\Alchemist.UI\PartOrdering.cs" Link="Shared\PartOrdering.cs" />
+    <Compile Include="..\Alchemist.UI\SkeletonMergePlan.cs" Link="Shared\SkeletonMergePlan.cs" />
+    <Compile Include="..\Alchemist.UI\SmdAnimationExporter.cs" Link="Shared\SmdAnimationExporter.cs" />
+  </ItemGroup>
+
+</Project>

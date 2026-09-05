@@ -15,7 +15,11 @@ using System.Xml.Linq;
 
 namespace Alchemist.UI
 {
+#if ALCHEMYSTARS_ENGINE
+    internal class AnimationConverter
+#else
     public class AnimationConverter
+#endif
     {
         public static Graphics3DTranslatorFactory TranslatorFactory { get; set; } = new Graphics3DTranslatorFactory().WithDefaultTranslators();
 
@@ -532,8 +536,10 @@ namespace Alchemist.UI
         /// </summary>
         /// <param name="parts">The parts to load skeletons from.</param>
         /// <returns>A single combined skeleton.</returns>
+#if !ALCHEMYSTARS_ENGINE
         public static Skeleton LoadSkeletonFromParts(IEnumerable<Part> parts, bool matchOldCallOfDuty) =>
             SkeletonMergePlan.Build(parts, matchOldCallOfDuty).Skeleton;
+#endif
 
         private static void SaveAtomically(string outputPath, Action<string> write)
         {

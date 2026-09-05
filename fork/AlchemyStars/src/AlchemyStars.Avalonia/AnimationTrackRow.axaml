@@ -1,0 +1,37 @@
+<UserControl
+    x:Class="AlchemyStars.Avalonia.AnimationTrackRow"
+    x:DataType="local:AnimationTrackItem"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:AlchemyStars.Avalonia">
+  <Grid ColumnDefinitions="200,*,84" Margin="0,4">
+    <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+      <Path Classes="icon-glyph muted" Data="M3,5 L17,5 L17,17 L3,17 Z M3,9 L17,9 M7,2 L7,7 M13,2 L13,7 M8,11 L13,14 L8,17 Z" IsVisible="{Binding IsBase}" IsHitTestVisible="False" />
+      <Path Classes="icon-glyph muted" Data="M10,2 L18,6 L10,10 L2,6 Z M2,10 L10,14 L18,10 M2,14 L10,18 L18,14" IsVisible="{Binding IsLayer}" IsHitTestVisible="False" />
+      <TextBlock Text="{Binding TrackLabel}" Width="162" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding SourcePath}" />
+    </StackPanel>
+    <Grid Grid.Column="1" Classes="track-lane">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="{Binding LeadingLength}" />
+        <ColumnDefinition Width="{Binding DurationLength}" />
+        <ColumnDefinition Width="{Binding TrailingLength}" />
+      </Grid.ColumnDefinitions>
+      <ContentControl Grid.Column="1"
+                      Classes="clip"
+                      Classes.base-clip="{Binding IsBase}"
+                      Classes.layer-clip="{Binding IsLayer}"
+                      MinWidth="64"
+                      Focusable="False"
+                      ToolTip.Tip="{Binding Tooltip}"
+                      AutomationProperties.Name="{Binding AccessibleName}"
+                      AutomationProperties.AccessibilityView="Content"
+                      AutomationProperties.IsControlElementOverride="True">
+        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+          <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" />
+          <TextBlock Grid.Column="1" Text="{Binding FrameLabel}" Classes="clip-frame-label" />
+        </Grid>
+      </ContentControl>
+    </Grid>
+    <TextBlock Grid.Column="2" Text="{Binding OffsetLabel}" Classes="muted" VerticalAlignment="Center" TextAlignment="Right" />
+  </Grid>
+</UserControl>

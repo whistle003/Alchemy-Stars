@@ -708,7 +708,9 @@ class Mesh(CastNode):
         sm = self.properties.get("sm")
         if sm is not None:
             return sm.values[0]
-        return "linear"
+        # Alchemy Stars defaults unlabelled skinned meshes to Maya DQS. CAST
+        # files that explicitly request linear skinning continue to be honored.
+        return "quaternion"
 
     def SetSkinningMethod(self, method):
         """Sets the skinning method used for this mesh."""

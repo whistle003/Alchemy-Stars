@@ -755,7 +755,7 @@ def utilityGetSkinCluster(mesh):
     return OpenMayaAnim.MFnSkinCluster(clusterObject)
 
 
-def utilityCreateSkinCluster(newMesh, bones=[], maxWeightInfluence=1, skinningMethod="linear"):
+def utilityCreateSkinCluster(newMesh, bones=[], maxWeightInfluence=1, skinningMethod="quaternion"):
     skinParams = [x for x in bones]
     skinParams.append(newMesh.fullPathName())
 

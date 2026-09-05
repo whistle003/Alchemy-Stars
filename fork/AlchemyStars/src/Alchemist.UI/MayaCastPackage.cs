@@ -161,6 +161,11 @@ internal static class MayaCastPackage
             if (mesh.VertexWeightBoneBuffer is null)
                 continue;
 
+            // DQS is the Alchemy Stars default for merged first-person assets.
+            // Writing it into the CAST keeps Maya imports and downstream FBX
+            // conversion deterministic instead of depending on importer defaults.
+            mesh.AddString("sm", "quaternion");
+
             var mapped = mesh.VertexWeightBoneBuffer switch
             {
                 CastArrayProperty<byte> values => values.Values.Select(value => (uint)sourceToDestination[value]).ToArray(),

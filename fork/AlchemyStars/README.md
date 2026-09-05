@@ -1,8 +1,8 @@
 # Alchemy Stars
 
-Alchemy Stars is a maintained, Maya-ready fork of [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist). It retains the original WPF workflow and RedFox animation pipeline while adding deterministic view-hands/weapon skeleton merging, one-animation Maya CAST packaging, safe IK, layer offsets, validation, published examples, and acceptance tests.
+Alchemy Stars is a maintained, Maya-ready fork of [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist). It retains the RedFox animation pipeline while adding deterministic view-hands/weapon skeleton merging, one-animation Maya CAST packaging, safe IK, layer offsets, DQS skinning, validation, published examples, and acceptance tests. The `codex/avalonia-aot` test branch contains the complete Avalonia Native AOT workflow; WPF v1.1.9 remains the stable baseline on `main` until .NET 11 GA.
 
-Open `AlchemyStars.slnx` with Visual Studio 2022 or build it with the .NET 9 SDK:
+Open `AlchemyStars.slnx` with Visual Studio or build this test branch with the .NET 11 Preview SDK pinned by the repository `global.json`:
 
 ```powershell
 dotnet build .\AlchemyStars.slnx -c Release

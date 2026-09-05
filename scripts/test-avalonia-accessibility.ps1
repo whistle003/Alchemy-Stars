@@ -14,7 +14,9 @@ if (-not (Test-Path -LiteralPath $executable)) {
 Add-Type -AssemblyName UIAutomationClient
 Add-Type -AssemblyName UIAutomationTypes
 
-$arguments = '--accessibility-smoke --culture en-US --window-size 900x600 --page animations --dialog success'
+$repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
+$standardProject = Join-Path $repositoryRoot 'fork\AlchemyStars\Example\Hawk\HawkSprint.aprj'
+$arguments = '--accessibility-smoke --culture en-US --window-size 900x600 --page animations --dialog success "' + $standardProject + '"'
 $process = Start-Process -FilePath $executable -ArgumentList $arguments -WorkingDirectory $publishPath -PassThru
 try {
     $processCondition = [System.Windows.Automation.PropertyCondition]::new(
@@ -66,6 +68,36 @@ try {
         }
     }
 
+    $trackNames = @(
+        'Base animation, starts at frame 0, duration 1 frames',
+        'sat_vm_ar_hawk_sprint_loop, starts at frame 0, duration 67 frames',
+        'sat_vm_ar_hawk_sprint_offset_additive, starts at frame 0, duration 1 frames'
+    )
+    $trackElements = @{}
+    foreach ($name in $trackNames) {
+        $trackElement = $null
+        do {
+            $trackCondition = [System.Windows.Automation.PropertyCondition]::new(
+                [System.Windows.Automation.AutomationElement]::NameProperty,
+                $name)
+            $trackElement = $window.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $trackCondition)
+            if ($null -eq $trackElement) { Start-Sleep -Milliseconds 100 }
+        } while ($null -eq $trackElement -and [DateTime]::UtcNow -lt $deadline)
+        if ($null -eq $trackElement) {
+            throw "Duration-aware track was not exposed to UI Automation: $name"
+        }
+        $trackElements[$name] = $trackElement
+    }
+    $baseBounds = $trackElements[$trackNames[0]].Current.BoundingRectangle
+    $sprintBounds = $trackElements[$trackNames[1]].Current.BoundingRectangle
+    $offsetBounds = $trackElements[$trackNames[2]].Current.BoundingRectangle
+    if ($baseBounds.Width -lt 63 -or $offsetBounds.Width -lt 63) {
+        throw 'One-frame animation tracks are smaller than the visible 64 DIP minimum.'
+    }
+    if ($sprintBounds.Width -le $baseBounds.Width * 2 -or $sprintBounds.Width -le $offsetBounds.Width * 2) {
+        throw 'The 67-frame sprint track is not visibly longer than the one-frame tracks.'
+    }
+
     $closeButton = $elements['Close']
     if (-not $closeButton.Current.HasKeyboardFocus) {
         $closeButton.SetFocus()
@@ -75,7 +107,7 @@ try {
         throw 'The centered dialog did not provide a reliable keyboard focus target.'
     }
 
-    Write-Output 'Windows UI Automation names, keyboard focus and 44x44 key targets: PASS'
+    Write-Output 'Windows UI Automation names, keyboard focus, 44x44 key targets and duration-aware track geometry: PASS'
 }
 finally {
     $process.Refresh()

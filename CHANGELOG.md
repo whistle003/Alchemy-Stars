@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.0-preview.9 — 2026-09-06
+
+- Made animation-track bars read each source CAST asynchronously and scale to its true frame count. The shared frame range also reflects positive and negative layer offsets; frame-count labels, localized tooltips and UI Automation names supplement the visual length encoding.
+- Set merged skinned CAST meshes to Dual Quaternion (`quaternion`) skinning. The bundled Maya importer now defaults older meshes without an explicit skinning method to DQS while continuing to honor explicit methods.
+- Added pure layout, canonical Hawk metadata, Native AOT UI Automation geometry and merged-output DQS regressions. The standard Hawk project visibly resolves to 1-frame idle, 67-frame sprint-loop and 1-frame additive-offset tracks.
+
 ## 1.3.0-preview.8 — 2026-09-06
 
 - Localized every workspace context-menu command through the active UI language. Animation, animation-layer, model-part and CAST framing menus now show Chinese or English exclusively and update with the global language switch.

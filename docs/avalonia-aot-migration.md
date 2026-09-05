@@ -2,7 +2,7 @@
 
 Status: complete test implementation on `codex/avalonia-aot`; do not merge into `main` or publish as a stable release before .NET 11 GA.
 
-Version: `1.3.0-preview.8`
+Version: `1.3.0-preview.9`
 Runtime: .NET 11 Preview 7
 UI framework: Avalonia 12.1.2
 Production baseline: WPF v1.1.9 on `main`
@@ -20,7 +20,9 @@ The test branch now contains the complete Alchemy Stars desktop workflow rather 
 - remember per-purpose file-browser locations and follow system, Chinese or English UI language;
 - use file browsers, editable/pasteable paths, direct path drops, list drop zones and blank-area context menus;
 - keep progress, success and error feedback centered inside the owning window;
-- display the actual merged CAST with clay-shaded skinning, frame playback/scrubbing, orbit/zoom and skeleton-only support.
+- display the actual merged CAST with clay-shaded skinning, frame playback/scrubbing, orbit/zoom and skeleton-only support;
+- display source animation layers on a shared frame range, with bar widths driven by real CAST duration metadata and positions driven by layer offsets;
+- emit DQS as the merged CAST skinning default and use the same default for legacy unlabelled meshes in the bundled Maya importer.
 
 New animation output folders stay blank. The engine also rejects an output that resolves to any model, animation, pose or layer input, so a same-named export cannot overwrite source data.
 
@@ -48,7 +50,7 @@ The UI layer owns presentation, localization, file pickers and drag/drop. The en
 - Icon-only toolbar commands use 24 DIP fixed canvases with inset rounded strokes, localized tooltips and UI Automation names.
 - `Ctrl+O`, `Ctrl+S`, `Ctrl+Shift+S`, `Ctrl+E` and `Esc` cover project/export/dialog actions.
 - Every drag or reorder workflow also has a file-browser, context-menu or button alternative.
-- Windows UI Automation checks the published native executable for required names, keyboard focus, 44 × 44 key targets and initial dialog focus.
+- Windows UI Automation checks the published native executable for required names, keyboard focus, 44 × 44 key targets, initial dialog focus, localized track descriptions and visibly different 1/67-frame bar widths.
 - The About icon is displayed inside a padded 112 × 112 region and is not clipped.
 - No decorative animation is used; CAST playback is explicitly user-controlled and pauses when leaving the preview pages or opening a dialog.
 
@@ -57,12 +59,12 @@ The UI layer owns presentation, localization, file pickers and drag/drop. The en
 Completed on 2026-09-06:
 
 - Release solution build: 0 warnings and 0 errors, excluding the expected preview-support notice.
-- Acceptance suite: all 32 checks passed, including CAST, animation-only CAST, selective baking, SMD, Maya-backed FBX, the workspace store and source-overwrite prevention.
+- Acceptance suite: all 33 checks passed, including true track durations, DQS skinning metadata, CAST, animation-only CAST, selective baking, SMD, Maya-backed FBX, the workspace store and source-overwrite prevention.
 - Native AOT self-test, real Win32 startup, Windows UI Automation and four-page off-screen rendering: passed.
 - Native AOT standard `HawkSprint.aprj` export: passed.
 - CAST preview regression: visible geometry, distinct sampled frames, deterministic reverse scrubbing and unchanged input SHA-256; animation-only files also pass using the canonical project's matching skeleton. Preview uses a separate scene and does not alter the export pipeline.
-- Native AOT and managed Hawk CAST outputs are byte-identical: SHA-256 `DB5940259349C1952E2049C27D55853B0A26A94C8AD30E8730B122C372287C81`.
-- The clean `win-x64` publish is 7 files / 38.47 MiB (40,341,209 bytes). The application executable is 21,326,848 bytes; PDB files are rejected.
+- Native AOT and managed Hawk CAST outputs are byte-identical: SHA-256 `B8D9476C71F4483668AB0444770DF9B4B8FF5E4CCFC4B24668A6B7B2EE995504`.
+- The clean `win-x64` publish is 4 files / 38.39 MiB (40,251,944 bytes). The application executable is 21,412,864 bytes; PDB files are rejected.
 
 Run the complete native verification with the pinned preview SDK:
 
@@ -73,7 +75,7 @@ Run the complete native verification with the pinned preview SDK:
 The standard-project path can also be exercised directly:
 
 ```powershell
-./output/avalonia-aot-preview8/AlchemyStars.Avalonia.exe --project-smoke ./fork/AlchemyStars/Example/Hawk/HawkSprint.aprj <output-folder>
+./output/avalonia-aot-preview9/AlchemyStars.Avalonia.exe --project-smoke ./fork/AlchemyStars/Example/Hawk/HawkSprint.aprj <output-folder>
 ```
 
 ## Native AOT notes
@@ -85,4 +87,4 @@ The standard-project path can also be exercised directly:
 
 ## Remaining production gate
 
-No implementation phase remains on the test branch. Production migration waits only for the final .NET 11 SDK, an updated dependency audit, a repeat of all 32 engine/Maya checks, Native AOT startup/UI Automation checks on the GA runtime, and explicit approval to merge. Until then, WPF v1.1.9 remains the supported release.
+No implementation phase remains on the test branch. Production migration waits only for the final .NET 11 SDK, an updated dependency audit, a repeat of all 33 engine/Maya checks, Native AOT startup/UI Automation checks on the GA runtime, and explicit approval to merge. Until then, WPF v1.1.9 remains the supported release.

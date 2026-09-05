@@ -82,6 +82,16 @@ internal static class SelfTest
                 Require(viewModel.Parts[1].Type == ModelPartKind.Weapon && viewModel.Parts[1].ParentBoneTag == "tag_weapon", "Weapon default parenting failed.");
                 Require(viewModel.AddLayerPaths([Path.Combine(testDirectory, "sprint.cast")]) == 1, "Layer-priority import routing failed.");
 
+                var placements = AnimationTimelineLayout.Calculate([
+                    new AnimationTimelineSpan(0, 60),
+                    new AnimationTimelineSpan(10, 20),
+                    new AnimationTimelineSpan(-5, 10),
+                ]);
+                Require(placements[0].DurationFrames == 60 && placements[1].DurationFrames == 20,
+                    "Timeline bars do not preserve differing animation durations.");
+                Require(placements[1].LeadingFrames == 15 && placements[2].LeadingFrames == 0,
+                    "Timeline bars do not reflect positive and negative layer offsets.");
+
                 var projectPath = Path.Combine(testDirectory, "roundtrip.aprj");
                 projectStore.Save(viewModel.Workspace, projectPath);
                 var roundtrip = projectStore.Load(projectPath);

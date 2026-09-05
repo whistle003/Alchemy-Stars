@@ -53,6 +53,7 @@ def main() -> int:
         joints = cmds.ls(type="joint", long=True) or []
         meshes = cmds.ls(type="mesh", long=True, noIntermediate=True) or []
         skin_clusters = cmds.ls(type="skinCluster") or []
+        skinning_methods = [int(cmds.getAttr(f"{cluster}.skinningMethod")) for cluster in skin_clusters]
         gun_roots = cmds.ls("j_gun__weapon", type="joint", long=True) or []
         skeleton_roots = sorted({top_joint(cmds, joint) for joint in joints})
         minimum = float(cmds.playbackOptions(query=True, minTime=True))
@@ -91,6 +92,7 @@ def main() -> int:
             "singleMergedSkeleton": len(joints) == 215 and len(gun_roots) == 1 and len(skeleton_roots) == 1,
             "weaponParent": (cmds.listRelatives("j_gun__weapon", parent=True) or []) == ["tag_weapon"],
             "allSkinnedMeshesImported": len(meshes) == 21 and len(skin_clusters) == 21,
+            "allSkinClustersUseDqs": len(skin_clusters) == len(meshes) and all(method == 1 for method in skinning_methods),
             "playbackRange": minimum == 0.0 and maximum == 66.0,
             "weaponAnimationPresent": (
                 len(gun_roots) == 1
@@ -105,6 +107,7 @@ def main() -> int:
             "jointCount": len(joints),
             "meshCount": len(meshes),
             "skinClusterCount": len(skin_clusters),
+            "skinningMethods": skinning_methods,
             "jGunJointCount": len(gun_roots),
             "jGunTransformKeyCount": gun_key_count,
             "jGunKeyTimes": gun_key_times,

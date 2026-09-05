@@ -124,6 +124,18 @@ Run("Standard MP5 examples load in the current project format", () =>
 });
 Run("Standard MP5 examples remain byte-identical to the source", () => TestStandardExampleHashes(exampleDirectory, exampleManifest.StandardExamples));
 Run("Hawk sprint follows the upstream idle-plus-two-additive-layers pattern", () => TestHawkSprintPattern(sprintProject, mp5BaseProject));
+Run("Hawk timeline metadata exposes the true clip durations", () =>
+{
+    var source = sprintProject.Animations.Single();
+    var clips = new[] { source.Name }.Concat(source.Layers.Select(layer => layer.Name)).ToArray();
+    var metadata = clips.Select(AnimationClipMetadataReader.Read).ToArray();
+    Assert(metadata.All(item => item.FrameCount > 0 && item.Framerate > 0),
+        "Every displayed CAST track must have valid timing metadata.");
+    Assert(metadata.Select(item => item.FrameCount).Distinct().Count() > 1,
+        "The standard Hawk tracks should expose visibly different source durations.");
+    Assert(metadata.Max(item => item.FrameCount) == 67,
+        "The standard Hawk sprint loop should span frames 0 through 66.");
+});
 Run("Example manifest is complete", () => TestExampleManifest(exampleDirectory, exampleManifest));
 Run("Avalonia workspace store reads and round-trips the standard Hawk project", () =>
 {
@@ -881,6 +893,9 @@ static void ValidateMayaPackage(string path, IEnumerable<Part> sourceParts)
     Assert(skeleton.Bones[weaponRoot.ParentIndex].Name == "tag_weapon", "Weapon root is not attached to tag_weapon.");
     Assert(weaponRoot.LocalPosition.Length() < 0.00001f, "Weapon root lost its zero local transform.");
     Assert(model.Meshes.All(mesh => mesh.EnumerateBoneWeights().All(influence => influence.Item1 >= 0 && influence.Item1 < skeleton.Bones.Length)), "Merged CAST mesh contains an out-of-range bone influence.");
+    Assert(model.Meshes.Where(mesh => mesh.MaximumWeightInfluence > 0)
+        .All(mesh => string.Equals(mesh.SkinningMethod, "quaternion", StringComparison.OrdinalIgnoreCase)),
+        "Merged CAST skinned meshes must default to DQS/quaternion skinning.");
     var sourceModels = sourceParts
         .OrderBy(part => part.Type switch
         {

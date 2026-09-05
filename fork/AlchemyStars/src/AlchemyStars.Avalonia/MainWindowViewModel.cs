@@ -49,8 +49,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         languageMode = NormalizeLanguageMode(preferenceSnapshot.Language);
         text = new UiText(ResolveChinese(languageMode));
         Preview = new CastPreviewViewModel(text);
+        Timeline = new AnimationTimelineViewModel(text);
         workspace = preferences.CreateWorkspace();
         selectedAnimation = workspace.Animations.FirstOrDefault();
+        Timeline.SetAnimation(selectedAnimation);
         selectedPart = workspace.Parts.FirstOrDefault();
         footerStatus = text.Ready;
     }
@@ -73,8 +75,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
     public ObservableCollection<WorkspaceAnimation> Animations => Workspace.Animations;
     public ObservableCollection<WorkspacePart> Parts => Workspace.Parts;
-    public UiText Text { get => text; private set { text = value; Preview.Text = value; OnPropertyChanged(); } }
+    public UiText Text { get => text; private set { text = value; Preview.Text = value; Timeline.Text = value; OnPropertyChanged(); } }
     public CastPreviewViewModel Preview { get; }
+    public AnimationTimelineViewModel Timeline { get; }
     public string Version => AnimationExportEngine.EngineVersion;
     public string RuntimeDescription => $"{System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription} · {System.Runtime.InteropServices.RuntimeInformation.OSArchitecture}";
     public string CurrentProjectLabel => string.IsNullOrWhiteSpace(CurrentProjectPath) ? Text.Untitled : CurrentProjectPath;
@@ -91,9 +94,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     public bool IsChinese => ResolveChinese(languageMode);
     public string LanguageMode => languageMode;
     public string? CurrentProjectPath { get => currentProjectPath; private set { currentProjectPath = value; OnPropertyChanged(); OnPropertyChanged(nameof(CurrentProjectLabel)); OnPropertyChanged(nameof(WindowTitle)); } }
-    public WorkspaceAnimation? SelectedAnimation { get => selectedAnimation; set { if (!ReferenceEquals(selectedAnimation, value)) Preview.Clear(); selectedAnimation = value; SelectedLayer = null; OnPropertyChanged(); OnPropertyChanged(nameof(HasSelectedAnimation)); } }
+    public WorkspaceAnimation? SelectedAnimation { get => selectedAnimation; set { if (!ReferenceEquals(selectedAnimation, value)) Preview.Clear(); selectedAnimation = value; SelectedLayer = null; Timeline.SetAnimation(value); OnPropertyChanged(); OnPropertyChanged(nameof(HasSelectedAnimation)); } }
     public WorkspacePart? SelectedPart { get => selectedPart; set { selectedPart = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasSelectedPart)); } }
-    public WorkspaceLayer? SelectedLayer { get => selectedLayer; set { selectedLayer = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasSelectedLayer)); } }
+    public WorkspaceLayer? SelectedLayer { get => selectedLayer; set { selectedLayer = value; OnPropertyChanged(); OnPropertyChanged(nameof(SelectedTimelineTrack)); OnPropertyChanged(nameof(HasSelectedLayer)); } }
+    public AnimationTrackItem? SelectedTimelineTrack
+    {
+        get => Timeline.FindTrack(SelectedLayer);
+        set => SelectedLayer = value?.Layer;
+    }
     public bool HasSelectedAnimation => SelectedAnimation is not null;
     public bool HasSelectedPart => SelectedPart is not null;
     public bool HasSelectedLayer => SelectedLayer is not null;
@@ -398,7 +406,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
-    public void Dispose() => Preview.Dispose();
+    public void Dispose()
+    {
+        Timeline.Dispose();
+        Preview.Dispose();
+    }
 
     public void ToggleLanguage()
     {
@@ -630,6 +642,13 @@ public sealed class UiText
     public string TrackName => L("名称", "Name");
     public string BaseAnimation => L("基础动画", "Base animation");
     public string CompositionOrder => L("合成顺序 · 非时间轴", "Composition order · not a timeline");
+    public string FrameRange(int firstFrame, int lastFrame) => L($"帧范围 {firstFrame}–{lastFrame} · 按时长缩放", $"Frames {firstFrame}–{lastFrame} · scaled by duration");
+    public string FrameCount(int count) => L($"{count} 帧", $"{count} frames");
+    public string ReadingFrames => L("读取中", "Reading");
+    public string FrameCountUnavailable => L("帧数未知", "Frames unavailable");
+    public string TrackAccessibleName(string name, int startFrame, int frameCount) => L($"{name}，起始帧 {startFrame}，持续 {frameCount} 帧", $"{name}, starts at frame {startFrame}, duration {frameCount} frames");
+    public string TrackTooltip(string path, int startFrame, int frameCount) => L($"{path}\n起始帧：{startFrame}\n持续：{frameCount} 帧", $"{path}\nStart: {startFrame}\nDuration: {frameCount} frames");
+    public string TrackMetadataUnavailable(string name) => L($"{name}\n无法读取帧数", $"{name}\nFrame count unavailable");
     public string Inspector => L("属性检查器", "Inspector");
     public string TrackEditor => L("动画层轨道", "Layer tracks");
     public string SelectedLayer => L("所选动画层", "Selected layer");
@@ -707,7 +726,7 @@ public sealed class UiText
     public string ApplicationIcon => L("炼金之星应用图标", "Alchemy Stars application icon");
     public string AboutSubtitle => L("面向第一人称武器资产的 CAST 动画合并与 Maya 2025 工作流", "CAST animation merging and Maya 2025 workflow for first-person weapon assets");
     public string AboutOverview => L("炼金之星改进自 Scobalula/Alchemist。本测试版已将完整工作流迁移至 Avalonia，并通过 Native AOT 发布；WPF 版本在 .NET 11 正式版迁移前继续作为生产基线。", "Alchemy Stars improves Scobalula/Alchemist. This preview migrates the complete workflow to Avalonia and publishes with Native AOT; WPF remains the production baseline until the .NET 11 GA migration.");
-    public string Capabilities => L("支持完整或仅动画 CAST、FBX、SMD、SEAnim、普通/叠加/手势动画层、左右手 IK、相关骨骼烘焙和旧版 .aprj。合成工作区可进行真实 CAST 灰模预览、骨架显示和逐帧播放。", "Supports full-scene or animation-only CAST, FBX, SMD, SEAnim, normal/additive/gesture layers, IK, relevant-bone baking and legacy .aprj files. The composition workspace previews real CAST geometry, skeletons and animation frames.");
+    public string Capabilities => L("支持完整或仅动画 CAST、FBX、SMD、SEAnim、普通/叠加/手势动画层、左右手 IK、相关骨骼烘焙、DQS 蒙皮和旧版 .aprj。合成工作区可进行真实 CAST 灰模预览、骨架显示和逐帧播放；动画层轨道按源文件真实帧数和偏移显示。", "Supports full-scene or animation-only CAST, FBX, SMD, SEAnim, normal/additive/gesture layers, IK, relevant-bone baking, DQS skinning and legacy .aprj files. The composition workspace previews real CAST geometry, skeletons and animation frames; layer tracks reflect true source frame counts and offsets.");
     public string Build => L("版本与环境", "Build and environment");
     public string UpstreamTitle => L("来源与致谢", "Origin and attribution");
     public string UpstreamHelp => L("炼金之星保留 Alchemist 与 RedFox 的转换基础，并在其上改进生产工作流。", "Alchemy Stars retains the Alchemist and RedFox conversion foundation and improves its production workflow.");

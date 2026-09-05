@@ -2,7 +2,7 @@
 
 # Alchemy Stars Avalonia preview quick guide
 
-This guide applies to `1.3.0-preview.8` on the test branch. WPF v1.1.9 remains the supported release until .NET 11 GA.
+This guide applies to `1.3.0-preview.9` on the test branch. WPF v1.1.9 remains the supported release until .NET 11 GA.
 
 The 48 DIP activity rail switches between Animations, Model parts, Settings and About. The base-animation library sits on the left, a real CAST preview in the center, composition layers across the bottom, and collapsible properties on the right. Drag the dividers or focus them and use arrow keys to resize panels. Icon commands have localized tooltips and UI Automation names; the current page remains visible in the breadcrumb.
 
@@ -26,7 +26,8 @@ Choose **Build preview** in the composition workspace header to merge the select
 - Use playback, Space, the frame slider and previous/next frame buttons to inspect animation.
 - Press F to frame the subject. Right-click **Fit subject** or press Shift+F to include all geometry, including distant spare parts.
 - Toggle the bone button for a skeleton overlay. Animation-only CAST contains curves, not an embedded skeleton: load its matching model parts into the current project first. The viewport identifies this project-supplied skeleton; matching bone names alone cannot guarantee a matching bind pose.
-- The current renderer shows clay geometry without textures/materials. Settings edits do not automatically rebuild a snapshot: choose **Build preview** again. Colored layer bars show composition order, not actual duration.
+- The current renderer shows clay geometry without textures/materials. Settings edits do not automatically rebuild a snapshot: choose **Build preview** again.
+- Track bars read source metadata in the background. Their widths represent true CAST frame counts, their horizontal positions include configured frame offsets, and the header shows the shared frame range. The text inside each bar repeats its frame count; an unreadable source stays visible and is marked **Frames unavailable**.
 - Sampling and drawing run in the background, with at most one render in flight and a 960×640 resolution cap. Playback performance depends on scene complexity; validate final usage in Maya.
 
 Keyboard commands:
@@ -38,5 +39,7 @@ Keyboard commands:
 | Save project as | `Ctrl+Shift+S` |
 | Export all | `Ctrl+E` |
 | Close result/error dialog | `Esc` |
+
+Merged CAST output uses DQS (`quaternion`) for skinned meshes. The bundled Maya importer respects an explicit CAST skinning method and defaults legacy files without one to DQS.
 
 For migration architecture, package details and validation evidence, see [Avalonia + Native AOT migration](avalonia-aot-migration.md).

@@ -176,6 +176,8 @@ def main() -> int:
                         partially_keyed_channels.append(f"{joint}.{attribute}")
 
         skeleton_roots = sorted({top_joint(cmds, joint) for joint in joints})
+        skin_clusters = cmds.ls(type="skinCluster") or []
+        skinning_methods = [int(cmds.getAttr(f"{cluster}.skinningMethod")) for cluster in skin_clusters]
         time_unit = cmds.currentUnit(query=True, time=True)
 
         full_curve_count = len(joints) * len(animated_transform_attributes)
@@ -185,6 +187,7 @@ def main() -> int:
             "weaponParent": (cmds.listRelatives("j_gun__weapon", parent=True) or []) == ["tag_weapon"],
             "handHelperParent": (cmds.listRelatives("j_gun", parent=True) or []) == ["j_wrist_ri"],
             "allMeshesImportedAndVisible": len(meshes) == 21 and len(visible_meshes) == len(meshes),
+            "allSkinClustersUseDqs": len(skin_clusters) == len(meshes) and all(method == 1 for method in skinning_methods),
             "animationCurvesCreated": (
                 0 < len(animation_curves) < full_curve_count
                 if selective_bake
@@ -216,6 +219,8 @@ def main() -> int:
             "cast": str(cast_path),
             "jointCount": len(joints),
             "meshCount": len(meshes),
+            "skinClusterCount": len(skin_clusters),
+            "skinningMethods": skinning_methods,
             "visibleMeshCount": len(visible_meshes),
             "animationCurveCount": len(animation_curves),
             "jGunJointCount": len(gun_roots),

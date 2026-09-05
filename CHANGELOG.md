@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.2.0-preview.1 — 2026-09-05
+
+- Created an isolated .NET 11 Preview test line; the production `main` branch and v1.1.9 release remain on .NET 9.
+- Retargeted Alchemy Stars and its acceptance tests to `net11.0`; the pinned upstream RedFox submodule remains untouched and runs as a compatible .NET 9 library on the .NET 11 runtime.
+- Pinned .NET SDK `11.0.100-preview.7.26381.103` with preview opt-in for reproducible testing.
+- Display the full informational version so test builds are visibly identified as `1.2.0-preview.1`.
+- Keep the preview package framework-dependent after .NET 11 disallowed compressed framework-dependent single-file bundles; ZIP distribution remains compressed and no runtime is bundled.
+- Create validated archive subdirectories on first use so preview packages can remain separated from stable release assets.
+- This branch is not a production release. It will move to .NET 11 GA only after Microsoft publishes the final SDK and the full Maya 2025 regression suite passes.
+
 ## 1.1.9 — 2026-09-05
 
 - Fixed the partially clipped About icon with explicit icon sizing and padding. The toolbar now overflows before reaching the protected language/About controls.

@@ -84,13 +84,16 @@ if ($LASTEXITCODE -ne 0) {
     throw "dotnet restore failed with exit code $LASTEXITCODE"
 }
 
+# .NET 11 supports compressed single-file bundles only for self-contained apps.
+# Keep this preview branch framework-dependent; the distribution ZIP still
+# provides outer compression and the Desktop Runtime remains external.
 dotnet publish $uiProject `
     -c Release `
     -r win-x64 `
     --no-restore `
     --self-contained false `
     -p:PublishSingleFile=true `
-    -p:EnableCompressionInSingleFile=true `
+    -p:EnableCompressionInSingleFile=false `
     -p:IncludeNativeLibrariesForSelfExtract=true `
     -p:DebugType=None `
     -p:DebugSymbols=false `
@@ -131,6 +134,11 @@ foreach ($standardExample in $exampleManifest.StandardExamples) {
 
 if (Test-Path -LiteralPath $resolvedZipPath) {
     Remove-Item -LiteralPath $resolvedZipPath -Force
+}
+
+$archiveDirectory = Split-Path -Parent $resolvedZipPath
+if (-not (Test-Path -LiteralPath $archiveDirectory)) {
+    New-Item -ItemType Directory -Path $archiveDirectory | Out-Null
 }
 
 Compress-Archive -Path (Join-Path $resolvedPublishDir '*') -DestinationPath $resolvedZipPath -CompressionLevel Optimal

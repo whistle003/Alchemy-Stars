@@ -28,7 +28,10 @@ namespace Alchemist.UI
 {
     public class MainViewModel : LoggableMVVMObject
     {
-        public string FileVersion { get; } = typeof(MainViewModel).Assembly.GetName().Version?.ToString(3) ?? "1.1.9";
+        public string FileVersion { get; } = typeof(MainViewModel).Assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+            ?? typeof(MainViewModel).Assembly.GetName().Version?.ToString(3)
+            ?? "1.2.0-preview.1";
         public AnimationConverter Converter { get; set; } = new();
         public MVVMItemList<Animation> Animations { get; set; } = [];
         public MVVMItemList<Part> Parts { get; set; } = [];

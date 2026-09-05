@@ -2,6 +2,10 @@
 
 # Alchemy Stars（炼金之星）
 
+> **.NET 11 预览测试分支：** 本分支仅用于 .NET 11 Preview 7 兼容性验证，版本标记为 `1.2.0-preview.1`。正式版仍是 `main` 上的 v1.1.9，请勿把本分支构建作为稳定版分发。
+
+详细结果及正式版迁移门槛见 [.NET 11 Preview 兼容性报告](docs/dotnet11-preview.md)。
+
 Alchemy Stars 是 [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist) 的可用化改进版，面向 Windows、CAST 第一人称武器资产与 Autodesk Maya 2025。项目保留原版 Alchemist 的 WPF 批处理界面和 RedFox 动画管线，并补齐了原仓库尚未完成的模型/动画一体化导出。
 
 主源码位于 `fork/AlchemyStars`，固定使用与原项目同期的 RedFox 提交，避免上游变动破坏构建。先前的独立重写已保存在 Git 分支 `independent-rewrite-v1`，不再是当前实现。
@@ -97,7 +101,7 @@ Alchemy Stars 保留原版批处理、动画层、IK 与 RedFox 转换管线，�
 
 ## 构建与验证
 
-开发构建需要 .NET 9 SDK；运行发布版需要本机安装 [.NET 9 Desktop Runtime (x64)](https://dotnet.microsoft.com/download/dotnet/9.0)：
+本预览分支需要 .NET SDK `11.0.100-preview.7.26381.103`；运行测试构建需要匹配的 [.NET 11 Preview Desktop Runtime (x64)](https://dotnet.microsoft.com/download/dotnet/11.0)。.NET 11 已不允许对框架依赖的单文件包启用内部压缩，因此测试 EXE 本身不压缩，但外层发布 ZIP 仍正常压缩且不会内置运行时。稳定用户应继续使用 `main` 分支的 v1.1.9 和 .NET 9 Desktop Runtime：
 
 ```powershell
 .\scripts\run-tests.ps1

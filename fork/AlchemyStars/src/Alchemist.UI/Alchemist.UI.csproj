@@ -2,17 +2,17 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net9.0-windows7.0</TargetFramework>
+    <TargetFramework>net11.0-windows7.0</TargetFramework>
     <AssemblyName>Alchemy Stars</AssemblyName>
     <Product>Alchemy Stars</Product>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>Assets\AlchemyStarsIcon.ico</ApplicationIcon>
-    <Version>1.1.9</Version>
-    <FileVersion>1.1.9.0</FileVersion>
-    <AssemblyVersion>1.1.9.0</AssemblyVersion>
-    <InformationalVersion>1.1.9</InformationalVersion>
+    <Version>1.2.0-preview.1</Version>
+    <FileVersion>1.2.0.0</FileVersion>
+    <AssemblyVersion>1.2.0.0</AssemblyVersion>
+    <InformationalVersion>1.2.0-preview.1</InformationalVersion>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
   </PropertyGroup>
 
@@ -81,6 +81,11 @@
     </Content>
     <Content Include="..\..\..\..\design-system\alchemy-stars\pages\ui-audit-1.1.9.md">
       <Link>design-system\alchemy-stars\pages\ui-audit-1.1.9.md</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="..\..\..\..\docs\dotnet11-preview.md">
+      <Link>docs\dotnet11-preview.md</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>

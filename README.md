@@ -2,6 +2,10 @@
 
 # Alchemy Stars
 
+> **.NET 11 preview branch:** this branch is an isolated compatibility test targeting .NET 11 Preview 7 and versioned `1.2.0-preview.1`. Production remains v1.1.9 on `main`. Do not distribute this build as a stable release.
+
+See the [preview compatibility report and GA migration gate](docs/dotnet11-preview.md).
+
 Alchemy Stars (炼金之星) is a production-focused improvement of [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist) for Windows, first-person CAST weapon assets, and Autodesk Maya 2025. It retains Alchemist's WPF batch interface and RedFox animation pipeline while completing a reliable model-and-animation export workflow.
 
 The maintained source lives in `fork/AlchemyStars` and pins the matching RedFox revision to keep builds reproducible. The earlier standalone rewrite remains preserved on the `independent-rewrite-v1` branch and is no longer the active implementation.
@@ -89,7 +93,7 @@ The generated report is `fork/AlchemyStars/output/sat_vm_ar_hawk_sprint_alchemy_
 
 ## Build and validation
 
-Development requires the .NET 9 SDK. The compact Windows x64 release is framework-dependent and requires the [.NET 9 Desktop Runtime (x64)](https://dotnet.microsoft.com/download/dotnet/9.0); it does not bundle .NET or Maya.
+This preview branch requires .NET SDK `11.0.100-preview.7.26381.103`. Its test package is framework-dependent and requires the matching [.NET 11 Preview Desktop Runtime (x64)](https://dotnet.microsoft.com/download/dotnet/11.0); it does not bundle .NET or Maya. .NET 11 no longer compresses framework-dependent single-file bundles, so the test EXE is uncompressed inside the normally compressed distribution ZIP. Stable users should continue using v1.1.9 from `main` with the .NET 9 Desktop Runtime.
 
 ```powershell
 .\scripts\run-tests.ps1

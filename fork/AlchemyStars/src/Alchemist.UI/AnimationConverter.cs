@@ -64,25 +64,8 @@ namespace Alchemist.UI
             return solver;
         }
 
-        public static string Convert(
-            Skeleton skeleton, Animation animation, IKSettings lSettings, IKSettings rSettings,
-            string prefix, string suffix, string format, bool castAnimationOnly,
-            bool bakeRelevantBonesOnly, bool matchOldCallOfDuty, IEnumerable<Part>? sourceParts = null)
-        {
-            var plan = sourceParts is null ? null : SkeletonMergePlan.Build(sourceParts, matchOldCallOfDuty);
-            return ConvertCore(plan?.Skeleton ?? skeleton, animation, lSettings, rSettings, prefix, suffix,
-                format, castAnimationOnly, bakeRelevantBonesOnly, matchOldCallOfDuty, plan);
-        }
-
         internal static string Convert(
-            SkeletonMergePlan plan, Animation animation, IKSettings lSettings, IKSettings rSettings,
-            string prefix, string suffix, string format, bool castAnimationOnly,
-            bool bakeRelevantBonesOnly, bool matchOldCallOfDuty) =>
-            ConvertCore(plan.Skeleton, animation, lSettings, rSettings, prefix, suffix,
-                format, castAnimationOnly, bakeRelevantBonesOnly, matchOldCallOfDuty, plan);
-
-        private static string ConvertCore(
-            Skeleton skeleton,
+            SkeletonMergePlan mergePlan,
             Animation animation,
             IKSettings lSettings,
             IKSettings rSettings,
@@ -91,9 +74,9 @@ namespace Alchemist.UI
             string format,
             bool castAnimationOnly,
             bool bakeRelevantBonesOnly,
-            bool matchOldCallOfDuty,
-            SkeletonMergePlan? mergePlan)
+            bool matchOldCallOfDuty)
         {
+            var skeleton = mergePlan.Skeleton;
             Logging.Logger.Info($"Attempting to convert: {animation.Name}");
 
             format = OutputFormatCatalog.Normalize(format);
@@ -114,7 +97,7 @@ namespace Alchemist.UI
             AnimationSamplerSolver? rSolver = null;
 
             var mainAnimation = TranslatorFactory.Load<SkeletonAnimation>(animation.Name);
-            mergePlan?.BindAnimation(mainAnimation);
+            mergePlan.BindAnimation(mainAnimation);
             var contributingAnimations = new List<SkeletonAnimation> { mainAnimation };
 
             if (matchOldCallOfDuty)
@@ -130,7 +113,7 @@ namespace Alchemist.UI
             {
                 Logging.Logger.Info($"Loading left hand pose: {animation.LeftHandPoseFile}");
                 var leftHandPose = TranslatorFactory.Load<SkeletonAnimation>(animation.LeftHandPoseFile);
-                mergePlan?.BindAnimation(leftHandPose);
+                mergePlan.BindAnimation(leftHandPose);
                 contributingAnimations.Add(leftHandPose);
                 plSampler = new SkeletonAnimationSampler("PLLayer", leftHandPose, skeleton, player);
                 Logging.Logger.Info($"Loaded left hand pose: {animation.LeftHandPoseFile}");
@@ -144,7 +127,7 @@ namespace Alchemist.UI
             {
                 Logging.Logger.Info($"Loading right hand pose: {animation.RightHandPoseFile}");
                 var rightHandPose = TranslatorFactory.Load<SkeletonAnimation>(animation.RightHandPoseFile);
-                mergePlan?.BindAnimation(rightHandPose);
+                mergePlan.BindAnimation(rightHandPose);
                 contributingAnimations.Add(rightHandPose);
                 prSampler = new SkeletonAnimationSampler("PRLayer", rightHandPose, skeleton, player);
                 Logging.Logger.Info($"Loaded right hand pose: {animation.RightHandPoseFile}");
@@ -168,7 +151,7 @@ namespace Alchemist.UI
             {
                 Logging.Logger.Info($"Loading layer: {layer.Name} of type: {layer.Type}");
                 var anim = TranslatorFactory.Load<SkeletonAnimation>(layer.Name);
-                mergePlan?.BindAnimation(anim);
+                mergePlan.BindAnimation(anim);
                 contributingAnimations.Add(anim);
 
                 switch(layer.Type)
@@ -437,7 +420,6 @@ namespace Alchemist.UI
             Directory.CreateDirectory(animation.OutputFolder);
 
             if (string.Equals(format, ".cast", StringComparison.OrdinalIgnoreCase)
-                && mergePlan is not null
                 && !castAnimationOnly)
             {
                 MayaCastPackage.Save(
@@ -456,8 +438,6 @@ namespace Alchemist.UI
             }
             else if (string.Equals(format, ".fbx", StringComparison.OrdinalIgnoreCase))
             {
-                if (mergePlan is null)
-                    throw new InvalidOperationException(LocalizationManager.Get("FbxNeedsModels"));
                 SaveAtomically(outputFull, temporaryPath =>
                 {
                     var stagingDirectory = Path.Combine(

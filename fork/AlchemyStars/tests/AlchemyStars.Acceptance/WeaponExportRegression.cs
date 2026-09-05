@@ -1,6 +1,7 @@
 using Alchemist.UI;
 using Cast.NET;
 using Cast.NET.Nodes;
+using RedFox.Graphics3D.Skeletal;
 using System.IO;
 using System.Numerics;
 using System.Text.Json;
@@ -39,6 +40,15 @@ internal static class WeaponExportRegression
         var separated = AnimationConverter.LoadSkeletonFromParts(vm.Parts, false);
         Check(separated.Bones.Count == 7 && separated.FindBone("slide__attachment") is not null,
             "Different bind transforms must not silently reuse the same bone.");
+        var plan = SkeletonMergePlan.Build(vm.Parts, false);
+        var ambiguous = new SkeletonAnimation("ambiguous");
+        ambiguous.Targets.Add(new SkeletonAnimationTarget("slide"));
+        try { plan.BindAnimation(ambiguous); throw new Exception("Ambiguous slide animation was accepted."); }
+        catch (InvalidDataException) { }
+        var handTrack = new SkeletonAnimation("hand");
+        handTrack.Targets.Add(new SkeletonAnimationTarget("j_gun"));
+        plan.BindAnimation(handTrack);
+        Check(handTrack.Targets.Single().BoneName == "j_gun", "Unqualified hand animation was sent to the weapon root.");
         vm.Parts[1].ParentBoneTag = "missing";
         try { AnimationConverter.LoadSkeletonFromParts(vm.Parts, false); throw new Exception("Missing parent was accepted."); }
         catch (InvalidDataException) { }

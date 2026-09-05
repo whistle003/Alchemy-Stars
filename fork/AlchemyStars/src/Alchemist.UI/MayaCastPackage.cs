@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using static Alchemist.UI.CastNodeTraversal;
 
 namespace Alchemist.UI;
 
@@ -196,18 +197,6 @@ internal static class MayaCastPackage
         {
             var transformed = Vector3.Transform(property.Values[i], rotation);
             property.Values[i] = transformed == Vector3.Zero ? Vector3.Zero : Vector3.Normalize(transformed);
-        }
-    }
-
-    private static IEnumerable<CastNode> DescendantsAndSelf(CastNode node)
-    {
-        yield return node;
-        foreach (var child in node.Children)
-        {
-            foreach (var descendant in DescendantsAndSelf(child))
-            {
-                yield return descendant;
-            }
         }
     }
 

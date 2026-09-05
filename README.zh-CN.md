@@ -89,6 +89,8 @@ Alchemy Stars 保留原版批处理、动画层、IK 与 RedFox 转换管线，�
 - 左手 IK 按物理可达范围验证；
 - 保留右手和武器动画，武器根随 `tag_weapon` 运动。
 
+1.1.8 还按原始 1911 工程与 P27 ADS 验证武器：逐帧比较完整、精简、仅动画 CAST，以及独立组装的源骨架、FBX 和 SMD。源动画参考会先归一化量化四元数，并将短叠加层采样至完整区间再导入 Maya，以保留原旋转含义和原项目的持续偏移规则。结果记录在 `fork/AlchemyStars/output/weapon-regression/weapon-regression.maya2025.json`。
+
 相关骨骼模式下，Hawk 冲刺从 215 根骨骼精简到 121 根；所有保留曲线都与全骨骼版本逐帧对比，所有省略骨骼均确认保持绑定姿势，精简后的完整场景 CAST 还会单独导入 Maya 2025 验证。
 
 验证报告：`fork/AlchemyStars/output/sat_vm_ar_hawk_sprint_alchemy_stars.maya2025.json`。

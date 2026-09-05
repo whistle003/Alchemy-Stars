@@ -115,9 +115,9 @@ if (-not [string]::IsNullOrWhiteSpace($mayaPython) -and (Test-Path -LiteralPath 
     $selectiveMayaReportPath = [System.IO.Path]::ChangeExtension($selectiveBakeCast, '.maya2025.json')
     $fullMayaReport = Get-Content -LiteralPath $fullMayaReportPath -Raw | ConvertFrom-Json
     $selectiveMayaReport = Get-Content -LiteralPath $selectiveMayaReportPath -Raw | ConvertFrom-Json
-    if ($fullMayaReport.jointWorldAnimationDigest4dp -ne $selectiveMayaReport.jointWorldAnimationDigest4dp) {
-        throw 'Selective-bake Maya joint animation differs from the full bake at four-decimal precision.'
-    }
+    # The weapon reference regression below compares every joint/world matrix at
+    # every frame with a 1e-5 tolerance. Rounded hashes can disagree for tiny
+    # floating-point differences that straddle a four-decimal rounding boundary.
     if ([int]$selectiveMayaReport.animationCurveCount -ge [int]$fullMayaReport.animationCurveCount) {
         throw 'Selective-bake Maya validation did not reduce the animation-curve count.'
     }

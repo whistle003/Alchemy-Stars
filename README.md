@@ -81,6 +81,8 @@ The Hawk sprint release artifact has been tested headlessly in Maya 2025 with:
 
 The relevant-bone Hawk variant retains 121 of 215 bones. Every retained transform curve is compared with the full bake, every omitted target is confirmed to remain at bind pose, and the reduced full-scene CAST is imported separately in Maya 2025.
 
+The 1.1.8 weapon regression also covers the original 1911 project and P27 ADS. It compares every joint at every frame across full, selective and animation-only CAST, independently assembled source rigs, FBX, and SMD. Source-animation references normalize quantized quaternions and sample short additive layers across the full range before Maya import; this preserves the represented rotations and the original project's persistent-offset semantics. Results are recorded in `fork/AlchemyStars/output/weapon-regression/weapon-regression.maya2025.json`.
+
 For weapon parts with an empty parent, a unique `tag_weapon` is resolved during export; otherwise export asks for a parent. Existing explicit parents are honored. Set older Hawk projects that used `j_gun` to `tag_weapon` and re-export into a new destination. Animation-only files must be used with the matching 1.1.8 skeleton; old merged scenes need to be regenerated.
 
 The generated report is `fork/AlchemyStars/output/sat_vm_ar_hawk_sprint_alchemy_stars.maya2025.json`.

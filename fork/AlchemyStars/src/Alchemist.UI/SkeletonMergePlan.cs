@@ -3,6 +3,7 @@ using Cast.NET.Nodes;
 using RedFox.Graphics3D.Skeletal;
 using System.IO;
 using System.Numerics;
+using static Alchemist.UI.CastNodeTraversal;
 
 namespace Alchemist.UI;
 
@@ -24,7 +25,7 @@ internal sealed class SkeletonMergePlan
             var path = Path.GetFullPath(part.FilePath);
             var snapshot = File.ReadAllBytes(path);
             using var stream = new MemoryStream(snapshot, writable: false);
-            var models = CastReader.Load(stream).RootNodes.SelectMany(Descendants).OfType<ModelNode>().ToArray();
+            var models = CastReader.Load(stream).RootNodes.SelectMany(DescendantsAndSelf).OfType<ModelNode>().ToArray();
             if (models.Length == 0)
                 throw new InvalidDataException($"Model part has no CAST model: {path}");
             for (var index = 0; index < models.Length; index++)
@@ -166,11 +167,4 @@ internal sealed class SkeletonMergePlan
             throw new InvalidDataException($"Invalid bind transform for {name}: {path}");
     }
 
-    internal static IEnumerable<CastNode> Descendants(CastNode node)
-    {
-        yield return node;
-        foreach (var child in node.Children)
-            foreach (var descendant in Descendants(child))
-                yield return descendant;
-    }
 }

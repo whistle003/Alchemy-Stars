@@ -125,6 +125,7 @@
     <sys:String x:Key="ExportCompleteMessage">Exported {0} animation file(s).</sys:String>
     <sys:String x:Key="ExportFailedTitle">Alchemy Stars | Export failed</sys:String>
     <sys:String x:Key="NeedAnimation">Add at least one animation.</sys:String>
+    <sys:String x:Key="NeedOutputFolder">Choose an output folder for every animation before exporting.</sys:String>
     <sys:String x:Key="NeedPart">Add at least one model part.</sys:String>
     <sys:String x:Key="StartupProjectFailedTitle">Alchemy Stars | Project load failed</sys:String>
     <sys:String x:Key="StartupProjectFailedMessage">Could not load project:&#10;{0}&#10;&#10;{1}</sys:String>
@@ -147,7 +148,7 @@
     <sys:String x:Key="AboutOverviewTitle">Overview</sys:String>
     <sys:String x:Key="AboutOverview">Alchemy Stars is a Windows x64 desktop tool continuously improved from Scobalula/Alchemist. It combines view hands, weapons, attachments, and animation into one CAST file; every export retains one baked target animation ready to play, edit, and continue working with in Maya.</sys:String>
     <sys:String x:Key="AboutFeaturesTitle">Key capabilities</sys:String>
-    <sys:String x:Key="AboutFeatureFiles">Import through file browsers, editable or pasteable path fields, targeted drag and drop, or context menus; remember folders by category; layer-area drops prioritize the hovered animation</sys:String>
+    <sys:String x:Key="AboutFeatureFiles">Import through file browsers, editable or pasteable path fields, targeted drag and drop, or context menus; new animations keep output blank until explicitly chosen, preventing accidental source replacement</sys:String>
     <sys:String x:Key="AboutFeatureLayers">Normal, Additive, Gesture, and Gesture Pose layers, frame offsets, and left/right hand IK</sys:String>
     <sys:String x:Key="AboutFeatureModels">Canonical View Hands → Weapon → Attachment order is physically merged into one model without relying on Maya Import Merge</sys:String>
     <sys:String x:Key="AboutFeatureMaya">Exports full-scene or animation-only CAST, FBX, SMD, and SEAnim; supports relevant-bone-only baking; includes the Maya CAST importer, standard MP5/Hawk examples, and bilingual guides</sys:String>

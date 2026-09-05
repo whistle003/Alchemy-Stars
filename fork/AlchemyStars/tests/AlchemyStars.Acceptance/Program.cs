@@ -21,6 +21,13 @@ if (args.Contains("--drop-routing-only", StringComparer.OrdinalIgnoreCase))
     return 0;
 }
 
+if (args.Contains("--safe-output-defaults-only", StringComparer.OrdinalIgnoreCase))
+{
+    TestSafeOutputFolderDefaults();
+    Console.WriteLine("Safe output-folder defaults passed.");
+    return 0;
+}
+
 var outputDirectory = args.Length > 0
     ? Path.GetFullPath(args[0])
     : Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "output"));
@@ -80,6 +87,7 @@ Run("System language detection and explicit language choices resolve predictably
         "An explicit English choice should override the system culture.");
 });
 Run("Context animation import adds every selected animation", TestContextAnimationImport);
+Run("New animation sources require an explicit output folder", TestSafeOutputFolderDefaults);
 Run("Context layer import targets only the requested animation", TestContextLayerImport);
 Run("External drop over animation layers prioritizes the hovered animation", TestLayerDropTargetPriority);
 Run("Path inputs accept paste/drop and consume rejected file drops", TestPathInputs);
@@ -312,6 +320,58 @@ static void TestContextAnimationImport()
 
     Assert(added == 2, "Both selected animation files should be imported.");
     Assert(viewModel.Animations.Select(animation => animation.Name).SequenceEqual(["sprint.cast", "idle.cast"]), "Imported animations are missing or out of order.");
+    Assert(viewModel.Animations.All(animation => animation.OutputFolder.Length == 0),
+        "Imported animations must not default to their source folders.");
+}
+
+static void TestSafeOutputFolderDefaults()
+{
+    var animation = new Animation(Path.Combine("source", "sprint.cast"));
+
+    Assert(animation.OutputName == "sprint", "The output name should still default from the source filename.");
+    Assert(animation.OutputFolder.Length == 0,
+        "The output folder must stay blank until the user explicitly selects one.");
+
+    var blankOutputProject = new MainViewModel(_ => { }, string.Empty);
+    blankOutputProject.Animations.Add(animation);
+    try
+    {
+        blankOutputProject.ExportAnimations();
+        throw new InvalidDataException("Export should reject a blank output destination.");
+    }
+    catch (InvalidOperationException ex)
+    {
+        Assert(ex.Message == LocalizationManager.Get("NeedOutputFolder"),
+            "Blank output destinations should produce the localized actionable error.");
+    }
+
+    MainWindow.ApplyAnimationSourceSelection(animation, Path.Combine("replacement", "idle.cast"));
+    Assert(animation.OutputName == "idle", "Replacing the source should update an inferred output name.");
+    Assert(animation.OutputFolder.Length == 0,
+        "Replacing the source must not silently restore a source-folder output destination.");
+
+    animation.OutputFolder = Path.Combine("exports", "chosen");
+    MainWindow.ApplyAnimationSourceSelection(animation, Path.Combine("replacement", "fire.cast"));
+    Assert(animation.OutputFolder == Path.Combine("exports", "chosen"),
+        "Replacing the source must preserve an explicitly selected output destination.");
+
+    var temporaryDirectory = Directory.CreateTempSubdirectory("alchemy-stars-output-default-");
+    try
+    {
+        var projectPath = Path.Combine(temporaryDirectory.FullName, "existing.aprj");
+        var project = new MainViewModel(_ => { }, string.Empty);
+        project.Animations.Add(animation);
+        MainViewModel.SaveProject(project, projectPath);
+
+        var reloaded = new MainViewModel(_ => { }, string.Empty);
+        reloaded.LoadProjectFile(projectPath);
+        Assert(reloaded.Animations.Single().OutputFolder == Path.Combine("exports", "chosen"),
+            "Loading an existing project must preserve its explicitly saved output destination.");
+    }
+    finally
+    {
+        temporaryDirectory.Delete(recursive: true);
+    }
 }
 
 static void TestContextPartImport()

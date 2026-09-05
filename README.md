@@ -8,7 +8,7 @@ The maintained source lives in `fork/AlchemyStars` and pins the matching RedFox 
 
 ## Improvements over upstream Alchemist
 
-| Area | Upstream Alchemist | Alchemy Stars 1.1.6 |
+| Area | Upstream Alchemist | Alchemy Stars 1.1.7 |
 | --- | --- | --- |
 | Maya model and animation | Import behavior can leave duplicate skeletons or lose weapon motion | Physically merges parts, same-name bones, skin weights, and emits one baked animation per file |
 | Output formats | Primarily CAST / SEAnim | Adds real FBX and native SMD while retaining CAST / SEAnim |
@@ -33,6 +33,7 @@ Alchemy Stars keeps the upstream animation-layer concepts intact. Attribution an
 - Optionally writes a true animation-only CAST with no model, mesh, material, or skin data; full-scene CAST remains the default.
 - Optionally bakes only bones referenced by the base animation, poses, layers, or IK, while automatically retaining any indirectly changed bone and falling back to all bones for unknown solvers.
 - Uses system file dialogs for animation, pose-layer, model, project, and output paths; each path box also accepts typed, pasted, or directly dropped paths and remembers the most recent folder for its category.
+- Leaves the output folder blank for every newly imported animation. Export therefore requires an explicit destination and cannot silently replace a same-named source CAST; existing projects retain their saved destinations.
 - Offers Follow System, Simplified Chinese, and English interface modes.
 - Keeps all completion, warning, and error dialogs centered over the application; long diagnostics are scrollable and copyable.
 - Uses a redesigned alchemy-flask-and-star application icon and function-specific toolbar icons.
@@ -44,6 +45,8 @@ Download the latest ZIP from [GitHub Releases](https://github.com/ez4cywa/Alchem
 `Alchemy Stars.exe`
 
 The app starts with an empty batch. Use the toolbar buttons, the folder buttons beside path fields, or the context menus to select assets with the system file browser. Existing path boxes remain editable: type or paste a path, or drop a CAST file directly on its intended field. Dropping a file on an output-folder field uses that file's containing directory.
+
+For safety, a newly imported animation has no default output folder. Choose, paste, type, or drop an output destination before exporting. This prevents a same-named `.cast` output from overwriting the input animation. Replacing the input animation does not repopulate the destination, while an output folder explicitly stored in an existing `.aprj` remains unchanged.
 
 Open **Settings → Output** to choose `.cast`, `.fbx`, `.smd`, or `.seanim` as the default output format. For `.cast`, **Animation-only CAST** omits the complete model scene. **Bake relevant bones only** reduces baked curves to source-animation, pose, layer, IK, and indirectly changed bones. Both options apply immediately, are remembered globally, and are stored in project files.
 
@@ -91,7 +94,7 @@ Development requires the .NET 9 SDK. The compact Windows x64 release is framewor
 
 `run-tests.ps1` builds the improved upstream project, verifies that the standard MP5 examples were not modified, generates actual Hawk CAST/SMD/FBX outputs, and reimports full and relevant-bone CAST plus FBX into Maya 2025 when available. It checks the skeleton, meshes, skinning, frame range, IK, weapon animation, animation-only CAST contents, retained-curve equivalence, weapon-first model ordering, and Chinese TEMP/output paths and names. The UI smoke suite checks centered dialogs, the protected language/About layout, settings clipping, four format choices, output-option accessibility, three language modes, toolbar controls, and context imports.
 
-Every functional release change increments at least the patch version; this release is `1.1.6`.
+Every functional release change increments at least the patch version; this release is `1.1.7`.
 
 ## Source and licenses
 

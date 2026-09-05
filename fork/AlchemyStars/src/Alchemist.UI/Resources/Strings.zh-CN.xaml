@@ -125,6 +125,7 @@
     <sys:String x:Key="ExportCompleteMessage">已导出 {0} 个动画文件。</sys:String>
     <sys:String x:Key="ExportFailedTitle">炼金之星 | 导出失败</sys:String>
     <sys:String x:Key="NeedAnimation">请至少添加一个动画。</sys:String>
+    <sys:String x:Key="NeedOutputFolder">导出前请为每个动画明确选择输出目录。</sys:String>
     <sys:String x:Key="NeedPart">请至少添加一个模型部件。</sys:String>
     <sys:String x:Key="StartupProjectFailedTitle">炼金之星 | 项目载入失败</sys:String>
     <sys:String x:Key="StartupProjectFailedMessage">无法载入项目：&#10;{0}&#10;&#10;{1}</sys:String>
@@ -147,7 +148,7 @@
     <sys:String x:Key="AboutOverviewTitle">项目简介</sys:String>
     <sys:String x:Key="AboutOverview">炼金之星是在 Scobalula/Alchemist 基础上持续改进的 Windows x64 桌面工具。它将手臂、武器、附件与动画合并为单个 CAST；每个导出文件只保留一个已烘焙的目标动画，便于在 Maya 中直接播放、编辑和继续制作。</sys:String>
     <sys:String x:Key="AboutFeaturesTitle">主要能力</sys:String>
-    <sys:String x:Key="AboutFeatureFiles">支持文件浏览器、路径框输入或粘贴、定向拖放和列表右键导入；分类记忆目录；拖到动画层区域时优先加入悬停动画</sys:String>
+    <sys:String x:Key="AboutFeatureFiles">支持文件浏览器、路径框输入或粘贴、定向拖放和列表右键导入；新动画的输出目录默认留空，须明确选择后导出，避免意外替换源文件</sys:String>
     <sys:String x:Key="AboutFeatureLayers">支持普通、叠加、手势、手势姿势动画层、帧偏移及左右手 IK</sys:String>
     <sys:String x:Key="AboutFeatureModels">按“手臂 → 武器 → 附件”规范化顺序并物理合并为单个模型，无需依赖 Maya 的 Import Merge 选项</sys:String>
     <sys:String x:Key="AboutFeatureMaya">支持完整场景或仅动画 CAST，以及 FBX、SMD、SEAnim 输出；可仅烘焙相关骨骼；随包提供 Maya CAST 插件、标准 MP5/Hawk 示例和中英文文档</sys:String>

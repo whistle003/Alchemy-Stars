@@ -28,7 +28,7 @@ namespace Alchemist.UI
 {
     public class MainViewModel : LoggableMVVMObject
     {
-        public string FileVersion { get; } = typeof(MainViewModel).Assembly.GetName().Version?.ToString(3) ?? "1.1.6";
+        public string FileVersion { get; } = typeof(MainViewModel).Assembly.GetName().Version?.ToString(3) ?? "1.1.7";
         public AnimationConverter Converter { get; set; } = new();
         public MVVMItemList<Animation> Animations { get; set; } = [];
         public MVVMItemList<Part> Parts { get; set; } = [];
@@ -352,6 +352,8 @@ namespace Alchemist.UI
         {
             if (Animations.Count == 0)
                 throw new InvalidOperationException(LocalizationManager.Get("NeedAnimation"));
+            if (Animations.Any(animation => string.IsNullOrWhiteSpace(animation.OutputFolder)))
+                throw new InvalidOperationException(LocalizationManager.Get("NeedOutputFolder"));
             if (Parts.Count == 0)
                 throw new InvalidOperationException(LocalizationManager.Get("NeedPart"));
 

@@ -264,13 +264,15 @@ namespace Alchemist.UI
             if (selected is null)
                 return;
 
+            ApplyAnimationSourceSelection(animation, selected);
+        }
+
+        internal static void ApplyAnimationSourceSelection(Animation animation, string selected)
+        {
             var previousOutputName = Path.GetFileNameWithoutExtension(animation.Name);
-            var previousOutputFolder = Path.GetDirectoryName(animation.Name) ?? string.Empty;
             animation.Name = selected;
             if (string.IsNullOrWhiteSpace(animation.OutputName) || animation.OutputName == previousOutputName)
                 animation.OutputName = Path.GetFileNameWithoutExtension(selected);
-            if (string.IsNullOrWhiteSpace(animation.OutputFolder) || animation.OutputFolder == previousOutputFolder)
-                animation.OutputFolder = Path.GetDirectoryName(selected) ?? string.Empty;
         }
 
         private void BrowsePoseClick(object sender, RoutedEventArgs e)

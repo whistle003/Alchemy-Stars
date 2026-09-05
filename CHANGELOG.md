@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.7 — 2026-09-05
+
+- Left the output folder blank for every newly imported animation, requiring an explicit destination before export so a same-named CAST cannot silently overwrite its source.
+- Kept explicitly selected output folders stable when replacing an animation source and preserved saved destinations when loading existing projects.
+- Added focused acceptance coverage for new imports, source replacement, and project round trips.
+
 ## 1.1.6 — 2026-09-05
 
 - Added direct Explorer file drops to every editable source-path field; all file drops targeted at a field—including rejected types—stop there instead of bubbling into the surrounding animation, layer, or model import list.

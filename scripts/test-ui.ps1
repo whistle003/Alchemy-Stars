@@ -244,7 +244,7 @@ $testSettingsPath = Join-Path ([System.IO.Path]::GetTempPath()) ("alchemy-stars-
 $env:ALCHEMY_STARS_SETTINGS_PATH = $testSettingsPath
 $process = Start-Process -FilePath $executable -PassThru -WindowStyle Hidden
 try {
-$expectedVersion = '1.1.6'
+$expectedVersion = '1.1.7'
 
     if (-not $process.WaitForInputIdle(10000)) {
         throw 'Application did not become input-idle within 10 seconds.'

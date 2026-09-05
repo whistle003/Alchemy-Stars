@@ -38,7 +38,6 @@ namespace Alchemist.UI
         {
             Name = name;
             OutputName = Path.GetFileNameWithoutExtension(Name);
-            OutputFolder = Path.GetDirectoryName(Name) ?? string.Empty;
         }
 
         public override string ToString() => Path.GetFileNameWithoutExtension(OutputName);

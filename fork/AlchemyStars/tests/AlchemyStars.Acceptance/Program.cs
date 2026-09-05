@@ -345,13 +345,13 @@ static void TestSafeOutputFolderDefaults()
             "Blank output destinations should produce the localized actionable error.");
     }
 
-    MainWindow.ApplyAnimationSourceSelection(animation, Path.Combine("replacement", "idle.cast"));
+    animation.ReplaceSource(Path.Combine("replacement", "idle.cast"));
     Assert(animation.OutputName == "idle", "Replacing the source should update an inferred output name.");
     Assert(animation.OutputFolder.Length == 0,
         "Replacing the source must not silently restore a source-folder output destination.");
 
     animation.OutputFolder = Path.Combine("exports", "chosen");
-    MainWindow.ApplyAnimationSourceSelection(animation, Path.Combine("replacement", "fire.cast"));
+    animation.ReplaceSource(Path.Combine("replacement", "fire.cast"));
     Assert(animation.OutputFolder == Path.Combine("exports", "chosen"),
         "Replacing the source must preserve an explicitly selected output destination.");
 

@@ -36,8 +36,15 @@ namespace Alchemist.UI
 
         public Animation(string name)
         {
-            Name = name;
-            OutputName = Path.GetFileNameWithoutExtension(Name);
+            ReplaceSource(name);
+        }
+
+        internal void ReplaceSource(string selected)
+        {
+            var previousOutputName = Path.GetFileNameWithoutExtension(Name);
+            Name = selected;
+            if (string.IsNullOrWhiteSpace(OutputName) || OutputName == previousOutputName)
+                OutputName = Path.GetFileNameWithoutExtension(selected);
         }
 
         public override string ToString() => Path.GetFileNameWithoutExtension(OutputName);

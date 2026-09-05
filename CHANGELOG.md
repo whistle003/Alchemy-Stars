@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.3.0-preview.7 — 2026-09-06
+
+- Rebuilt the supplied reference's panel geometry: a 48 DIP activity rail, resizable library/viewport/inspector, a full-width lower layer area, and flat collapsible properties.
+- Replaced project-toolbar glyphs with distinct, padded 24 DIP vectors while retaining 44 DIP hit targets and localized accessibility names; render smoke checks include stroke-bound clipping assertions.
+- Added a real read-only merged CAST preview, backed by the existing exporter and sampler: clay-shaded meshes, skinned animation, playback/frame scrubbing, orbit/zoom, subject/all-geometry framing and skeleton overlay. Curve-only CAST can use the matching current-project skeleton, with an explicit bind-pose compatibility notice.
+- Build-preview caches are uniquely scoped and cleaned after loading; successful CAST exports load the selected output automatically. Preview work runs off the UI thread and does not modify source assets, output settings or the conversion algorithm.
+- The interrupted frame-ruler experiment was withdrawn. Layer bars describe composition order, while the preview's frame slider reads the loaded CAST's actual animation.
+- Kept this work on the Avalonia Native AOT test branch; no stable release or GitHub publication is included.
+
 ## 1.3.0-preview.6 — 2026-09-05
 
 - Rebuilt the Avalonia workspace from the supplied Beutl editor reference: project breadcrumbs, a compact activity rail, asset library, central composition canvas, animation-layer tracks and a dedicated property inspector.

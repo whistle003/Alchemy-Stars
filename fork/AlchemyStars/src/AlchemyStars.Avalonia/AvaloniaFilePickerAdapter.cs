@@ -71,6 +71,7 @@ public sealed class AvaloniaFilePickerAdapter(Window owner, ApplicationPreferenc
     private static string PurposeScope(FilePickerPurpose purpose) => purpose switch
     {
         FilePickerPurpose.ModelPart => "part",
+        FilePickerPurpose.Preview => "preview",
         FilePickerPurpose.AnimationLayer => "layer",
         FilePickerPurpose.LeftPose or FilePickerPurpose.RightPose => "pose",
         _ => "animation",

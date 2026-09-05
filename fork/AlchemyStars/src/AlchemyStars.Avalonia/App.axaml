@@ -16,7 +16,7 @@
     <Style Selector="Button">
       <Setter Property="MinHeight" Value="44" />
       <Setter Property="Padding" Value="15,8" />
-      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="CornerRadius" Value="4" />
       <Setter Property="Background" Value="Transparent" />
       <Setter Property="BorderThickness" Value="1" />
       <Setter Property="BorderBrush" Value="Transparent" />
@@ -50,7 +50,10 @@
     <Style Selector="Button.toolbar">
       <Setter Property="Width" Value="44" />
       <Setter Property="MinWidth" Value="44" />
-      <Setter Property="Padding" Value="10" />
+      <Setter Property="Height" Value="44" />
+      <Setter Property="Padding" Value="8" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
       <Setter Property="Background" Value="Transparent" />
     </Style>
     <Style Selector="Button.icon">
@@ -63,14 +66,14 @@
       <Setter Property="Width" Value="44" />
       <Setter Property="MinHeight" Value="44" />
       <Setter Property="Height" Value="44" />
-      <Setter Property="Padding" Value="12" />
+      <Setter Property="Padding" Value="10" />
       <Setter Property="CornerRadius" Value="0" />
     </Style>
     <Style Selector="Button.activity">
-      <Setter Property="Width" Value="58" />
-      <Setter Property="Height" Value="64" />
-      <Setter Property="MinHeight" Value="64" />
-      <Setter Property="Padding" Value="6" />
+      <Setter Property="Width" Value="44" />
+      <Setter Property="Height" Value="44" />
+      <Setter Property="MinHeight" Value="44" />
+      <Setter Property="Padding" Value="10" />
       <Setter Property="Margin" Value="0" />
       <Setter Property="HorizontalContentAlignment" Value="Center" />
       <Setter Property="Background" Value="Transparent" />
@@ -78,6 +81,8 @@
     <Style Selector="Button.activity.selected">
       <Setter Property="Background" Value="{DynamicResource AlchemySelectedBrush}" />
       <Setter Property="BorderBrush" Value="{DynamicResource AlchemyAccentBrush}" />
+      <Setter Property="BorderThickness" Value="2,0,0,0" />
+      <Setter Property="CornerRadius" Value="0" />
       <Setter Property="Foreground" Value="{DynamicResource AlchemyAccentBrush}" />
       <Setter Property="FontWeight" Value="SemiBold" />
     </Style>
@@ -116,18 +121,11 @@
     <Style Selector="Border.composition-canvas">
       <Setter Property="Background" Value="{DynamicResource AlchemyCanvasBrush}" />
     </Style>
-    <Style Selector="Border.workflow-node">
-      <Setter Property="Background" Value="{DynamicResource AlchemySurfaceRaisedBrush}" />
-      <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderBrush}" />
-      <Setter Property="BorderThickness" Value="1" />
-      <Setter Property="CornerRadius" Value="6" />
-      <Setter Property="Padding" Value="14,11" />
-    </Style>
+
     <Style Selector="Border.inspector-section">
-      <Setter Property="Background" Value="{DynamicResource AlchemySubtleSurfaceBrush}" />
+      <Setter Property="Background" Value="Transparent" />
       <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderBrush}" />
-      <Setter Property="BorderThickness" Value="1" />
-      <Setter Property="CornerRadius" Value="5" />
+      <Setter Property="BorderThickness" Value="0,0,0,1" />
       <Setter Property="Padding" Value="14" />
     </Style>
     <Style Selector="Border.editor-card">
@@ -191,10 +189,13 @@
       <Setter Property="Background" Value="{DynamicResource AlchemySurfaceBrush}" />
       <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderStrongBrush}" />
       <Setter Property="BorderThickness" Value="1" />
-      <Setter Property="CornerRadius" Value="6" />
+      <Setter Property="CornerRadius" Value="4" />
     </Style>
     <Style Selector="TextBox:pointerover, ComboBox:pointerover">
       <Setter Property="BorderBrush" Value="{DynamicResource AlchemyMutedTextBrush}" />
+    </Style>
+    <Style Selector="ComboBox">
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
     </Style>
     <Style Selector="TextBox:focus-within, ComboBox:focus-within">
       <Setter Property="BorderBrush" Value="{DynamicResource AlchemyFocusBrush}" />
@@ -264,18 +265,89 @@
     <Style Selector="Path.icon-glyph.on-accent"><Setter Property="Stroke" Value="#FF0E0E0F" /></Style>
     <Style Selector="Path.icon-glyph.accent"><Setter Property="Stroke" Value="{DynamicResource AlchemyAccentBrush}" /></Style>
     <Style Selector="Path.icon-glyph.danger-glyph"><Setter Property="Stroke" Value="{DynamicResource AlchemyErrorBrush}" /></Style>
+
+    <Style Selector="Expander.property-group">
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderBrush}" />
+      <Setter Property="BorderThickness" Value="0,0,0,1" />
+      <Setter Property="CornerRadius" Value="0" />
+      <Setter Property="Padding" Value="14,0,14,14" />
+    </Style>
+    <Style Selector="Expander.property-group /template/ ToggleButton">
+      <Setter Property="MinHeight" Value="44" />
+      <Setter Property="CornerRadius" Value="0" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="Border.canvas-footer">
+      <Setter Property="Background" Value="{DynamicResource AlchemySurfaceBrush}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderBrush}" />
+      <Setter Property="BorderThickness" Value="0,1,0,0" />
+      <Setter Property="Padding" Value="12,8" />
+    </Style>
+    <Style Selector="Border.track-heading">
+      <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderBrush}" />
+      <Setter Property="BorderThickness" Value="0,0,0,1" />
+      <Setter Property="Padding" Value="14,5" />
+    </Style>
+    <Style Selector="Border.track-heading TextBlock">
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="Foreground" Value="{DynamicResource AlchemyMutedTextBrush}" />
+    </Style>
+    <Style Selector="Border.track-row">
+      <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderBrush}" />
+      <Setter Property="BorderThickness" Value="0,0,0,1" />
+      <Setter Property="Padding" Value="14,4" />
+    </Style>
+    <Style Selector="Border.clip">
+      <Setter Property="Height" Value="30" />
+      <Setter Property="Padding" Value="10,5" />
+      <Setter Property="Margin" Value="0,0,12,0" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="CornerRadius" Value="1" />
+      <Setter Property="BorderThickness" Value="3,0,0,0" />
+    </Style>
+    <Style Selector="Border.base-clip">
+      <Setter Property="Background" Value="{DynamicResource AlchemyBaseClipBrush}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBaseEdgeBrush}" />
+    </Style>
+    <Style Selector="Border.layer-clip">
+      <Setter Property="Background" Value="{DynamicResource AlchemyLayerClipBrush}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource AlchemyLayerEdgeBrush}" />
+    </Style>
+    <Style Selector="ListBox.asset-list, ListBox.track-list">
+      <Setter Property="CornerRadius" Value="0" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+    </Style>
+    <Style Selector="ListBox.asset-list ListBoxItem, ListBox.track-list ListBoxItem">
+      <Setter Property="CornerRadius" Value="0" />
+      <Setter Property="Margin" Value="0" />
+      <Setter Property="Padding" Value="14,4" />
+      <Setter Property="MinHeight" Value="44" />
+    </Style>
+    <Style Selector="ListBox.track-list ListBoxItem">
+      <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderBrush}" />
+      <Setter Property="BorderThickness" Value="0,0,0,1" />
+    </Style>
+    <Style Selector="GridSplitter:pointerover, GridSplitter:focus-visible">
+      <Setter Property="Background" Value="{DynamicResource AlchemyFocusBrush}" />
+    </Style>
   </Application.Styles>
 
   <Application.Resources>
-    <!-- Beutl-derived flat editor surfaces; AtomBox spacing remains in forms and lists. -->
-    <Color x:Key="AlchemyBackground">#FF18191B</Color>
-    <Color x:Key="AlchemySidebar">#FF121214</Color>
-    <Color x:Key="AlchemyCommandBar">#FF202022</Color>
+    <!-- Reference-driven neutral creative editor; color distinguishes composition layers, not duration. -->
+    <Color x:Key="AlchemyBackground">#FF202020</Color>
+    <Color x:Key="AlchemySidebar">#FF252525</Color>
+    <Color x:Key="AlchemyCommandBar">#FF222222</Color>
     <Color x:Key="AlchemyCanvas">#FF03060C</Color>
-    <Color x:Key="AlchemySurface">#FF1D1D1F</Color>
-    <Color x:Key="AlchemySubtleSurface">#FF232325</Color>
-    <Color x:Key="AlchemySurfaceRaised">#FF29292C</Color>
-    <Color x:Key="AlchemyBorder">#FF36373B</Color>
+    <Color x:Key="AlchemySurface">#FF222222</Color>
+    <Color x:Key="AlchemySubtleSurface">#FF262626</Color>
+    <Color x:Key="AlchemySurfaceRaised">#FF2D2D2D</Color>
+    <Color x:Key="AlchemyBorder">#FF383838</Color>
     <Color x:Key="AlchemyBorderStrong">#FF62656D</Color>
     <Color x:Key="AlchemyAccent">#FF4CC2FF</Color>
     <Color x:Key="AlchemyFocus">#FF60CDFF</Color>
@@ -302,5 +374,9 @@
     <SolidColorBrush x:Key="AlchemyHeroBrush" Color="#FF232325" />
     <SolidColorBrush x:Key="AlchemySuccessBrush" Color="#FF54D68B" />
     <SolidColorBrush x:Key="AlchemyErrorBrush" Color="#FFFF7B86" />
+    <SolidColorBrush x:Key="AlchemyBaseClipBrush" Color="#FF54436E" />
+    <SolidColorBrush x:Key="AlchemyBaseEdgeBrush" Color="#FFC6ABEF" />
+    <SolidColorBrush x:Key="AlchemyLayerClipBrush" Color="#FF36523E" />
+    <SolidColorBrush x:Key="AlchemyLayerEdgeBrush" Color="#FFA2D2A5" />
   </Application.Resources>
 </Application>

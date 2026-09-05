@@ -13,7 +13,7 @@ public enum WorkspacePage
     About,
 }
 
-public sealed class MainWindowViewModel : INotifyPropertyChanged
+public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 {
     private readonly IAnimationExportEngine engine;
     private readonly WorkspaceProjectStore projectStore;
@@ -48,6 +48,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         var preferenceSnapshot = preferences.Snapshot();
         languageMode = NormalizeLanguageMode(preferenceSnapshot.Language);
         text = new UiText(ResolveChinese(languageMode));
+        Preview = new CastPreviewViewModel(text);
         workspace = preferences.CreateWorkspace();
         selectedAnimation = workspace.Animations.FirstOrDefault();
         selectedPart = workspace.Parts.FirstOrDefault();
@@ -72,7 +73,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public ObservableCollection<WorkspaceAnimation> Animations => Workspace.Animations;
     public ObservableCollection<WorkspacePart> Parts => Workspace.Parts;
-    public UiText Text { get => text; private set { text = value; OnPropertyChanged(); } }
+    public UiText Text { get => text; private set { text = value; Preview.Text = value; OnPropertyChanged(); } }
+    public CastPreviewViewModel Preview { get; }
     public string Version => AnimationExportEngine.EngineVersion;
     public string RuntimeDescription => $"{System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription} · {System.Runtime.InteropServices.RuntimeInformation.OSArchitecture}";
     public string CurrentProjectLabel => string.IsNullOrWhiteSpace(CurrentProjectPath) ? Text.Untitled : CurrentProjectPath;
@@ -89,13 +91,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public bool IsChinese => ResolveChinese(languageMode);
     public string LanguageMode => languageMode;
     public string? CurrentProjectPath { get => currentProjectPath; private set { currentProjectPath = value; OnPropertyChanged(); OnPropertyChanged(nameof(CurrentProjectLabel)); OnPropertyChanged(nameof(WindowTitle)); } }
-    public WorkspaceAnimation? SelectedAnimation { get => selectedAnimation; set { selectedAnimation = value; SelectedLayer = null; OnPropertyChanged(); OnPropertyChanged(nameof(HasSelectedAnimation)); } }
+    public WorkspaceAnimation? SelectedAnimation { get => selectedAnimation; set { if (!ReferenceEquals(selectedAnimation, value)) Preview.Clear(); selectedAnimation = value; SelectedLayer = null; OnPropertyChanged(); OnPropertyChanged(nameof(HasSelectedAnimation)); } }
     public WorkspacePart? SelectedPart { get => selectedPart; set { selectedPart = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasSelectedPart)); } }
     public WorkspaceLayer? SelectedLayer { get => selectedLayer; set { selectedLayer = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasSelectedLayer)); } }
     public bool HasSelectedAnimation => SelectedAnimation is not null;
     public bool HasSelectedPart => SelectedPart is not null;
     public bool HasSelectedLayer => SelectedLayer is not null;
-    public WorkspacePage SelectedPage { get => selectedPage; private set { selectedPage = value; OnPropertyChanged(); RaisePageState(); } }
+    public WorkspacePage SelectedPage { get => selectedPage; private set { selectedPage = value; if (value is WorkspacePage.Settings or WorkspacePage.About) Preview.Pause(); OnPropertyChanged(); RaisePageState(); } }
     public bool IsAnimationsPage => SelectedPage == WorkspacePage.Animations;
     public bool IsModelPartsPage => SelectedPage == WorkspacePage.ModelParts;
     public bool IsSettingsPage => SelectedPage == WorkspacePage.Settings;
@@ -333,7 +335,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             BusyMessage = Text.Exporting;
             FooterStatus = Text.Exporting;
             var request = projectStore.CreateExportRequest(Workspace);
+            var selection = SelectedAnimation;
+            var selectedIndex = selection is null ? 0 : Animations.IndexOf(selection);
             var result = await Task.Run(() => engine.Export(request));
+            if (request.Options.Format == ExportFormat.Cast && ReferenceEquals(selection, SelectedAnimation))
+                await Preview.LoadAsync(result.OutputFiles[Math.Clamp(selectedIndex, 0, result.OutputFiles.Count - 1)], parts: request.Parts, legacy: request.Options.MatchOldCallOfDuty);
             FooterStatus = string.Format(CultureInfo.CurrentCulture, Text.ExportComplete, result.OutputFiles.Count);
             ShowDialog(Text.ExportCompleteTitle, string.Format(CultureInfo.CurrentCulture, Text.ExportCompleteBody, result.OutputFiles.Count) + Environment.NewLine + string.Join(Environment.NewLine, result.OutputFiles), false);
         }
@@ -355,6 +361,44 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         FooterStatus = Text.DefaultsSaved;
         ShowDialog(Text.SettingsSavedTitle, Text.SettingsSavedBody, false);
     }
+
+    public async Task OpenPreviewAsync()
+    {
+        var path = (await picker.PickFilesAsync(FilePickerPurpose.Preview, false)).FirstOrDefault();
+        if (path is not null) await Preview.LoadAsync(path, parts: Parts.Select(part => new ModelPartSpec(part.FilePath, part.Type, part.ParentBoneTag)).ToArray(), legacy: Workspace.MatchOldCallOfDuty);
+    }
+
+    public async Task BuildPreviewAsync()
+    {
+        if (IsBusy || SelectedAnimation is null) return;
+        // Each invocation owns a unique cache, never a source/output asset directory.
+        var cache = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "PreviewCache", Guid.NewGuid().ToString("N")));
+        try
+        {
+            IsBusy = true; BusyMessage = Text.BuildingPreview;
+            var selection = SelectedAnimation;
+            var request = projectStore.CreateExportRequest(Workspace);
+            var job = request.Animations[Animations.IndexOf(selection)] with { OutputFolder = cache, OutputName = "composition" };
+            request = request with { Animations = [job], Options = request.Options with { Format = ExportFormat.Cast, OutputPrefix = "", OutputSuffix = "" } };
+            Directory.CreateDirectory(cache);
+            var result = await Task.Run(() => engine.Export(request));
+            if (ReferenceEquals(selection, SelectedAnimation))
+                await Preview.LoadAsync(result.OutputFiles.Single(), Text.PreviewSnapshot + " · " + selection.OutputName, request.Parts, request.Options.MatchOldCallOfDuty);
+        }
+        catch (Exception exception) { ShowDialog(Text.PreviewFailed, LocalizeExportError(exception), true); }
+        finally
+        {
+            IsBusy = false; BusyMessage = string.Empty;
+            if (Directory.Exists(cache))
+            {
+                try { Directory.Delete(cache, true); }
+                catch (IOException) { FooterStatus = Text.PreviewCacheRetained; }
+                catch (UnauthorizedAccessException) { FooterStatus = Text.PreviewCacheRetained; }
+            }
+        }
+    }
+
+    public void Dispose() => Preview.Dispose();
 
     public void ToggleLanguage()
     {
@@ -450,6 +494,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     private void ShowDialog(string title, string message, bool error)
     {
+        Preview.Pause();
         DialogTitle = title;
         DialogMessage = message;
         DialogIsError = error;
@@ -552,6 +597,34 @@ public sealed class UiText
     public string AnimationDetails => L("动画属性", "Animation properties");
     public string AssetLibrary => L("资源库", "Asset library");
     public string Composition => L("合成工作区", "Composition");
+    public string ResizePanels => L("调整面板宽度（方向键也可调整）", "Resize panels (arrow keys supported)");
+    public string ResizeTracks => L("调整图层区高度（方向键也可调整）", "Resize layer area (arrow keys supported)");
+    public string ImportHint => L("右键导入", "Right-click to import");
+    public string Order => L("排序", "Order");
+    public string RestoreLayout => L("恢复面板布局", "Restore panel layout");
+    public string BuildPreview => L("合成预览", "Build CAST preview");
+    public string BuildingPreview => L("正在合成 CAST 预览…", "Composing CAST preview…");
+    public string OpenPreview => L("打开 CAST 预览", "Open CAST preview");
+    public string PreviewEmpty => L("点击“合成预览”查看当前结果，也可打开已合并的 CAST。", "Build a preview of the current composition, or open a merged CAST.");
+    public string PreviewLoading => L("正在读取 CAST…", "Reading CAST…");
+    public string ProjectSkeletonPreview => L("仅动画：使用当前工程骨架，请确保绑定姿势匹配", "Animation only: using project skeleton; verify matching bind pose");
+    public string PreviewFailed => L("CAST 预览失败", "CAST preview failed");
+    public string PreviewSnapshot => L("合成快照（修改设置后请重新合成）", "Composition snapshot (rebuild after changes)");
+    public string PreviewStats => L("{0:N0} 顶点 · {1:N0} 骨骼 · {2:0.##} FPS", "{0:N0} vertices · {1:N0} bones · {2:0.##} FPS");
+    public string PreviewCacheRetained => L("预览已完成，临时缓存未能清理。", "Preview completed; temporary cache could not be cleaned.");
+    public string PlayPreview => L("播放 / 空格", "Play / Space");
+    public string PausePreview => L("暂停 / 空格", "Pause / Space");
+    public string PreviousFrame => L("上一帧", "Previous frame");
+    public string NextFrame => L("下一帧", "Next frame");
+    public string PreviewFrame => L("预览帧", "Preview frame");
+    public string FitPreview => L("适应主体 / F；右键查看全部几何体", "Fit subject / F; right-click to fit all geometry");
+    public string ZoomIn => L("放大 / +", "Zoom in / +");
+    public string ZoomOut => L("缩小 / −", "Zoom out / −");
+    public string ShowBones => L("显示 / 隐藏骨架", "Show / hide skeleton");
+    public string PreviewHelp => L("拖动旋转 · 滚轮缩放 · 方向键旋转 · 灰模预览，不含贴图", "Drag or arrow keys to orbit · wheel to zoom · clay preview, no textures");
+    public string TrackName => L("名称", "Name");
+    public string BaseAnimation => L("基础动画", "Base animation");
+    public string CompositionOrder => L("合成顺序 · 非时间轴", "Composition order · not a timeline");
     public string Inspector => L("属性检查器", "Inspector");
     public string TrackEditor => L("动画层轨道", "Layer tracks");
     public string SelectedLayer => L("所选动画层", "Selected layer");
@@ -594,7 +667,7 @@ public sealed class UiText
     public string DefaultOutputFormat => L("输出格式", "Output format");
     public string FormatHelp => L("为当前项目选择目标管线和烘焙策略。", "Choose the target pipeline and bake strategy for this project.");
     public string AnimationOnlyCast => L("仅输出合并动画 CAST", "Animation-only merged CAST");
-    public string AnimationOnlyHelp => L("移除网格、材质和蒙皮，只保留完整骨架与唯一动画。", "Removes meshes, materials and skinning while retaining the complete skeleton and one animation.");
+    public string AnimationOnlyHelp => L("只保留唯一的合并动画；导入或预览时需要匹配的骨架。", "Retains one merged animation; importing or previewing requires a matching skeleton.");
     public string SelectiveBake => L("仅烘焙相关骨骼", "Bake relevant bones only");
     public string SelectiveBakeHelp => L("减小动画曲线数量；目标骨架必须与绑定姿势完全匹配。", "Reduces animation curves; the target skeleton must exactly match the bind pose.");
     public string OldCod => L("兼容旧版 Call of Duty", "Legacy Call of Duty compatibility");
@@ -628,7 +701,7 @@ public sealed class UiText
     public string AboutTitle => L("关于 炼金之星", "About Alchemy Stars");
     public string AboutSubtitle => L("面向第一人称武器资产的 CAST 动画合并与 Maya 2025 工作流", "CAST animation merging and Maya 2025 workflow for first-person weapon assets");
     public string AboutOverview => L("炼金之星改进自 Scobalula/Alchemist。本测试版已将完整工作流迁移至 Avalonia，并通过 Native AOT 发布；WPF 版本在 .NET 11 正式版迁移前继续作为生产基线。", "Alchemy Stars improves Scobalula/Alchemist. This preview migrates the complete workflow to Avalonia and publishes with Native AOT; WPF remains the production baseline until the .NET 11 GA migration.");
-    public string Capabilities => L("支持完整或仅动画 CAST、FBX、SMD、SEAnim、普通/叠加/手势动画层、左右手 IK、相关骨骼烘焙，以及兼容旧项目的 .aprj 读写。", "Supports full-scene or animation-only CAST, FBX, SMD, SEAnim, normal/additive/gesture layers, left/right IK, relevant-bone baking and legacy-compatible .aprj project files.");
+    public string Capabilities => L("支持完整或仅动画 CAST、FBX、SMD、SEAnim、普通/叠加/手势动画层、左右手 IK、相关骨骼烘焙和旧版 .aprj。合成工作区可进行真实 CAST 灰模预览、骨架显示和逐帧播放。", "Supports full-scene or animation-only CAST, FBX, SMD, SEAnim, normal/additive/gesture layers, IK, relevant-bone baking and legacy .aprj files. The composition workspace previews real CAST geometry, skeletons and animation frames.");
     public string Build => L("版本与环境", "Build and environment");
     public string UpstreamTitle => L("来源与致谢", "Origin and attribution");
     public string UpstreamHelp => L("炼金之星保留 Alchemist 与 RedFox 的转换基础，并在其上改进生产工作流。", "Alchemy Stars retains the Alchemist and RedFox conversion foundation and improves its production workflow.");

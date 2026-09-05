@@ -1,0 +1,43 @@
+<UserControl x:Class="AlchemyStars.Avalonia.CastPreviewView"
+    xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:AlchemyStars.Avalonia" x:DataType="local:CastPreviewViewModel">
+  <Grid RowDefinitions="*,28,44">
+    <Grid ColumnDefinitions="44,*">
+      <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+        <StackPanel Background="{DynamicResource AlchemySurfaceBrush}" IsEnabled="{Binding HasScene}">
+          <Button Classes="panel-command" Click="FitClick" ToolTip.Tip="{Binding Text.FitPreview}" AutomationProperties.Name="{Binding Text.FitPreview}"><Button.ContextMenu><ContextMenu><MenuItem Header="主体 / Subject (F)" Click="FitClick" /><MenuItem Header="全部几何体 / All geometry (Shift+F)" Click="FitAllClick" /></ContextMenu></Button.ContextMenu><Path Classes="icon-glyph" Data="M3,8 L3,3 L8,3 M12,3 L17,3 L17,8 M17,12 L17,17 L12,17 M8,17 L3,17 L3,12" /></Button>
+          <Button Classes="panel-command" Click="ZoomInClick" ToolTip.Tip="{Binding Text.ZoomIn}" AutomationProperties.Name="{Binding Text.ZoomIn}"><Path Classes="icon-glyph" Data="M10,3 L10,17 M3,10 L17,10" /></Button>
+          <Button Classes="panel-command" Click="ZoomOutClick" ToolTip.Tip="{Binding Text.ZoomOut}" AutomationProperties.Name="{Binding Text.ZoomOut}"><Path Classes="icon-glyph" Stretch="None" Data="M3,10 L17,10" /></Button>
+          <Button Classes="panel-command" Click="BonesClick" ToolTip.Tip="{Binding Text.ShowBones}" AutomationProperties.Name="{Binding Text.ShowBones}"><Path Classes="icon-glyph" Data="M4,4 L10,10 L16,5 M10,10 L15,17 M2,2 L6,2 L6,6 L2,6 Z M14,3 L18,3 L18,7 L14,7 Z M13,15 L17,15 L17,19 L13,19 Z" /></Button>
+        </StackPanel>
+      </ScrollViewer>
+      <Border x:Name="Viewport" Grid.Column="1" Background="#10151C" Focusable="True" ClipToBounds="True"
+          SizeChanged="ViewportSizeChanged" PointerPressed="ViewportPressed" PointerMoved="ViewportMoved" PointerReleased="ViewportReleased"
+          PointerWheelChanged="ViewportWheel" KeyDown="ViewportKeyDown" ToolTip.Tip="{Binding Text.PreviewHelp}"
+          AutomationProperties.Name="{Binding Text.PreviewHelp}">
+        <Grid>
+          <Image Source="{Binding Image}" Stretch="Fill" IsVisible="{Binding HasScene}" AutomationProperties.Name="{Binding Status}" />
+          <StackPanel IsVisible="{Binding !HasScene}" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="20" Spacing="14">
+            <Image Source="avares://AlchemyStars.Avalonia/Assets/AlchemyStarsIcon.png" Width="52" Height="52" Stretch="Uniform" />
+            <TextBlock Text="{Binding Status}" TextAlignment="Center" TextWrapping="Wrap" Classes="muted" MaxWidth="400" />
+          </StackPanel>
+          <Border VerticalAlignment="Bottom" Padding="8,4" Background="#BB10151C" IsVisible="{Binding HasScene}" IsHitTestVisible="False">
+            <TextBlock Text="{Binding Source}" Classes="muted" FontSize="11" TextTrimming="CharacterEllipsis" />
+          </Border>
+          <Border VerticalAlignment="Top" Padding="8,4" Background="#9910151C" IsVisible="{Binding HasScene}" IsHitTestVisible="False">
+            <TextBlock Text="{Binding Status}" Classes="muted" FontSize="11" TextWrapping="Wrap" />
+          </Border>
+        </Grid>
+      </Border>
+    </Grid>
+    <Slider x:Name="FrameSlider" Grid.Row="1" Minimum="0" Maximum="{Binding LastFrame}" Value="{Binding Frame}" SmallChange="1" IsSnapToTickEnabled="True" TickFrequency="1" Margin="12,0" IsEnabled="{Binding CanPlay}" AutomationProperties.Name="{Binding Text.PreviewFrame}" />
+    <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" Background="{DynamicResource AlchemySurfaceBrush}">
+      <TextBlock Text="{Binding FrameLabel}" FontSize="12" Margin="10,0" VerticalAlignment="Center" ToolTip.Tip="{Binding Status}" />
+      <StackPanel Grid.Column="2" Orientation="Horizontal" IsEnabled="{Binding CanPlay}">
+        <Button Classes="panel-command" Click="PreviousClick" ToolTip.Tip="{Binding Text.PreviousFrame}" AutomationProperties.Name="{Binding Text.PreviousFrame}"><Path Classes="icon-glyph" Data="M4,3 L4,17 M16,3 L7,10 L16,17 Z" /></Button>
+        <Button Classes="panel-command" Click="PlayClick" ToolTip.Tip="{Binding PlayLabel}" AutomationProperties.Name="{Binding PlayLabel}"><Grid><Path Classes="icon-glyph" IsVisible="{Binding !IsPlaying}" Data="M5,3 L17,10 L5,17 Z" /><Path Classes="icon-glyph" IsVisible="{Binding IsPlaying}" Data="M6,3 L6,17 M14,3 L14,17" /></Grid></Button>
+        <Button Classes="panel-command" Click="NextClick" ToolTip.Tip="{Binding Text.NextFrame}" AutomationProperties.Name="{Binding Text.NextFrame}"><Path Classes="icon-glyph" Data="M16,3 L16,17 M4,3 L13,10 L4,17 Z" /></Button>
+      </StackPanel>
+    </Grid>
+  </Grid>
+</UserControl>

@@ -7,7 +7,7 @@ $ErrorActionPreference = 'Stop'
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $project = Join-Path $repositoryRoot 'fork\AlchemyStars\src\AlchemyStars.Avalonia\AlchemyStars.Avalonia.csproj'
 $outputRoot = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'output'))
-$publishDirectory = [System.IO.Path]::GetFullPath((Join-Path $outputRoot 'avalonia-aot-preview6'))
+$publishDirectory = [System.IO.Path]::GetFullPath((Join-Path $outputRoot 'avalonia-aot-preview7'))
 function Assert-OutputChild([string]$Path) {
     if (-not $Path.StartsWith($outputRoot + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)) {
         throw "Refusing to clean a path outside the repository output directory: $Path"
@@ -72,6 +72,20 @@ if (@($projectInputs | Where-Object { -not (Test-Path -LiteralPath $_) }).Count 
         throw 'Native AOT standard-project export produced an invalid output set.'
     }
     Write-Output 'Native AOT standard Hawk project export: PASS'
+    $castPreviewSource = $projectOutputs | Where-Object Extension -eq '.cast' | Select-Object -First 1
+    if ($castPreviewSource) {
+        $previewArguments = '--preview-test "' + $castPreviewSource.FullName + '"'
+        $previewTest = Start-Process -FilePath $executable -ArgumentList $previewArguments -WorkingDirectory $publishDirectory -WindowStyle Hidden -Wait -PassThru
+        if ($previewTest.ExitCode -ne 0) { throw 'Native AOT CAST preview sampling/rasterization regression failed.' }
+        Write-Output 'Native AOT CAST preview: geometry, animation, reverse scrubbing and source integrity PASS'
+    }
+    $animationOnlySource = Join-Path $repositoryRoot 'fork\AlchemyStars\output\animation-only-cast\sat_vm_ar_hawk_sprint_alchemy_stars.cast'
+    if (Test-Path -LiteralPath $animationOnlySource) {
+        $skeletonArguments = '--preview-test "' + $animationOnlySource + '" --skeleton-project "' + $standardProject + '"'
+        $skeletonTest = Start-Process -FilePath $executable -ArgumentList $skeletonArguments -WorkingDirectory $publishDirectory -WindowStyle Hidden -Wait -PassThru
+        if ($skeletonTest.ExitCode -ne 0) { throw 'Native AOT animation-only CAST project-skeleton preview failed.' }
+        Write-Output 'Native AOT animation-only CAST preview with matching project skeleton: PASS'
+    }
 } else {
     Write-Output 'Native AOT standard Hawk project export: SKIPPED (source assets unavailable)'
 }
@@ -93,6 +107,9 @@ foreach ($renderCase in $renderCases) {
     $arguments = '--culture "' + $renderCase.Culture + '" --window-size 900x600 --page "' + $renderCase.Page + '" --render-smoke "' + $renderPath + '" "' + $standardProject + '"'
     if ($renderCase.Dialog) {
         $arguments += ' --dialog "' + $renderCase.Dialog + '"'
+    }
+    if ($renderCase.Page -eq 'animations' -and $castPreviewSource) {
+        $arguments += ' --preview-cast "' + $castPreviewSource.FullName + '"'
     }
     $renderProcess = Start-Process -FilePath $executable -ArgumentList $arguments -WorkingDirectory $publishDirectory -WindowStyle Hidden -Wait -PassThru
     if ($renderProcess.ExitCode -ne 0 -or -not (Test-Path -LiteralPath $renderPath) -or (Get-Item -LiteralPath $renderPath).Length -eq 0) {

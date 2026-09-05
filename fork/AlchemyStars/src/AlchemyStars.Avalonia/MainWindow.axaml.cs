@@ -1,18 +1,54 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 
 namespace AlchemyStars.Avalonia;
 
 public sealed partial class MainWindow : Window
 {
-    public MainWindow() => InitializeComponent();
+    public MainWindow()
+    {
+        InitializeComponent();
+        SizeChanged += (_, _) => KeepEditorsWithinWindow();
+    }
+
+    private void KeepEditorsWithinWindow()
+    {
+        // Fixed side panes need to give space back after a user narrows the window.
+        // Keep the center usable without discarding the user's normal splitter positions.
+        if (ClientSize.Width < MinWidth) return;
+        foreach (var editor in new[] { AnimationEditor, PartsEditor })
+        {
+            var columns = editor.ColumnDefinitions;
+            var overflow = columns[0].Width.Value + columns[4].Width.Value
+                - (ClientSize.Width - 48 - 8 - columns[2].MinWidth);
+            if (overflow <= 0) continue;
+            var libraryReduction = Math.Min(overflow, columns[0].Width.Value - columns[0].MinWidth);
+            columns[0].Width = new GridLength(columns[0].Width.Value - libraryReduction);
+            columns[4].Width = new GridLength(Math.Max(columns[4].MinWidth, columns[4].Width.Value - overflow + libraryReduction));
+        }
+    }
+
+    private void RestoreLayoutClick(object? sender, RoutedEventArgs e)
+    {
+        foreach (var editor in new[] { AnimationEditor, PartsEditor })
+        {
+            editor.ColumnDefinitions[0].Width = new GridLength(240);
+            editor.ColumnDefinitions[4].Width = new GridLength(320);
+        }
+        AnimationEditor.RowDefinitions[0].Height = new GridLength(3, GridUnitType.Star);
+        AnimationEditor.RowDefinitions[2].Height = new GridLength(2, GridUnitType.Star);
+        KeepEditorsWithinWindow();
+    }
 
     public MainWindowViewModel InitializeWorkspace(IAnimationExportEngine engine, WorkspaceProjectStore projectStore, ApplicationPreferencesStore preferences)
     {
         var viewModel = new MainWindowViewModel(engine, projectStore, preferences, new AvaloniaFilePickerAdapter(this, preferences));
         DataContext = viewModel;
+        Closed += (_, _) => viewModel.Dispose();
         viewModel.PropertyChanged += (_, eventArgs) =>
         {
             if (eventArgs.PropertyName == nameof(MainWindowViewModel.IsDialogOpen) && viewModel.IsDialogOpen)
@@ -23,11 +59,32 @@ public sealed partial class MainWindow : Window
 
     private MainWindowViewModel ViewModel => (MainWindowViewModel)DataContext!;
 
+    internal void VerifyToolbarLayout()
+    {
+        var buttons = this.GetVisualDescendants().OfType<Button>().Where(button => button.Classes.Contains("toolbar")).ToArray();
+        if (buttons.Length != 4) throw new InvalidOperationException("The project toolbar must expose four commands.");
+        foreach (var button in buttons)
+        {
+            var glyph = button.GetVisualDescendants().OfType<global::Avalonia.Controls.Shapes.Path>().Single();
+            var ink = glyph.Data!.Bounds.Inflate(glyph.StrokeThickness / 2);
+            var origin = glyph.TranslatePoint(default, button)
+                ?? throw new InvalidOperationException("Toolbar glyph is not attached to its button.");
+            if (button.Bounds.Width < 44 || button.Bounds.Height < 44
+                || ink.Left < 0 || ink.Top < 0 || ink.Right > glyph.Width || ink.Bottom > glyph.Height
+                || glyph.Bounds.Width < glyph.Width || glyph.Bounds.Height < glyph.Height
+                || origin.X + ink.Left < 2 || origin.Y + ink.Top < 2
+                || origin.X + ink.Right > button.Bounds.Width - 2 || origin.Y + ink.Bottom > button.Bounds.Height - 2)
+                throw new InvalidOperationException("A toolbar icon or hit target is clipped.");
+        }
+    }
+
     private void NewProjectClick(object? sender, RoutedEventArgs e) => ViewModel.NewProject();
     private async void OpenProjectClick(object? sender, RoutedEventArgs e) => await ViewModel.OpenProjectAsync();
     private async void SaveProjectClick(object? sender, RoutedEventArgs e) => await ViewModel.SaveProjectAsync(false);
     private async void SaveProjectAsClick(object? sender, RoutedEventArgs e) => await ViewModel.SaveProjectAsync(true);
     private async void ExportClick(object? sender, RoutedEventArgs e) => await ViewModel.ExportAsync();
+    private async void BuildPreviewClick(object? sender, RoutedEventArgs e) => await ViewModel.BuildPreviewAsync();
+    private async void OpenPreviewClick(object? sender, RoutedEventArgs e) => await ViewModel.OpenPreviewAsync();
     private async void AddAnimationClick(object? sender, RoutedEventArgs e) => await ViewModel.AddAnimationsAsync();
     private async void AddPartClick(object? sender, RoutedEventArgs e) => await ViewModel.AddPartsAsync();
     private async void AddLayerClick(object? sender, RoutedEventArgs e) => await ViewModel.AddLayersAsync();

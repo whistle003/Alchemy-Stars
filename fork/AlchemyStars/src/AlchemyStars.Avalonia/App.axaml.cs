@@ -48,18 +48,23 @@ public sealed partial class App : Application
                     mainWindow.WindowStartupLocation = WindowStartupLocation.Manual;
                     mainWindow.Position = new PixelPoint(-32000, -32000);
                 }
-                mainWindow.Opened += (_, _) => DispatcherTimer.RunOnce(() =>
+                mainWindow.Opened += async (_, _) =>
                 {
+                    if (Program.BuildPreviewSmoke) await viewModel.BuildPreviewAsync();
+                    else if (Program.PreviewSmokePath is { } castPath) await viewModel.Preview.LoadAsync(castPath);
+                    await Task.Delay(500);
+                    mainWindow.VerifyToolbarLayout();
                     if (Program.RenderSmokePath is not null)
                     {
                         var width = Math.Max(1, (int)Math.Ceiling(mainWindow.ClientSize.Width));
                         var height = Math.Max(1, (int)Math.Ceiling(mainWindow.ClientSize.Height));
                         using var bitmap = new RenderTargetBitmap(new PixelSize(width, height));
                         bitmap.Render(mainWindow);
+                        Directory.CreateDirectory(Path.GetDirectoryName(Program.RenderSmokePath)!);
                         bitmap.Save(Program.RenderSmokePath, PngBitmapEncoderOptions.Default);
                     }
-                    desktop.Shutdown(0);
-                }, TimeSpan.FromMilliseconds(500));
+                    desktop.Shutdown((Program.BuildPreviewSmoke || Program.PreviewSmokePath is not null) && !viewModel.Preview.HasScene ? 1 : 0);
+                };
             }
             desktop.MainWindow = mainWindow;
         }

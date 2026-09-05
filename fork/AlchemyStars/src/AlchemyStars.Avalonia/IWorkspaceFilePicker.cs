@@ -8,6 +8,7 @@ public enum FilePickerPurpose
     AnimationLayer,
     LeftPose,
     RightPose,
+    Preview,
 }
 
 public interface IWorkspaceFilePicker

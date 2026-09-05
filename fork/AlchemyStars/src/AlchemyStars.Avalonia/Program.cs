@@ -12,6 +12,8 @@ internal static class Program
     internal static string? RenderDialogKind { get; private set; }
     internal static string? StartupProjectPath { get; private set; }
     internal static bool AccessibilitySmokeRequested { get; private set; }
+    internal static string? PreviewSmokePath { get; private set; }
+    internal static bool BuildPreviewSmoke { get; private set; }
 
     [STAThread]
     public static int Main(string[] args)
@@ -26,6 +28,8 @@ internal static class Program
 
         if (args.Contains("--self-test", StringComparer.OrdinalIgnoreCase))
             return SelfTest.Run();
+        if (GetOption(args, "--preview-test") is { } previewTest)
+            return SelfTest.RunPreview(previewTest, GetOption(args, "--skeleton-project"));
 
         var hawkArgumentIndex = Array.FindIndex(args, argument =>
             argument.Equals("--hawk-smoke", StringComparison.OrdinalIgnoreCase));
@@ -45,6 +49,8 @@ internal static class Program
         RenderSmokeSize = renderSize is null ? null : ParseSize(renderSize);
         RenderSmokePage = ParsePage(GetOption(args, "--page"));
         RenderDialogKind = GetOption(args, "--dialog");
+        PreviewSmokePath = GetOption(args, "--preview-cast");
+        BuildPreviewSmoke = args.Contains("--build-preview", StringComparer.OrdinalIgnoreCase);
         AccessibilitySmokeRequested = args.Contains("--accessibility-smoke", StringComparer.OrdinalIgnoreCase);
         StartupProjectPath = args
             .Where(argument => !argument.StartsWith("--", StringComparison.Ordinal))

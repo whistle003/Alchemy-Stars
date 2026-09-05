@@ -2,7 +2,7 @@
 
 Status: complete test implementation on `codex/avalonia-aot`; do not merge into `main` or publish as a stable release before .NET 11 GA.
 
-Version: `1.3.0-preview.6`
+Version: `1.3.0-preview.7`
 Runtime: .NET 11 Preview 7
 UI framework: Avalonia 12.1.2
 Production baseline: WPF v1.1.9 on `main`
@@ -19,7 +19,8 @@ The test branch now contains the complete Alchemy Stars desktop workflow rather 
 - choose full or relevant-bones-only baking, old Call of Duty compatibility, prefixes and suffixes;
 - remember per-purpose file-browser locations and follow system, Chinese or English UI language;
 - use file browsers, editable/pasteable paths, direct path drops, list drop zones and blank-area context menus;
-- keep progress, success and error feedback centered inside the owning window.
+- keep progress, success and error feedback centered inside the owning window;
+- display the actual merged CAST with clay-shaded skinning, frame playback/scrubbing, orbit/zoom and skeleton-only support.
 
 New animation output folders stay blank. The engine also rejects an output that resolves to any model, animation, pose or layer input, so a same-named export cannot overwrite source data.
 
@@ -42,25 +43,26 @@ The UI layer owns presentation, localization, file pickers and drag/drop. The en
 ## Accessibility and visual behavior
 
 - The minimum supported window is 900 × 600 DIP; each page scrolls vertically without horizontal clipping.
-- The main shell adapts the supplied Beutl editor reference into a compact activity rail, project breadcrumb, asset library, composition canvas, functional animation-layer tracks, property inspector and 30 DIP full-width status strip. AtomBox contributes the restrained form/list spacing model.
-- All primary controls use persistent labels, at least 44 DIP command targets and visible focus rings.
-- Icon-only toolbar commands use a consistent 20 DIP rounded-stroke family, localized tooltips and UI Automation names.
+- The main shell adapts the supplied Beutl editor reference into a compact activity rail, project breadcrumb, asset library, composition canvas, functional animation-layer tracks, property inspector and 24 DIP full-width status strip. The 48 DIP activity rail, full-width lower layer area, resizable dividers and flat collapsible inspector follow the supplied reference.
+- Primary actions retain at least 44 DIP command targets and visible focus rings. Icon-only navigation has localized tooltips and UI Automation names, with the page title visible in the breadcrumb.
+- Icon-only toolbar commands use 24 DIP fixed canvases with inset rounded strokes, localized tooltips and UI Automation names.
 - `Ctrl+O`, `Ctrl+S`, `Ctrl+Shift+S`, `Ctrl+E` and `Esc` cover project/export/dialog actions.
 - Every drag or reorder workflow also has a file-browser, context-menu or button alternative.
 - Windows UI Automation checks the published native executable for required names, keyboard focus, 44 × 44 key targets and initial dialog focus.
 - The About icon is displayed inside a padded 112 × 112 region and is not clipped.
-- Motion is intentionally absent, so reduced-motion users do not lose information or controls.
+- No decorative animation is used; CAST playback is explicitly user-controlled and pauses when leaving the preview pages or opening a dialog.
 
 ## Verification
 
-Completed on 2026-09-05:
+Completed on 2026-09-06:
 
 - Release solution build: 0 warnings and 0 errors, excluding the expected preview-support notice.
 - Acceptance suite: all 32 checks passed, including CAST, animation-only CAST, selective baking, SMD, Maya-backed FBX, the workspace store and source-overwrite prevention.
 - Native AOT self-test, real Win32 startup, Windows UI Automation and four-page off-screen rendering: passed.
 - Native AOT standard `HawkSprint.aprj` export: passed.
+- CAST preview regression: visible geometry, distinct sampled frames, deterministic reverse scrubbing and unchanged input SHA-256; animation-only files also pass using the canonical project's matching skeleton. Preview uses a separate scene and does not alter the export pipeline.
 - Native AOT and managed Hawk CAST outputs are byte-identical: SHA-256 `DB5940259349C1952E2049C27D55853B0A26A94C8AD30E8730B122C372287C81`.
-- The clean `win-x64` publish is 7 files / 38.17 MiB. The application executable is 21,006,336 bytes; PDB files are rejected.
+- The clean `win-x64` publish is 7 files / 38.46 MiB (40,325,337 bytes). The application executable is 21,310,976 bytes; PDB files are rejected.
 
 Run the complete native verification with the pinned preview SDK:
 
@@ -71,7 +73,7 @@ Run the complete native verification with the pinned preview SDK:
 The standard-project path can also be exercised directly:
 
 ```powershell
-./output/avalonia-aot-preview6/AlchemyStars.Avalonia.exe --project-smoke ./fork/AlchemyStars/Example/Hawk/HawkSprint.aprj <output-folder>
+./output/avalonia-aot-preview7/AlchemyStars.Avalonia.exe --project-smoke ./fork/AlchemyStars/Example/Hawk/HawkSprint.aprj <output-folder>
 ```
 
 ## Native AOT notes

@@ -4,6 +4,29 @@ namespace AlchemyStars.Avalonia;
 
 internal static class SelfTest
 {
+    public static int RunPreview(string path, string? projectPath = null)
+    {
+        try
+        {
+            var before = System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(path));
+            var store = new WorkspaceProjectStore();
+            var request = projectPath is null ? null : store.CreateExportRequest(store.Load(projectPath));
+            var scene = CastPreviewScene.Load(path, request?.Parts, request?.Options.MatchOldCallOfDuty ?? false);
+            Require(scene.FrameCount > 1, "Expected an animated CAST for the preview regression.");
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            var first = CastPreviewRenderer.Render(scene, 0, 640, 400, PreviewCamera.Default, false);
+            var another = CastPreviewRenderer.Render(scene, scene.FrameCount / 2, 640, 400, PreviewCamera.Default, false);
+            var repeat = CastPreviewRenderer.Render(scene, 0, 640, 400, PreviewCamera.Default, false);
+            Require(first.Count(pixel => pixel != CastPreviewRenderer.Background) > 50, "CAST geometry was not rasterized.");
+            Require(!first.SequenceEqual(another), "Animation sampling did not change the preview.");
+            Require(first.SequenceEqual(repeat), "Reverse frame scrubbing accumulated transforms.");
+            Require(before.SequenceEqual(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(path))), "Preview modified the CAST.");
+            Console.WriteLine($"CAST preview: PASS ({scene.VertexCount} vertices, {scene.BoneCount} bones, {scene.FrameCount} frames; three 640x400 renders {watch.ElapsedMilliseconds} ms)");
+            return 0;
+        }
+        catch (Exception exception) { Console.Error.WriteLine(exception); return 1; }
+    }
+
     public static int Run()
     {
         try

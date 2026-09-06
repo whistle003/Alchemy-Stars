@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.3.0-preview.14 — 2026-09-07
+
+Consolidated Chinese release notes covering preview.12–preview.14: [release notes](docs/releases/1.3.0-preview.14.zh-CN.md). The requested download archive is named `AlchemyStars-1.3.0-preview.11-win-x64.zip`; its actual application version is preview.14.
+
+- Added draggable splitters on both sides of the dual-wield preview, matching the animation and model-parts editors, including arrow-key resizing and hover/focus feedback.
+- Included dual-wield panes in window-width clamping and Restore layout so widening a list cannot leave the preview inaccessible after shrinking the window.
+
+## 1.3.0-preview.13 — 2026-09-07
+
+- Added a per-dual-task “Export weapon models” switch, enabled by default and saved with the project. It writes a separate `_model.cast` containing hands, both complete weapon instances, skin weights and one skeleton without animation, independently of animation format and animation-only CAST settings.
+- Included companion paths in export results, source-overwrite protection and batch collision detection. Preview never writes companion files.
+- Added checks for both weapon mesh sets, switch persistence, enabled/disabled export, animation-only CAST, SMD/SEAnim companions and Blender model-then-animation import.
+
+## 1.3.0-preview.12 — 2026-09-07
+
+- Added a Dual wield sidebar page with source-task pairing, editable mount names, composition preview, selected/batch export and persistent project references.
+- Added native attached-mode composition from one hands model and one weapon model. Both source tasks run the existing pose/layer/IK pipeline before per-frame mount solving; two weapon instances share one output skeleton and one baked animation.
+- Added explicit validation for source references, matching timing, scale curves, output collisions and missing inputs; report unmapped source targets.
+- Added Blender background FBX conversion, preferring installed Blender 4.3, while retaining the Maya backend and explicit backend selection.
+- Bundled a pinned MIT Blender CAST importer with a complete-scene animation-binding fix. Added Scarab engine and Blender pose verification; see `docs/dual-wield.zh-CN.md` for workflow and limits.
+
 ## 1.3.0-preview.11 — 2026-09-06
 
 - Added structural CAST model-part detection for view hands, weapons and attachments. Complete bilateral arm chains take precedence over helper `j_gun` and weapon tags, while weapon/attachment roots and mechanism topology drive the remaining recommendations.

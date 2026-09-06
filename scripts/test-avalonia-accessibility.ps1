@@ -17,7 +17,7 @@ Add-Type -AssemblyName UIAutomationTypes
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $standardProject = Join-Path $repositoryRoot 'fork\AlchemyStars\Example\Hawk\HawkSprint.aprj'
 $arguments = '--accessibility-smoke --culture en-US --window-size 900x600 --page animations --dialog success "' + $standardProject + '"'
-$process = Start-Process -FilePath $executable -ArgumentList $arguments -WorkingDirectory $publishPath -PassThru
+$process = Start-Process -FilePath $executable -ArgumentList $arguments -WorkingDirectory $publishPath -WindowStyle Hidden -PassThru
 try {
     $processCondition = [System.Windows.Automation.PropertyCondition]::new(
         [System.Windows.Automation.AutomationElement]::ProcessIdProperty,

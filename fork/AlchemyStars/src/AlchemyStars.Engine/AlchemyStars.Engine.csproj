@@ -28,6 +28,7 @@
     <Compile Include="..\Alchemist.UI\CastNodeTraversal.cs" Link="Shared\CastNodeTraversal.cs" />
     <Compile Include="..\Alchemist.UI\MayaCastPackage.cs" Link="Shared\MayaCastPackage.cs" />
     <Compile Include="..\Alchemist.UI\MayaFbxExporter.cs" Link="Shared\MayaFbxExporter.cs" />
+    <Compile Include="..\Alchemist.UI\DesktopFbxExporter.cs" Link="Shared\DesktopFbxExporter.cs" />
     <Compile Include="..\Alchemist.UI\OutputFormatCatalog.cs" Link="Shared\OutputFormatCatalog.cs" />
     <Compile Include="..\Alchemist.UI\PartOrdering.cs" Link="Shared\PartOrdering.cs" />
     <Compile Include="..\Alchemist.UI\SkeletonMergePlan.cs" Link="Shared\SkeletonMergePlan.cs" />

@@ -29,6 +29,8 @@ internal static class Program
 
         if (args.Contains("--self-test", StringComparer.OrdinalIgnoreCase))
             return SelfTest.Run();
+        var dualIndex = Array.IndexOf(args, "--dual-smoke");
+        if (dualIndex >= 0) return DualWieldSmoke.Run(args.Skip(dualIndex + 1).ToArray());
         if (GetOption(args, "--preview-test") is { } previewTest)
             return SelfTest.RunPreview(previewTest, GetOption(args, "--skeleton-project"));
 
@@ -96,6 +98,7 @@ internal static class Program
     {
         "animations" => WorkspacePage.Animations,
         "parts" => WorkspacePage.ModelParts,
+        "dual" => WorkspacePage.DualAnimations,
         "settings" => WorkspacePage.Settings,
         "about" => WorkspacePage.About,
         _ => null,

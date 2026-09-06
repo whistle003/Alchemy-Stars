@@ -80,15 +80,22 @@ namespace Alchemist.UI
             bool bakeRelevantBonesOnly,
             bool matchOldCallOfDuty)
         {
+            if (string.IsNullOrEmpty(animation.OutputFolder))
+                throw new ArgumentException("No output folder was provided.");
+            var baked = Bake(mergePlan, animation, lSettings, rSettings, bakeRelevantBonesOnly, matchOldCallOfDuty);
+            return SaveBaked(mergePlan, baked,
+                Path.Combine(animation.OutputFolder, prefix + animation.OutputName + suffix + format), format, castAnimationOnly);
+        }
+
+        internal static SkeletonAnimation Bake(
+            SkeletonMergePlan mergePlan, Animation animation, IKSettings lSettings, IKSettings rSettings,
+            bool bakeRelevantBonesOnly, bool matchOldCallOfDuty)
+        {
             var skeleton = mergePlan.Skeleton;
             Logging.Logger.Info($"Attempting to convert: {animation.Name}");
 
-            format = OutputFormatCatalog.Normalize(format);
-
             if (string.IsNullOrEmpty(animation.Name))
                 throw new ArgumentException("No input file was provided to alchemist for main animation.");
-            if (string.IsNullOrEmpty(animation.OutputFolder))
-                throw new ArgumentException("No input file was provided to alchemist for output folder.");
 
             var player = new AnimationPlayer("Player");
 
@@ -416,12 +423,18 @@ namespace Alchemist.UI
                 }
             }
 
-            var outputFull = Path.Combine(animation.OutputFolder, prefix + animation.OutputName + suffix + format);
+            return newAnim;
+        }
+
+        internal static string SaveBaked(SkeletonMergePlan mergePlan, SkeletonAnimation newAnim,
+            string outputFull, string format, bool castAnimationOnly)
+        {
+            format = OutputFormatCatalog.Normalize(format);
 
             Logging.Logger.Info($"Copied notetracks");
             Logging.Logger.Info($"Saving animation to: {outputFull}");
 
-            Directory.CreateDirectory(animation.OutputFolder);
+            Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(outputFull))!);
 
             if (string.Equals(format, ".cast", StringComparison.OrdinalIgnoreCase)
                 && !castAnimationOnly)
@@ -454,7 +467,7 @@ namespace Alchemist.UI
                     {
                         Directory.CreateDirectory(stagingDirectory);
                         MayaCastPackage.Save(stagedCast, mergePlan, newAnim, TranslatorFactory);
-                        MayaFbxExporter.Export(stagedCast, stagedFbx, newAnim.Framerate);
+                        DesktopFbxExporter.Export(stagedCast, stagedFbx, newAnim.Framerate);
                         File.Move(stagedFbx, temporaryPath, overwrite: true);
                     }
                     finally

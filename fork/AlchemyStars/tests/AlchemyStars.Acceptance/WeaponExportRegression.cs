@@ -25,7 +25,7 @@ internal static class WeaponExportRegression
         var root = new CastNode(CastNodeIdentifier.Root);
         new AnimationNode { Parent = root }.AddValue("fr", 30f);
         CastWriter.Save(animationPath, new Cast.NET.Cast([root]));
-        var vm = new MainViewModel(_ => { }, string.Empty);
+        var vm = new MainViewModel(_ => { }, string.Empty) { OutputFormat = ".cast", CastAnimationOnly = false };
         vm.Parts.Add(new Part(vm, hands) { Type = PartType.ViewHands });
         vm.Parts.Add(new Part(vm, weapon) { Type = PartType.Weapon });
         vm.Animations.Add(new Animation(animationPath) { OutputFolder = directory, OutputName = "merged", EnableLeftHandIK = false, EnableRightHandIK = false });

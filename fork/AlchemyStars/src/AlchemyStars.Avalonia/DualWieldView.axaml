@@ -1,0 +1,74 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ xmlns:local="using:AlchemyStars.Avalonia" xmlns:engine="using:AlchemyStars.Engine"
+ x:Class="AlchemyStars.Avalonia.DualWieldView" x:DataType="local:MainWindowViewModel">
+ <Grid x:Name="DualEditor">
+  <Grid.ColumnDefinitions>
+   <ColumnDefinition Width="200" MinWidth="180" MaxWidth="360" />
+   <ColumnDefinition Width="4" />
+   <ColumnDefinition Width="*" MinWidth="240" />
+   <ColumnDefinition Width="4" />
+   <ColumnDefinition Width="280" MinWidth="280" MaxWidth="460" />
+  </Grid.ColumnDefinitions>
+  <Border Classes="workspace-panel">
+   <Grid RowDefinitions="44,Auto,*,Auto">
+    <Border Classes="dock-header"><TextBlock Text="{Binding Text.DualAnimations}" Classes="dock-title" /></Border>
+    <StackPanel Grid.Row="1" Margin="10" Spacing="6">
+     <Button Content="{Binding Text.DualAdd}" Click="AddClick" AutomationProperties.Name="{Binding Text.DualAdd}" />
+     <Button Content="{Binding Text.DualPair}" Click="PairClick" AutomationProperties.Name="{Binding Text.DualPair}" />
+    </StackPanel>
+    <ListBox Grid.Row="2" ItemsSource="{Binding DualAnimations}" SelectedItem="{Binding SelectedDual}" Classes="asset-list" AutomationProperties.Name="{Binding Text.DualAnimations}">
+     <ListBox.ItemTemplate><DataTemplate x:DataType="engine:WorkspaceDualAnimation"><TextBlock Text="{Binding Name}" TextWrapping="Wrap" ToolTip.Tip="{Binding Name}" /></DataTemplate></ListBox.ItemTemplate>
+    </ListBox>
+    <StackPanel Grid.Row="3" Margin="10" Spacing="8">
+     <TextBlock Text="{Binding Text.DualPairHelp}" Classes="muted" TextWrapping="Wrap" />
+     <Button Content="{Binding Text.Remove}" Click="RemoveClick" IsEnabled="{Binding HasSelectedDual}" AutomationProperties.Name="{Binding Text.Remove}" />
+    </StackPanel>
+   </Grid>
+  </Border>
+  <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ResizeDirection="Columns" ResizeBehavior="PreviousAndNext" Focusable="True" KeyboardIncrement="16" Background="{DynamicResource AlchemyBorderBrush}" AutomationProperties.Name="{Binding Text.ResizePanels}" ToolTip.Tip="{Binding Text.ResizePanels}" />
+  <Border Grid.Column="2" Classes="composition-canvas">
+   <Grid RowDefinitions="Auto,*,Auto">
+    <WrapPanel Margin="8">
+     <Button Classes="primary" Content="{Binding Text.BuildPreview}" Click="PreviewClick" IsEnabled="{Binding HasSelectedDual}" AutomationProperties.Name="{Binding Text.BuildPreview}" />
+     <Button Margin="6,0,0,0" Content="{Binding CurrentExportLabel}" Click="ExportClick" IsEnabled="{Binding HasSelectedDual}" AutomationProperties.Name="{Binding CurrentExportLabel}" />
+    </WrapPanel>
+    <local:CastPreviewView Grid.Row="1" DataContext="{Binding Preview}" />
+    <StackPanel Grid.Row="2" Margin="14" Spacing="8">
+     <TextBlock Text="{Binding DualSourceSummary}" TextWrapping="Wrap" />
+     <TextBlock Text="{Binding Text.DualTimingHelp}" Classes="muted" TextWrapping="Wrap" />
+    </StackPanel>
+   </Grid>
+  </Border>
+  <GridSplitter Grid.Column="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ResizeDirection="Columns" ResizeBehavior="PreviousAndNext" Focusable="True" KeyboardIncrement="16" Background="{DynamicResource AlchemyBorderBrush}" AutomationProperties.Name="{Binding Text.ResizePanels}" ToolTip.Tip="{Binding Text.ResizePanels}" />
+  <Border Grid.Column="4" Classes="workspace-panel">
+   <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Margin="12" Spacing="10">
+     <TextBlock Text="{Binding Text.DualHelp}" Classes="muted" TextWrapping="Wrap" />
+     <StackPanel Spacing="10" IsEnabled="{Binding HasSelectedDual}">
+      <CheckBox x:Name="ExportModelsCheckBox" Content="{Binding Text.DualExportModels}" IsChecked="{Binding SelectedDual.ExportWeaponModels, Mode=TwoWay}" AutomationProperties.Name="{Binding Text.DualExportModels}" />
+      <TextBlock Text="{Binding Text.DualExportModelsHelp}" Classes="muted" TextWrapping="Wrap" />
+      <TextBlock Text="{Binding Text.DualName}" Classes="field-label" />
+      <TextBox Text="{Binding SelectedDual.Name}" AutomationProperties.Name="{Binding Text.DualName}" />
+      <TextBlock Text="{Binding Text.DualLeft}" Classes="field-label" />
+      <ComboBox x:Name="LeftSourcePicker" ItemsSource="{Binding Animations}" SelectedItem="{Binding DualLeftSource, Mode=TwoWay}" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding Text.DualLeft}" ToolTip.Tip="{Binding DualLeftSource.Name}">
+       <ComboBox.ItemTemplate><DataTemplate x:DataType="engine:WorkspaceAnimation"><TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" /></DataTemplate></ComboBox.ItemTemplate>
+      </ComboBox>
+      <Button Content="{Binding Text.DualEditLeft}" Click="EditLeftClick" AutomationProperties.Name="{Binding Text.DualEditLeft}" />
+      <TextBlock Text="{Binding Text.DualRight}" Classes="field-label" />
+      <ComboBox x:Name="RightSourcePicker" ItemsSource="{Binding Animations}" SelectedItem="{Binding DualRightSource, Mode=TwoWay}" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding Text.DualRight}" ToolTip.Tip="{Binding DualRightSource.Name}">
+       <ComboBox.ItemTemplate><DataTemplate x:DataType="engine:WorkspaceAnimation"><TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" /></DataTemplate></ComboBox.ItemTemplate>
+      </ComboBox>
+      <Button Content="{Binding Text.DualEditRight}" Click="EditRightClick" AutomationProperties.Name="{Binding Text.DualEditRight}" />
+      <TextBlock Text="{Binding Text.DualLeftMount}" Classes="field-label" /><TextBox Text="{Binding SelectedDual.LeftMount}" AutomationProperties.Name="{Binding Text.DualLeftMount}" />
+      <TextBlock Text="{Binding Text.DualRightMount}" Classes="field-label" /><TextBox Text="{Binding SelectedDual.RightMount}" AutomationProperties.Name="{Binding Text.DualRightMount}" />
+      <TextBlock Text="{Binding Text.DualSourceMount}" Classes="field-label" /><TextBox Text="{Binding SelectedDual.SourceMount}" AutomationProperties.Name="{Binding Text.DualSourceMount}" />
+      <TextBlock Text="{Binding Text.OutputFolder}" Classes="field-label" /><TextBox Text="{Binding SelectedDual.OutputFolder}" AutomationProperties.Name="{Binding Text.OutputFolder}" />
+      <Button Content="{Binding Text.Browse}" Click="FolderClick" AutomationProperties.Name="{Binding Text.Browse}" />
+      <Button Content="{Binding Text.DualAllFolder}" Click="AllFolderClick" AutomationProperties.Name="{Binding Text.DualAllFolder}" />
+      <Button Content="{Binding Text.DualExportAll}" Click="ExportAllClick" AutomationProperties.Name="{Binding Text.DualExportAll}" />
+     </StackPanel>
+    </StackPanel>
+   </ScrollViewer>
+  </Border>
+ </Grid>
+</UserControl>

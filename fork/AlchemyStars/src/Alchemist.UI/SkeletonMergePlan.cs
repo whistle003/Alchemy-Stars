@@ -15,6 +15,8 @@ internal sealed class SkeletonMergePlan
 
     public Skeleton Skeleton { get; } = new("Alchemy Stars Merged Skeleton");
     public List<Source> Sources { get; } = [];
+    public Dictionary<string, string> LeftWeaponNames { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public Dictionary<string, string> RightWeaponNames { get; } = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<Identity> identities = [];
 
     public static SkeletonMergePlan Build(IEnumerable<Part> parts, bool matchOldCallOfDuty)
@@ -40,7 +42,29 @@ internal sealed class SkeletonMergePlan
         return plan;
     }
 
-    private void AddModel(Part part, string path, byte[] snapshot, int modelIndex, ModelNode model, bool legacy)
+    public static SkeletonMergePlan BuildAttachedDual(Part hands, Part weapon, string leftMount, string rightMount)
+    {
+        var plan = new SkeletonMergePlan();
+        void AddPart(Part part, string? side, Dictionary<string, string>? names)
+        {
+            var path = Path.GetFullPath(part.FilePath);
+            var snapshot = File.ReadAllBytes(path);
+            using var stream = new MemoryStream(snapshot, writable: false);
+            var models = CastReader.Load(stream).RootNodes.SelectMany(DescendantsAndSelf).OfType<ModelNode>().ToArray();
+            if (models.Length != 1) throw new InvalidDataException("Dual wield requires one model node per input file.");
+            plan.AddModel(part, path, snapshot, 0, models[0], false, side, names);
+        }
+        AddPart(hands, null, null);
+        AddPart(new Part { FilePath = weapon.FilePath, Type = PartType.Weapon, ParentBoneTag = leftMount }, "left", plan.LeftWeaponNames);
+        AddPart(new Part { FilePath = weapon.FilePath, Type = PartType.Weapon, ParentBoneTag = rightMount }, "right", plan.RightWeaponNames);
+        if (plan.Skeleton.EnumerateRoots().Count() != 1) throw new InvalidDataException("Dual wield requires one connected skeleton.");
+        plan.Skeleton.AssignBoneIndices();
+        plan.Skeleton.GenerateGlobalTransforms();
+        return plan;
+    }
+
+    private void AddModel(Part part, string path, byte[] snapshot, int modelIndex, ModelNode model, bool legacy,
+        string? instance = null, Dictionary<string, string>? instanceNames = null)
     {
         var bones = model.Skeleton?.Bones ?? [];
         if (bones.Length == 0)
@@ -64,12 +88,13 @@ internal sealed class SkeletonMergePlan
             if (string.IsNullOrWhiteSpace(source.Name))
                 throw new InvalidDataException($"Unnamed bone in {path}");
             var targetParent = source.ParentIndex < 0 ? parent : Skeleton.Bones[Add(source.ParentIndex)];
+            var identityName = instance is null ? source.Name : source.Name + "__" + instance;
             var reset = part.Type == PartType.ViewHands && legacy;
             var position = reset ? Vector3.Zero : source.LocalPosition;
             var rotation = reset ? Quaternion.Identity : source.LocalRotation;
             ValidateTransform(position, rotation, source.Scale, path, source.Name);
             var matching = identities.Where(identity =>
-                string.Equals(identity.OriginalName, source.Name, StringComparison.OrdinalIgnoreCase)
+                string.Equals(identity.OriginalName, identityName, StringComparison.OrdinalIgnoreCase)
                 && ReferenceEquals(identity.Bone.Parent, targetParent)
                 && Vector3.DistanceSquared(identity.Bone.BaseLocalTranslation, position) < 1e-10f
                 && 1 - MathF.Abs(Quaternion.Dot(Quaternion.Normalize(identity.Bone.BaseLocalRotation), Quaternion.Normalize(rotation))) < 1e-6f
@@ -82,7 +107,7 @@ internal sealed class SkeletonMergePlan
             }
             else
             {
-                var name = source.Name;
+                var name = identityName;
                 if (Skeleton.Bones.Any(b => string.Equals(b.Name, name, StringComparison.OrdinalIgnoreCase)))
                 {
                     var stem = name + "__" + part.Type.ToString().ToLowerInvariant();
@@ -100,9 +125,10 @@ internal sealed class SkeletonMergePlan
                     Scale = source.Scale,
                 };
                 Skeleton.AddBone(bone);
-                identities.Add(new(source.Name, bone, index == rootIndex, part.Type));
+                identities.Add(new(identityName, bone, index == rootIndex, part.Type));
                 map[index] = bone.Index;
             }
+            if (instanceNames is not null) instanceNames[source.Name] = Skeleton.Bones[map[index]].Name!;
             visiting.Remove(index);
             return map[index];
         }

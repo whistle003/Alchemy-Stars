@@ -11,9 +11,10 @@ public enum WorkspacePage
     ModelParts,
     Settings,
     About,
+    DualAnimations,
 }
 
-public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
+public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 {
     private readonly IAnimationExportEngine engine;
     private readonly WorkspaceProjectStore projectStore;
@@ -55,6 +56,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         Timeline.SetAnimation(selectedAnimation);
         SelectedPart = workspace.Parts.FirstOrDefault();
         footerStatus = text.Ready;
+        WatchDualSources();
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -64,12 +66,19 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         get => workspace;
         private set
         {
+            UnwatchDualSources();
             workspace = value;
+            selectedDual = null;
+            WatchDualSources();
+            OnPropertyChanged(nameof(Animations));
+            OnPropertyChanged(nameof(DualAnimations));
+            RaiseDualSelection();
             OnPropertyChanged();
             OnPropertyChanged(nameof(Animations));
             OnPropertyChanged(nameof(Parts));
             OnPropertyChanged(nameof(OutputFormatIndex));
             OnPropertyChanged(nameof(IsCastOutput));
+            SelectedDual = workspace.DualAnimations.FirstOrDefault();
         }
     }
 
@@ -86,6 +95,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         WorkspacePage.ModelParts => Text.ModelParts,
         WorkspacePage.Settings => Text.Settings,
         WorkspacePage.About => Text.About,
+        WorkspacePage.DualAnimations => Text.DualAnimations,
         _ => Text.Animations,
     };
     public string WindowTitle => $"{Text.ProductName} | {CurrentProjectLabel} | {Version}";
@@ -163,7 +173,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     }
     public bool IsCastOutput => string.Equals(Workspace.OutputFormat, ".cast", StringComparison.OrdinalIgnoreCase);
 
-    public void SelectPage(WorkspacePage page) => SelectedPage = page;
+    public void SelectPage(WorkspacePage page)
+    {
+        if ((page == WorkspacePage.DualAnimations) != IsDualPage) Preview.Clear();
+        SelectedPage = page;
+    }
 
     public void NewProject()
     {
@@ -412,6 +426,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
     public async Task ExportAsync()
     {
+        if (IsDualPage) { await ProcessDualAsync(false); return; }
         if (IsBusy)
             return;
         try
@@ -455,6 +470,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
     public async Task BuildPreviewAsync()
     {
+        if (IsDualPage) { await ProcessDualAsync(true); return; }
         if (IsBusy || SelectedAnimation is null) return;
         // Each invocation owns a unique cache, never a source/output asset directory.
         var cache = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "PreviewCache", Guid.NewGuid().ToString("N")));
@@ -485,6 +501,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
     public void Dispose()
     {
+        UnwatchDualSources();
         if (selectedPart is not null)
             selectedPart.PropertyChanged -= SelectedPartChanged;
         Timeline.Dispose();
@@ -636,6 +653,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
     private void RaisePageState()
     {
+        OnPropertyChanged(nameof(CurrentExportLabel));
+        OnPropertyChanged(nameof(IsDualPage));
         OnPropertyChanged(nameof(CurrentPageTitle));
         OnPropertyChanged(nameof(IsAnimationsPage));
         OnPropertyChanged(nameof(IsModelPartsPage));
@@ -698,7 +717,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 }
 
-public sealed class UiText
+public sealed partial class UiText
 {
     private readonly bool zh;
     public UiText(bool chinese) => zh = chinese;

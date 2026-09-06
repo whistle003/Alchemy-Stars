@@ -20,13 +20,20 @@ internal static class MayaCastPackage
         SkeletonMergePlan plan,
         SkeletonAnimation animation,
         Graphics3DTranslatorFactory translatorFactory)
+        => SavePackage(outputPath, plan, animation, translatorFactory);
+
+    public static void SaveModel(string outputPath, SkeletonMergePlan plan, Graphics3DTranslatorFactory translatorFactory)
+        => SavePackage(outputPath, plan, null, translatorFactory);
+
+    private static void SavePackage(string outputPath, SkeletonMergePlan plan, SkeletonAnimation? animation,
+        Graphics3DTranslatorFactory translatorFactory)
     {
         var fullOutputPath = Path.GetFullPath(outputPath);
         var directory = Path.GetDirectoryName(fullOutputPath)
             ?? throw new InvalidOperationException("Output path has no directory.");
         Directory.CreateDirectory(directory);
 
-        if (!ReferenceEquals(animation.Skeleton, plan.Skeleton))
+        if (animation is not null && !ReferenceEquals(animation.Skeleton, plan.Skeleton))
             throw new InvalidDataException("Animation and model must use the same skeleton merge plan.");
         if (plan.Sources.Any(source => string.Equals(source.Path, fullOutputPath, StringComparison.OrdinalIgnoreCase)))
             throw new InvalidOperationException("Output CAST cannot overwrite one of its source model files.");
@@ -35,7 +42,7 @@ internal static class MayaCastPackage
         var packagePath = Path.Combine(directory, $".{Guid.NewGuid():N}.package.cast");
         try
         {
-            translatorFactory.Save(animationPath, animation);
+            if (animation is not null) translatorFactory.Save(animationPath, animation);
             var nextHash = HashBase;
             var sourceModels = new List<(ModelNode Model, SkeletonMergePlan.Source Source)>();
             foreach (var source in plan.Sources)
@@ -54,20 +61,21 @@ internal static class MayaCastPackage
             var packageRoot = new CastNode(CastNodeIdentifier.Root);
             packageRoot.Hash = nextHash++;
             mergedModel.Parent = packageRoot;
-            var animationCast = CastReader.Load(animationPath);
-            FreshenHashes(animationCast, ref nextHash);
-            foreach (var root in animationCast.RootNodes)
+            if (animation is not null)
             {
-                foreach (var animationNode in DescendantsAndSelf(root).OfType<AnimationNode>().ToArray())
+                var animationCast = CastReader.Load(animationPath);
+                FreshenHashes(animationCast, ref nextHash);
+                foreach (var root in animationCast.RootNodes)
                 {
-                    animationNode.Parent = packageRoot;
+                    foreach (var animationNode in DescendantsAndSelf(root).OfType<AnimationNode>().ToArray())
+                        animationNode.Parent = packageRoot;
                 }
             }
 
             var package = new Cast.NET.Cast([packageRoot]);
-            Validate(package);
+            Validate(package, animation is null ? 0 : 1);
             CastWriter.Save(packagePath, package);
-            Validate(CastReader.Load(packagePath));
+            Validate(CastReader.Load(packagePath), animation is null ? 0 : 1);
             File.Move(packagePath, fullOutputPath, overwrite: true);
         }
         finally
@@ -236,14 +244,14 @@ internal static class MayaCastPackage
         }
     }
 
-    private static void Validate(Cast.NET.Cast cast)
+    private static void Validate(Cast.NET.Cast cast, int expectedAnimationCount)
     {
         var nodes = cast.RootNodes.SelectMany(DescendantsAndSelf).ToArray();
         var animationCount = nodes.Count(static x => x.Identifier == CastNodeIdentifier.Animation);
         var modelCount = nodes.Count(static x => x.Identifier == CastNodeIdentifier.Model);
-        if (animationCount != 1)
+        if (animationCount != expectedAnimationCount)
         {
-            throw new InvalidDataException($"Maya CAST package must contain exactly one animation; found {animationCount}.");
+            throw new InvalidDataException($"CAST package must contain {expectedAnimationCount} animation(s); found {animationCount}.");
         }
         if (modelCount != 1)
         {

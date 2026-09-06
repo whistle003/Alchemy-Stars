@@ -4,6 +4,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 
 namespace AlchemyStars.Avalonia;
 
@@ -50,12 +51,16 @@ public sealed partial class App : Application
                 }
                 mainWindow.Opened += async (_, _) =>
                 {
+                    if (viewModel.IsDualPage)
+                        mainWindow.GetVisualDescendants().OfType<DualWieldView>().Single().VerifySourceInteraction();
                     if (Program.BuildPreviewSmoke) await viewModel.BuildPreviewAsync();
                     else if (Program.PreviewSmokePath is { } castPath) await viewModel.Preview.LoadAsync(castPath);
                     if (Program.FirstPersonPreviewRequested && viewModel.Preview.HasScene)
                         viewModel.Preview.ToggleFirstPerson();
                     await Task.Delay(500);
                     mainWindow.VerifyToolbarLayout();
+                    if (viewModel.IsDualPage)
+                        mainWindow.GetVisualDescendants().OfType<DualWieldView>().Single().VerifySourceSelection();
                     if (Program.RenderSmokePath is not null)
                     {
                         var width = Math.Max(1, (int)Math.Ceiling(mainWindow.ClientSize.Width));

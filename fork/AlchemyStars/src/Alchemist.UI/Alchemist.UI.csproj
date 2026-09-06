@@ -18,6 +18,9 @@
 
   <ItemGroup>
     <Resource Include="Assets\AlchemyStarsIcon.png" />
+    <Content Include="..\..\..\..\blender\convert_cast.py" Link="Converters\convert_cast.py" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\..\..\..\third_party\cast\blender\io_scene_cast\*.py" Link="BlenderPlugin\io_scene_cast\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\..\..\..\third_party\cast\LICENSE" Link="BlenderPlugin\LICENSE" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="Assets\AlchemyStarsIcon.ico" />
   </ItemGroup>
 

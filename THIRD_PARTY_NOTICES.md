@@ -1,5 +1,15 @@
 # Third-party notices
 
+## Blender CAST plugin
+
+The Blender add-on and Python CAST library under `third_party/cast/blender` are
+from [dtzxporter/cast](https://github.com/dtzxporter/cast), pinned at
+`a8ca18a0acf3b97b19332c53b54b47fcc3217755`, under the MIT License.
+The license is retained at `third_party/cast/LICENSE`. Importer adaptations
+bind an animation to the newly imported armature for a complete single-model scene
+and increase joint display length to reduce orientation precision loss.
+See `third_party/cast/blender/UPSTREAM.md` for provenance.
+
 ## Alchemist
 
 Alchemy Stars is based on [Scobalula/Alchemist](https://github.com/Scobalula/Alchemist),

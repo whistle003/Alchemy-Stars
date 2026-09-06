@@ -11,7 +11,7 @@ namespace AlchemyStars.Engine;
 
 public sealed class AnimationExportEngine : IAnimationExportEngine
 {
-    public const string EngineVersion = "1.3.0-preview.11";
+    public const string EngineVersion = "1.3.0-preview.14";
 
     /// <summary>Creates an independent bind skeleton for previewing animation-only CAST data.</summary>
     public static RedFox.Graphics3D.Skeletal.Skeleton CreatePreviewSkeleton(IReadOnlyList<ModelPartSpec> parts, bool legacy) =>
@@ -110,7 +110,7 @@ public sealed class AnimationExportEngine : IAnimationExportEngine
             throw new ExportValidationException(ExportErrorCode.MissingInputFile, $"{label} file was not found: {path}");
     }
 
-    private static UiPart ToCompatibilityPart(ModelPartSpec part) => new()
+    internal static UiPart ToCompatibilityPart(ModelPartSpec part) => new()
     {
         FilePath = part.FilePath,
         ParentBoneTag = part.ParentBoneTag,
@@ -122,7 +122,7 @@ public sealed class AnimationExportEngine : IAnimationExportEngine
         },
     };
 
-    private static UiAnimation ToCompatibilityAnimation(AnimationExportJob job)
+    internal static UiAnimation ToCompatibilityAnimation(AnimationExportJob job)
     {
         var animation = new UiAnimation
         {
@@ -155,7 +155,7 @@ public sealed class AnimationExportEngine : IAnimationExportEngine
         return animation;
     }
 
-    private static IKSettings ToIkSettings(IkChainSpec chain, string targetOverride) => new(
+    internal static IKSettings ToIkSettings(IkChainSpec chain, string targetOverride) => new(
         chain.StartBone,
         chain.MiddleBone,
         chain.EndBone,

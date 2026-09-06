@@ -25,6 +25,8 @@ public abstract class ObservableModel : INotifyPropertyChanged
 
 public sealed class WorkspaceDocument : ObservableModel
 {
+    public int SchemaVersion { get; set; } = 1;
+    public ObservableCollection<WorkspaceDualAnimation> DualAnimations { get; set; } = [];
     private bool enableAnimationTrimming;
     private string leftIkStartBoneName = "j_shoulder_le";
     private string leftIkMidBoneName = "j_elbow_le";
@@ -106,6 +108,7 @@ public sealed class WorkspacePart : ObservableModel
 
 public sealed class WorkspaceAnimation : ObservableModel
 {
+    public string Id { get; set; } = Guid.NewGuid().ToString("N");
     private float outputFramerate = 30;
     private string name = string.Empty;
     private string outputName = string.Empty;

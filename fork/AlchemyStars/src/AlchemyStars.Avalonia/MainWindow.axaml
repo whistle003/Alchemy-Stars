@@ -22,6 +22,7 @@
         <StackPanel Spacing="4">
           <Button Classes="activity" Click="AnimationsPageClick" ToolTip.Tip="{Binding Text.Animations}" AutomationProperties.Name="{Binding Text.Animations}" Classes.selected="{Binding IsAnimationsPage}"><Path Classes="icon-glyph " Data="M3,5 L17,5 L17,17 L3,17 Z M3,9 L17,9 M7,2 L7,7 M13,2 L13,7 M8,11 L13,14 L8,17 Z" IsHitTestVisible="False" /></Button>
           <Button Classes="activity" Click="PartsPageClick" ToolTip.Tip="{Binding Text.ModelParts}" AutomationProperties.Name="{Binding Text.ModelParts}" Classes.selected="{Binding IsModelPartsPage}"><Path Classes="icon-glyph " Data="M10,2 L18,6 L10,10 L2,6 Z M2,10 L10,14 L18,10 M2,14 L10,18 L18,14" IsHitTestVisible="False" /></Button>
+          <Button Classes="activity" Click="DualPageClick" ToolTip.Tip="{Binding Text.DualAnimations}" AutomationProperties.Name="{Binding Text.DualAnimations}" Classes.selected="{Binding IsDualPage}"><Path Classes="icon-glyph" Data="M3,3 L8,3 L8,10 L3,10 Z M12,3 L17,3 L17,10 L12,10 Z M5,10 L5,15 L10,18 L15,15 L15,10 M10,13 L10,18" IsHitTestVisible="False" /></Button>
         </StackPanel>
         <StackPanel Grid.Row="2" Spacing="4">
           <Button Classes="activity" Click="SettingsPageClick" ToolTip.Tip="{Binding Text.Settings}" AutomationProperties.Name="{Binding Text.Settings}" Classes.selected="{Binding IsSettingsPage}"><Path Classes="icon-glyph " Data="M3,5 L17,5 M3,10 L17,10 M3,15 L17,15 M7,3 L7,7 M13,8 L13,12 M8,13 L8,17" IsHitTestVisible="False" /></Button>
@@ -54,10 +55,10 @@
             <Path Classes="icon-glyph" Width="24" Height="24" Stretch="None" Data="M4,3 L16,3 L19,6 L19,10 M4,3 L4,20 L10,20 M7,3 L7,8 L15,8 L15,3 M7,16 L10,16 M12,18 L19,11 L22,14 L15,21 L11,22 Z M17,13 L20,16" IsHitTestVisible="False" />
           </Button>
           <Border Width="1" Height="28" Background="{DynamicResource AlchemyBorderBrush}" Margin="6,0" />
-          <Button Classes="primary" Click="ExportClick" MinWidth="112" IsEnabled="{Binding !IsBusy}" AutomationProperties.Name="{Binding Text.Export}">
+          <Button Classes="primary" Click="ExportClick" MinWidth="112" IsEnabled="{Binding !IsBusy}" AutomationProperties.Name="{Binding CurrentExportLabel}">
             <StackPanel Orientation="Horizontal" Spacing="8">
               <Path Classes="icon-glyph on-accent" Width="24" Height="24" Stretch="None" Data="M12,3 L12,15 M8,11 L12,15 L16,11 M4,17 L4,21 L20,21 L20,17" IsHitTestVisible="False" />
-              <TextBlock Text="{Binding Text.Export}" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding CurrentExportLabel}" VerticalAlignment="Center" />
             </StackPanel>
           </Button>
         </StackPanel>
@@ -156,6 +157,7 @@
         </Grid>
       </Border>
     </Grid>
+    <local:DualWieldView x:Name="DualWorkspace" Grid.Column="1" Grid.Row="1" IsVisible="{Binding IsDualPage}" />
     <!-- Settings workspace -->
     <ScrollViewer Grid.Column="1" Grid.Row="1" IsVisible="{Binding IsSettingsPage}" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
       <StackPanel Margin="14,12,14,28" Spacing="14" MaxWidth="1080">
@@ -172,7 +174,7 @@
     <!-- About workspace -->
     <ScrollViewer Grid.Column="1" Grid.Row="1" IsVisible="{Binding IsAboutPage}" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
       <StackPanel Margin="30,26,30,38" Spacing="18" MaxWidth="900" HorizontalAlignment="Center">
-        <Grid ColumnDefinitions="116,26,*"><Border Width="116" Height="116" Padding="12" Background="{DynamicResource AlchemySurfaceBrush}" BorderBrush="{DynamicResource AlchemyBorderStrongBrush}" BorderThickness="1" CornerRadius="26"><Image Source="avares://AlchemyStars.Avalonia/Assets/AlchemyStarsIcon.png" Stretch="Uniform" AutomationProperties.Name="{Binding Text.ApplicationIcon}" /></Border><StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="7"><TextBlock Text="{Binding Text.AboutTitle}" FontSize="30" FontWeight="SemiBold" TextWrapping="Wrap" /><TextBlock Text="{Binding Text.AboutSubtitle}" Classes="muted" FontSize="15" TextWrapping="Wrap" /><Border Classes="preview-badge" HorizontalAlignment="Left"><TextBlock Text="1.3.0-preview.11 · .NET 11 · Native AOT" Classes="eyebrow" /></Border></StackPanel></Grid>
+        <Grid ColumnDefinitions="116,26,*"><Border Width="116" Height="116" Padding="12" Background="{DynamicResource AlchemySurfaceBrush}" BorderBrush="{DynamicResource AlchemyBorderStrongBrush}" BorderThickness="1" CornerRadius="26"><Image Source="avares://AlchemyStars.Avalonia/Assets/AlchemyStarsIcon.png" Stretch="Uniform" AutomationProperties.Name="{Binding Text.ApplicationIcon}" /></Border><StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="7"><TextBlock Text="{Binding Text.AboutTitle}" FontSize="30" FontWeight="SemiBold" TextWrapping="Wrap" /><TextBlock Text="{Binding Text.AboutSubtitle}" Classes="muted" FontSize="15" TextWrapping="Wrap" /><Border Classes="preview-badge" HorizontalAlignment="Left"><TextBlock Text="1.3.0-preview.14 · .NET 11 · Native AOT" Classes="eyebrow" /></Border></StackPanel></Grid>
         <Border Classes="hero-card"><StackPanel Spacing="10"><TextBlock Text="{Binding Text.AboutOverview}" TextWrapping="Wrap" FontSize="16" /><TextBlock Text="{Binding Text.Capabilities}" Classes="muted" TextWrapping="Wrap" /></StackPanel></Border>
         <Grid ColumnDefinitions="*,16,*"><Border Classes="card"><StackPanel Spacing="10"><TextBlock Text="{Binding Text.Build}" Classes="card-title" /><TextBlock Text="{Binding RuntimeDescription}" Classes="muted" /><TextBlock Text="{Binding Text.License}" Classes="muted" TextWrapping="Wrap" /></StackPanel></Border><Border Grid.Column="2" Classes="card"><StackPanel Spacing="10"><TextBlock Text="{Binding Text.UpstreamTitle}" Classes="card-title" /><TextBlock Text="{Binding Text.UpstreamHelp}" Classes="muted" TextWrapping="Wrap" /><Button Classes="secondary" Click="OpenUpstreamClick" Content="{Binding Text.Upstream}" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Text.Upstream}" /></StackPanel></Border></Grid>
       </StackPanel>

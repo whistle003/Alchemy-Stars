@@ -33,6 +33,13 @@ if (args.Length > 0 && args[0] == "--weapon-regression")
     return 0;
 }
 
+if (args.Length == 2 && args[0] == "--merge-structure-only")
+{
+    WeaponExportRegression.TestStructure(Path.GetFullPath(args[1]));
+    Console.WriteLine("Self-contained merge structure regression passed.");
+    return 0;
+}
+
 if (args.Contains("--drop-routing-only", StringComparer.OrdinalIgnoreCase))
 {
     TestLayerDropTargetPriority();

@@ -20,7 +20,7 @@ public sealed partial class MainWindow : Window
         // Fixed side panes need to give space back after a user narrows the window.
         // Keep the center usable without discarding the user's normal splitter positions.
         if (ClientSize.Width < MinWidth) return;
-        foreach (var editor in new[] { AnimationEditor, PartsEditor })
+        foreach (var editor in new[] { AnimationEditor, PartsEditor, DualWorkspace.EditorGrid })
         {
             var columns = editor.ColumnDefinitions;
             var overflow = columns[0].Width.Value + columns[4].Width.Value
@@ -41,6 +41,8 @@ public sealed partial class MainWindow : Window
         }
         AnimationEditor.RowDefinitions[0].Height = new GridLength(3, GridUnitType.Star);
         AnimationEditor.RowDefinitions[2].Height = new GridLength(2, GridUnitType.Star);
+        DualWorkspace.EditorGrid.ColumnDefinitions[0].Width = new GridLength(200);
+        DualWorkspace.EditorGrid.ColumnDefinitions[4].Width = new GridLength(280);
         KeepEditorsWithinWindow();
     }
 
@@ -119,6 +121,7 @@ public sealed partial class MainWindow : Window
     private async void BrowseRightPoseClick(object? sender, RoutedEventArgs e) { if (ViewModel.SelectedAnimation is { } item) await ViewModel.SetPoseAsync(item, false); }
     private async void BrowseOutputFolderClick(object? sender, RoutedEventArgs e) { if (ViewModel.SelectedAnimation is { } item) await ViewModel.SetOutputFolderAsync(item); }
     private void AnimationsPageClick(object? sender, RoutedEventArgs e) => ViewModel.SelectPage(WorkspacePage.Animations);
+    private void DualPageClick(object? sender, RoutedEventArgs e) => ViewModel.SelectPage(WorkspacePage.DualAnimations);
     private void PartsPageClick(object? sender, RoutedEventArgs e) => ViewModel.SelectPage(WorkspacePage.ModelParts);
     private void SettingsPageClick(object? sender, RoutedEventArgs e) => ViewModel.SelectPage(WorkspacePage.Settings);
     private void AboutPageClick(object? sender, RoutedEventArgs e) => ViewModel.SelectPage(WorkspacePage.About);

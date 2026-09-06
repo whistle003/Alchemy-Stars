@@ -5,6 +5,9 @@ namespace AlchemyStars.Engine;
 
 public sealed class WorkspaceProjectStore
 {
+    public static WorkspaceDocument Snapshot(WorkspaceDocument document) =>
+        JsonSerializer.Deserialize(JsonSerializer.Serialize(document, WorkspaceJsonContext.Default.WorkspaceDocument),
+            WorkspaceJsonContext.Default.WorkspaceDocument)!;
     private static readonly JsonSerializerOptions ReadOptions = new()
     {
         ReferenceHandler = ReferenceHandler.Preserve,
@@ -28,6 +31,7 @@ public sealed class WorkspaceProjectStore
     public void Save(WorkspaceDocument document, string filePath)
     {
         ArgumentNullException.ThrowIfNull(document);
+        document.SchemaVersion = document.DualAnimations.Count > 0 ? 2 : document.SchemaVersion;
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
         var fullPath = Path.GetFullPath(filePath);
         var directory = Path.GetDirectoryName(fullPath)
@@ -76,9 +80,17 @@ public sealed class WorkspaceProjectStore
 
     private static void Normalize(WorkspaceDocument document)
     {
+        if (document.SchemaVersion > 2) throw new InvalidDataException("This project requires a newer Alchemy Stars version.");
+        document.DualAnimations ??= [];
         document.OutputFormat = OutputFormats.Normalize(document.OutputFormat);
         document.Parts ??= [];
         document.Animations ??= [];
+        var ids = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var animation in document.Animations)
+        {
+            if (string.IsNullOrWhiteSpace(animation.Id)) animation.Id = Guid.NewGuid().ToString("N");
+            if (!ids.Add(animation.Id)) throw new InvalidDataException("Duplicate animation task identifiers.");
+        }
         foreach (var part in document.Parts)
         {
             part.FilePath = part.FilePath;

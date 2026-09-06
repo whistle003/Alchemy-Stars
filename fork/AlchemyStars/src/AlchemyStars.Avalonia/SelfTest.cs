@@ -1,3 +1,5 @@
+using Cast.NET;
+using Cast.NET.Nodes;
 using System.Globalization;
 using System.Numerics;
 
@@ -113,9 +115,45 @@ internal static class SelfTest
 
                 Require(viewModel.AddAnimationPaths([Path.Combine(testDirectory, "idle.cast")]) == 1, "Animation import routing failed.");
                 Require(viewModel.SelectedAnimation?.OutputFolder == string.Empty, "New animation output folder must stay blank.");
-                Require(viewModel.AddPartPaths([Path.Combine(testDirectory, "hands.cast"), Path.Combine(testDirectory, "weapon.cast")]) == 2, "Part import routing failed.");
-                Require(viewModel.Parts[0].Type == ModelPartKind.ViewHands, "First imported model part should default to view hands.");
-                Require(viewModel.Parts[1].Type == ModelPartKind.Weapon && viewModel.Parts[1].ParentBoneTag == "tag_weapon", "Weapon default parenting failed.");
+                var handsPath = Path.Combine(testDirectory, "misleading_weapon_name.cast");
+                var weaponPath = Path.Combine(testDirectory, "receiver.cast");
+                var attachmentPath = Path.Combine(testDirectory, "magazine.cast");
+                WriteClassificationFixture(handsPath,
+                [
+                    ("tag_origin", -1), ("tag_view", 0), ("j_mainroot", 0),
+                    ("j_shoulder_le", 2), ("j_elbow_le", 3), ("j_wrist_le", 4),
+                    ("j_shoulder_ri", 2), ("j_elbow_ri", 6), ("j_wrist_ri", 7),
+                    ("j_gun", 8), ("tag_weapon", 2),
+                ]);
+                WriteClassificationFixture(weaponPath,
+                [
+                    ("j_gun", -1), ("tag_align_gun", 0), ("tag_barrel_attach", 0), ("j_slide", 0),
+                ]);
+                WriteClassificationFixture(attachmentPath,
+                [
+                    ("tag_mag_attach", -1), ("j_mag1", 0), ("j_ammo_01", 1),
+                ]);
+                var handsClassification = ModelPartClassifier.Classify(handsPath);
+                var weaponClassification = ModelPartClassifier.Classify(weaponPath);
+                var attachmentClassification = ModelPartClassifier.Classify(attachmentPath);
+                Require(handsClassification.Kind == ModelPartKind.ViewHands && handsClassification.Confidence >= 0.98f,
+                    "A bilateral hand rig containing j_gun was misclassified.");
+                Require(weaponClassification.Kind == ModelPartKind.Weapon && weaponClassification.Confidence >= 0.9f
+                    && weaponClassification.RecommendedParentBone == "tag_weapon", "Weapon topology classification failed.");
+                Require(attachmentClassification.Kind == ModelPartKind.Attachment && attachmentClassification.Confidence >= 0.8f,
+                    "Attachment-root classification failed.");
+                Require(viewModel.AddPartPaths([handsPath, weaponPath, attachmentPath]) == 3, "Part import routing failed.");
+                Require(viewModel.Parts[0].Type == ModelPartKind.ViewHands, "Hands classification was not applied to the workspace.");
+                Require(viewModel.Parts[1].Type == ModelPartKind.Weapon && viewModel.Parts[1].ParentBoneTag == "tag_weapon", "Weapon classification or parenting failed.");
+                Require(viewModel.Parts[2].Type == ModelPartKind.Attachment && viewModel.Parts[2].ParentBoneTag == string.Empty,
+                    "Attachment classification or parenting failed.");
+                Require(viewModel.Parts.All(part => part.AutoClassification is not null), "Automatic classification evidence was not retained for review.");
+                viewModel.Parts[1].Type = ModelPartKind.Attachment;
+                viewModel.SelectedPart = viewModel.Parts[1];
+                Require(viewModel.Parts[1].AutoClassification?.Kind == ModelPartKind.Weapon
+                    && viewModel.SelectedPartDetection.Contains("Manually overridden", StringComparison.Ordinal),
+                    "Manual part-type override hid or replaced the detection recommendation.");
+                viewModel.Parts[1].Type = ModelPartKind.Weapon;
                 Require(viewModel.AddLayerPaths([Path.Combine(testDirectory, "sprint.cast")]) == 1, "Layer-priority import routing failed.");
 
                 var placements = AnimationTimelineLayout.Calculate([
@@ -132,7 +170,8 @@ internal static class SelfTest
                 projectStore.Save(viewModel.Workspace, projectPath);
                 var roundtrip = projectStore.Load(projectPath);
                 Require(roundtrip.Animations.Count == 1 && roundtrip.Animations[0].Layers.Count == 1, "AOT project round-trip lost animation layers.");
-                Require(roundtrip.Parts.Count == 2 && roundtrip.Parts[1].ParentBoneTag == "tag_weapon", "AOT project round-trip lost model hierarchy settings.");
+                Require(roundtrip.Parts.Count == 3 && roundtrip.Parts[1].ParentBoneTag == "tag_weapon", "AOT project round-trip lost model hierarchy settings.");
+                Require(roundtrip.Parts.All(part => part.AutoClassification is null), "Transient classification data leaked into the project format.");
 
                 var legacyProjectPath = Path.Combine(testDirectory, "legacy-reference.aprj");
                 File.WriteAllText(legacyProjectPath, """
@@ -163,6 +202,12 @@ internal static class SelfTest
         try
         {
             Require(arguments.Count == 6, "Hawk smoke requires: hands, weapon, idle, sprint loop, additive offset, output folder.");
+            var handsClassification = ModelPartClassifier.Classify(arguments[0]);
+            var weaponClassification = ModelPartClassifier.Classify(arguments[1]);
+            Require(handsClassification.Kind == ModelPartKind.ViewHands && handsClassification.Confidence >= 0.98f,
+                "Hawk hands were not classified as view hands.");
+            Require(weaponClassification.Kind == ModelPartKind.Weapon && weaponClassification.Confidence >= 0.9f
+                && weaponClassification.RecommendedParentBone == "tag_weapon", "Hawk receiver was not classified as a weapon.");
             var outputFolder = Path.GetFullPath(arguments[5]);
             var request = new AnimationExportRequest(
                 [
@@ -228,6 +273,21 @@ internal static class SelfTest
     {
         if (!condition)
             throw new InvalidOperationException(message);
+    }
+
+    private static void WriteClassificationFixture(string path, (string Name, int Parent)[] definitions)
+    {
+        ulong hash = 1;
+        var root = new CastNode(CastNodeIdentifier.Root) { Hash = hash++ };
+        var model = new ModelNode { Parent = root, Hash = hash++ };
+        var skeleton = new SkeletonNode { Parent = model, Hash = hash++ };
+        foreach (var definition in definitions)
+        {
+            var bone = new BoneNode { Parent = skeleton, Hash = hash++ };
+            bone.AddString("n", definition.Name);
+            bone.AddValue("p", definition.Parent < 0 ? uint.MaxValue : (uint)definition.Parent);
+        }
+        CastWriter.Save(path, new Cast.NET.Cast([root]));
     }
 
     private sealed class SelfTestFilePicker : IWorkspaceFilePicker

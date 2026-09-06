@@ -72,6 +72,7 @@ public sealed class WorkspacePart : ObservableModel
     private string filePath = string.Empty;
     private string parentBoneTag = string.Empty;
     private ModelPartKind type = ModelPartKind.Attachment;
+    private ModelPartClassification? autoClassification;
 
     public string FilePath
     {
@@ -79,12 +80,18 @@ public sealed class WorkspacePart : ObservableModel
         set
         {
             if (SetProperty(ref filePath, PathInput.Normalize(value)))
+            {
+                AutoClassification = null;
                 RaisePropertyChanged(nameof(DisplayName));
+            }
         }
     }
 
     public string ParentBoneTag { get => parentBoneTag; set => SetProperty(ref parentBoneTag, value ?? string.Empty); }
     public ModelPartKind Type { get => type; set => SetProperty(ref type, value); }
+
+    [JsonIgnore]
+    public ModelPartClassification? AutoClassification { get => autoClassification; set => SetProperty(ref autoClassification, value); }
 
     [JsonIgnore]
     public int TypeIndex

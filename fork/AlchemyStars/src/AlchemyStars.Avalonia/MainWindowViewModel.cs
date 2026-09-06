@@ -53,7 +53,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         workspace = preferences.CreateWorkspace();
         selectedAnimation = workspace.Animations.FirstOrDefault();
         Timeline.SetAnimation(selectedAnimation);
-        selectedPart = workspace.Parts.FirstOrDefault();
+        SelectedPart = workspace.Parts.FirstOrDefault();
         footerStatus = text.Ready;
     }
 
@@ -95,7 +95,20 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     public string LanguageMode => languageMode;
     public string? CurrentProjectPath { get => currentProjectPath; private set { currentProjectPath = value; OnPropertyChanged(); OnPropertyChanged(nameof(CurrentProjectLabel)); OnPropertyChanged(nameof(WindowTitle)); } }
     public WorkspaceAnimation? SelectedAnimation { get => selectedAnimation; set { if (!ReferenceEquals(selectedAnimation, value)) Preview.Clear(); selectedAnimation = value; SelectedLayer = null; Timeline.SetAnimation(value); OnPropertyChanged(); OnPropertyChanged(nameof(HasSelectedAnimation)); } }
-    public WorkspacePart? SelectedPart { get => selectedPart; set { selectedPart = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasSelectedPart)); } }
+    public WorkspacePart? SelectedPart
+    {
+        get => selectedPart;
+        set
+        {
+            if (ReferenceEquals(selectedPart, value)) return;
+            if (selectedPart is not null) selectedPart.PropertyChanged -= SelectedPartChanged;
+            selectedPart = value;
+            if (selectedPart is not null) selectedPart.PropertyChanged += SelectedPartChanged;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HasSelectedPart));
+            RaisePartClassificationState();
+        }
+    }
     public WorkspaceLayer? SelectedLayer { get => selectedLayer; set { selectedLayer = value; OnPropertyChanged(); OnPropertyChanged(nameof(SelectedTimelineTrack)); OnPropertyChanged(nameof(HasSelectedLayer)); } }
     public AnimationTrackItem? SelectedTimelineTrack
     {
@@ -104,6 +117,25 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     }
     public bool HasSelectedAnimation => SelectedAnimation is not null;
     public bool HasSelectedPart => SelectedPart is not null;
+    public bool HasSelectedPartClassification => SelectedPart?.AutoClassification is not null;
+    public string SelectedPartDetection
+    {
+        get
+        {
+            if (SelectedPart?.AutoClassification is not { } classification) return string.Empty;
+            var type = Text.PartTypes[(int)classification.Kind];
+            var confidence = classification.Confidence switch
+            {
+                >= 0.85f => Text.DetectionHigh,
+                >= 0.65f => Text.DetectionMedium,
+                _ => Text.DetectionLow,
+            };
+            var evidence = string.Join(Text.ListSeparator, classification.Evidence.Select(Text.PartEvidence));
+            var template = SelectedPart.Type == classification.Kind ? Text.AutoPartDetected : Text.AutoPartOverridden;
+            return string.Format(CultureInfo.CurrentCulture, template, type, confidence,
+                classification.BoneCount, evidence);
+        }
+    }
     public bool HasSelectedLayer => SelectedLayer is not null;
     public WorkspacePage SelectedPage { get => selectedPage; private set { selectedPage = value; if (value is WorkspacePage.Settings or WorkspacePage.About) Preview.Pause(); OnPropertyChanged(); RaisePageState(); } }
     public bool IsAnimationsPage => SelectedPage == WorkspacePage.Animations;
@@ -208,24 +240,55 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         return added;
     }
 
-    public async Task AddPartsAsync() => AddPartPaths(await picker.PickFilesAsync(FilePickerPurpose.ModelPart, true));
+    public async Task AddPartsAsync() => await AddPartPathsAsync(await picker.PickFilesAsync(FilePickerPurpose.ModelPart, true));
+
+    public async Task<int> AddPartPathsAsync(IEnumerable<string> paths)
+    {
+        var normalized = NormalizeCastPaths(paths).ToArray();
+        if (normalized.Length == 0) return 0;
+        FooterStatus = Text.DetectingPartTypes;
+        var attempts = await Task.WhenAll(normalized.Select(path => Task.Run(() => ClassifyPart(path))));
+        return AddPartPathsCore(normalized.Zip(attempts));
+    }
 
     public int AddPartPaths(IEnumerable<string> paths)
     {
+        var normalized = NormalizeCastPaths(paths).ToArray();
+        return AddPartPathsCore(normalized.Select(path => (path, ClassifyPart(path))));
+    }
+
+    private int AddPartPathsCore(IEnumerable<(string Path, ModelPartClassification? Classification)> inputs)
+    {
         var added = 0;
-        foreach (var path in NormalizeCastPaths(paths))
+        var detected = 0;
+        var needsReview = 0;
+        foreach (var (path, classification) in inputs)
         {
-            var part = new WorkspacePart { FilePath = path, Type = Parts.Count == 0 ? ModelPartKind.ViewHands : ModelPartKind.Weapon };
-            if (part.Type == ModelPartKind.Weapon)
-                part.ParentBoneTag = "tag_weapon";
+            var fallback = Parts.Count == 0 ? ModelPartKind.ViewHands : ModelPartKind.Weapon;
+            var part = new WorkspacePart
+            {
+                FilePath = path,
+                Type = classification?.Kind ?? fallback,
+                ParentBoneTag = classification?.RecommendedParentBone
+                    ?? (fallback == ModelPartKind.Weapon ? "tag_weapon" : string.Empty),
+                AutoClassification = classification,
+            };
             Parts.Add(part);
             SelectedPart = part;
+            if (classification is not null)
+            {
+                detected++;
+                if (classification.Confidence < 0.65f) needsReview++;
+            }
+            else needsReview++;
             added++;
         }
         if (added > 0)
         {
             preferences.RememberDirectory("part", SelectedPart?.FilePath);
-            FooterStatus = string.Format(CultureInfo.CurrentCulture, Text.PartsAdded, added);
+            FooterStatus = detected == 0
+                ? string.Format(CultureInfo.CurrentCulture, Text.PartsAdded, added)
+                : string.Format(CultureInfo.CurrentCulture, Text.PartsDetected, added, detected, needsReview);
         }
         return added;
     }
@@ -305,7 +368,21 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     {
         var path = (await picker.PickFilesAsync(FilePickerPurpose.ModelPart, false)).FirstOrDefault();
         if (path is not null)
-            part.FilePath = path;
+            await ApplyPartSourceAsync(part, path);
+    }
+
+    public async Task ReclassifyPartAsync(WorkspacePart part)
+    {
+        // FilePath clears the transient result whenever typed/pasted text changes.
+        // Preserve a manual type override when focus merely moves between controls.
+        if (part.AutoClassification is null)
+            await ApplyPartSourceAsync(part, part.FilePath);
+    }
+
+    public async Task SetPartPathFromDropAsync(WorkspacePart part, string path)
+    {
+        await ApplyPartSourceAsync(part, PathInput.Normalize(path));
+        preferences.RememberDirectory("part", path);
     }
 
     public async Task ReplaceLayerSourceAsync(WorkspaceLayer layer)
@@ -408,6 +485,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
     public void Dispose()
     {
+        if (selectedPart is not null)
+            selectedPart.PropertyChanged -= SelectedPartChanged;
         Timeline.Dispose();
         Preview.Dispose();
     }
@@ -470,9 +549,50 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             case WorkspaceAnimation animation when role == "leftPose": animation.LeftHandPoseFile = normalized; preferences.RememberDirectory("pose", normalized); break;
             case WorkspaceAnimation animation when role == "rightPose": animation.RightHandPoseFile = normalized; preferences.RememberDirectory("pose", normalized); break;
             case WorkspaceAnimation animation when role == "output": animation.OutputFolder = Directory.Exists(normalized) ? normalized : Path.GetDirectoryName(normalized) ?? string.Empty; preferences.RememberDirectory("output", normalized); break;
-            case WorkspacePart part when role == "part": part.FilePath = normalized; preferences.RememberDirectory("part", normalized); break;
             case WorkspaceLayer layer when role == "layer": layer.Name = normalized; preferences.RememberDirectory("layer", normalized); break;
         }
+    }
+
+    private async Task ApplyPartSourceAsync(WorkspacePart part, string path)
+    {
+        var normalized = PathInput.Normalize(path);
+        part.FilePath = normalized;
+        var classification = await Task.Run(() => ClassifyPart(normalized));
+        if (classification is not null)
+        {
+            part.Type = classification.Kind;
+            part.ParentBoneTag = classification.RecommendedParentBone;
+            part.AutoClassification = classification;
+            FooterStatus = string.Format(CultureInfo.CurrentCulture, Text.PartDetected,
+                Text.PartTypes[(int)classification.Kind]);
+        }
+        else
+        {
+            part.AutoClassification = null;
+            FooterStatus = Text.PartDetectionFailed;
+        }
+        RaisePartClassificationState();
+    }
+
+    private static ModelPartClassification? ClassifyPart(string path)
+    {
+        try { return ModelPartClassifier.Classify(path); }
+        catch (Exception exception) when (exception is not OutOfMemoryException)
+        {
+            return null;
+        }
+    }
+
+    private void SelectedPartChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(WorkspacePart.Type) or nameof(WorkspacePart.AutoClassification))
+            RaisePartClassificationState();
+    }
+
+    private void RaisePartClassificationState()
+    {
+        OnPropertyChanged(nameof(HasSelectedPartClassification));
+        OnPropertyChanged(nameof(SelectedPartDetection));
     }
 
     private void ApplyLanguage()
@@ -485,6 +605,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         OnPropertyChanged(nameof(LanguageButtonAccessibleName));
         OnPropertyChanged(nameof(CurrentProjectLabel));
         OnPropertyChanged(nameof(WindowTitle));
+        RaisePartClassificationState();
         RaisePageState();
     }
 
@@ -681,7 +802,7 @@ public sealed class UiText
     public string MoveUp => L("上移", "Move up");
     public string MoveDown => L("下移", "Move down");
     public string ModelWorkspace => L("模型部件", "Model parts");
-    public string ModelWorkspaceHelp => L("按层级顺序排列手臂、武器和附件。首个部件默认为手臂，后续部件默认为挂接到 tag_weapon 的武器。", "Order view hands, weapons and attachments by hierarchy. The first part defaults to view hands; later parts default to weapons attached to tag_weapon.");
+    public string ModelWorkspaceHelp => L("按层级顺序排列手臂、武器和附件。导入时会根据骨架结构自动识别类型；低置信度结果可在属性检查器中确认或覆盖。", "Order view hands, weapons and attachments by hierarchy. Imports are classified from skeleton structure; review or override low-confidence results in the inspector.");
     public string AddPart => L("添加模型部件", "Add model part");
     public string EmptyParts => L("尚未添加模型部件", "No model parts yet");
     public string EmptyPartsHelp => L("右键此区域、拖入 CAST，或点击“添加模型部件”。", "Right-click this area, drop CAST files, or choose Add model part.");
@@ -689,6 +810,28 @@ public sealed class UiText
     public string PartType => L("部件类型", "Part type");
     public string ParentBone => L("父骨骼", "Parent bone");
     public string PartDetails => L("部件属性", "Part properties");
+    public string DetectingPartTypes => L("正在识别模型部件类型…", "Detecting model part types…");
+    public string PartsDetected => L("已添加 {0} 个模型部件；自动识别 {1} 个，{2} 个需要确认。", "Added {0} model part(s); detected {1}, with {2} requiring review.");
+    public string PartDetected => L("已自动识别为{0}。", "Detected as {0}.");
+    public string PartDetectionFailed => L("无法识别模型类型；已保留当前设置。", "Could not detect the model type; the current settings were preserved.");
+    public string DetectionHigh => L("高", "High");
+    public string DetectionMedium => L("中", "Medium");
+    public string DetectionLow => L("低", "Low");
+    public string ListSeparator => L("、", ", ");
+    public string AutoPartDetected => L("自动识别：{0} · {1}置信度 · {2} 根骨骼\n依据：{3}", "Auto-detected: {0} · {1} confidence · {2} bones\nEvidence: {3}");
+    public string AutoPartOverridden => L("已手动覆盖（识别建议：{0} · {1}置信度 · {2} 根骨骼）\n依据：{3}", "Manually overridden (suggestion: {0} · {1} confidence · {2} bones)\nEvidence: {3}");
+    public string PartEvidence(ModelPartEvidence evidence) => evidence switch
+    {
+        ModelPartEvidence.BilateralArmChains => L("完整左右臂链", "complete bilateral arm chains"),
+        ModelPartEvidence.SingleArmChain => L("单侧手臂链", "single arm chain"),
+        ModelPartEvidence.ViewModelAnchors => L("第一人称骨架锚点", "view-model anchors"),
+        ModelPartEvidence.WeaponRoot => L("武器根骨骼", "weapon root"),
+        ModelPartEvidence.WeaponAttachmentTags => L("武器挂点", "weapon attachment tags"),
+        ModelPartEvidence.WeaponMechanismBones => L("武器机构骨骼", "weapon mechanism bones"),
+        ModelPartEvidence.AttachmentRoot => L("附件根挂点", "attachment root tag"),
+        ModelPartEvidence.FileNameHint => L("文件名提示", "file-name hint"),
+        _ => L("未发现骨架", "no skeleton found"),
+    };
     public string PartOrderHelp => L("模型顺序会影响骨架挂接：手臂应在武器之前，附件应位于其目标父级之后。", "Model order controls skeleton attachment: place view hands before the weapon and attachments after their intended parent.");
     public string OutputSettings => L("输出设置", "Output settings");
     public string OutputSettingsHelp => L("项目保留自己的设置；“保存为默认值”会用于以后新建的项目。", "Each project keeps its own settings; Save as defaults applies them to future projects.");
@@ -730,7 +873,7 @@ public sealed class UiText
     public string ApplicationIcon => L("炼金之星应用图标", "Alchemy Stars application icon");
     public string AboutSubtitle => L("面向第一人称武器资产的 CAST 动画合并与 Maya 2025 工作流", "CAST animation merging and Maya 2025 workflow for first-person weapon assets");
     public string AboutOverview => L("炼金之星改进自 Scobalula/Alchemist。本测试版已将完整工作流迁移至 Avalonia，并通过 Native AOT 发布；WPF 版本在 .NET 11 正式版迁移前继续作为生产基线。", "Alchemy Stars improves Scobalula/Alchemist. This preview migrates the complete workflow to Avalonia and publishes with Native AOT; WPF remains the production baseline until the .NET 11 GA migration.");
-    public string Capabilities => L("支持完整或仅动画 CAST、FBX、SMD、SEAnim、普通/叠加/手势动画层、左右手 IK、相关骨骼烘焙、DQS 蒙皮和旧版 .aprj。合成工作区通过 GPU 加速的 Skia 绘制预览平滑 CAST 灰模、骨架和逐帧动画；安全第一人称取景保持武器完整显示，动画层轨道按源文件真实帧数和偏移显示。", "Supports full-scene or animation-only CAST, FBX, SMD, SEAnim, normal/additive/gesture layers, IK, relevant-bone baking, DQS skinning and legacy .aprj files. The composition workspace uses GPU-backed Skia drawing for smooth CAST geometry, skeleton and frame preview; safe first-person framing keeps the weapon visible, while layer tracks reflect true source frame counts and offsets.");
+    public string Capabilities => L("支持基于骨架结构的模型部件自动识别、完整或仅动画 CAST、FBX、SMD、SEAnim、普通/叠加/手势动画层、左右手 IK、相关骨骼烘焙、DQS 蒙皮和旧版 .aprj。合成工作区通过 GPU 加速的 Skia 绘制预览平滑 CAST 灰模、骨架和逐帧动画；安全第一人称取景保持武器完整显示，动画层轨道按源文件真实帧数和偏移显示。", "Supports skeleton-based model-part detection, full-scene or animation-only CAST, FBX, SMD, SEAnim, normal/additive/gesture layers, IK, relevant-bone baking, DQS skinning and legacy .aprj files. The composition workspace uses GPU-backed Skia drawing for smooth CAST geometry, skeleton and frame preview; safe first-person framing keeps the weapon visible, while layer tracks reflect true source frame counts and offsets.");
     public string Build => L("版本与环境", "Build and environment");
     public string UpstreamTitle => L("来源与致谢", "Origin and attribution");
     public string UpstreamHelp => L("炼金之星保留 Alchemist 与 RedFox 的转换基础，并在其上改进生产工作流。", "Alchemy Stars retains the Alchemist and RedFox conversion foundation and improves its production workflow.");

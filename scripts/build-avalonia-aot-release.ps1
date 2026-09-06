@@ -4,10 +4,10 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$version = '1.3.0-preview.10'
+$version = '1.3.0-preview.11'
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $releaseRoot = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'release'))
-$publishDirectory = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'output\avalonia-aot-preview10'))
+$publishDirectory = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'output\avalonia-aot-preview11'))
 $stagingDirectory = [System.IO.Path]::GetFullPath((Join-Path $releaseRoot "Alchemy Stars $version"))
 $resolvedArchive = if ([string]::IsNullOrWhiteSpace($ArchivePath)) {
     [System.IO.Path]::GetFullPath((Join-Path $releaseRoot "AlchemyStars-$version-win-x64.zip"))

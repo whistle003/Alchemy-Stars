@@ -144,10 +144,11 @@ public sealed partial class MainWindow : Window
         e.DragEffects = DragDropEffects.Copy;
     }
 
-    private void PartDrop(object? sender, DragEventArgs e)
+    private async void PartDrop(object? sender, DragEventArgs e)
     {
-        ViewModel.AddPartPaths(GetDroppedPaths(e));
+        await ViewModel.AddPartPathsAsync(GetDroppedPaths(e));
         e.DragEffects = DragDropEffects.Copy;
+        e.Handled = true;
     }
 
     private void LayerDrop(object? sender, DragEventArgs e)
@@ -162,7 +163,26 @@ public sealed partial class MainWindow : Window
     private void LeftPosePathDrop(object? sender, DragEventArgs e) => SetDroppedPath(ViewModel.SelectedAnimation, "leftPose", e);
     private void RightPosePathDrop(object? sender, DragEventArgs e) => SetDroppedPath(ViewModel.SelectedAnimation, "rightPose", e);
     private void OutputPathDrop(object? sender, DragEventArgs e) => SetDroppedPath(ViewModel.SelectedAnimation, "output", e);
-    private void PartPathDrop(object? sender, DragEventArgs e) => SetDroppedPath(ViewModel.SelectedPart, "part", e);
+    private async void PartPathDrop(object? sender, DragEventArgs e)
+    {
+        var path = GetDroppedPaths(e).FirstOrDefault();
+        if (ViewModel.SelectedPart is { } part && path is not null)
+        {
+            await ViewModel.SetPartPathFromDropAsync(part, path);
+            e.DragEffects = DragDropEffects.Copy;
+        }
+        else
+        {
+            e.DragEffects = DragDropEffects.None;
+        }
+        e.Handled = true;
+    }
+
+    private async void PartPathLostFocus(object? sender, RoutedEventArgs e)
+    {
+        if (ViewModel.SelectedPart is { } part)
+            await ViewModel.ReclassifyPartAsync(part);
+    }
     private void LayerPathDrop(object? sender, DragEventArgs e) => SetDroppedPath(ViewModel.SelectedLayer, "layer", e);
 
     private void SetDroppedPath(object? target, string role, DragEventArgs e)

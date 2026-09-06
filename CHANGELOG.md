@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3.0-preview.11 — 2026-09-06
+
+- Added structural CAST model-part detection for view hands, weapons and attachments. Complete bilateral arm chains take precedence over helper `j_gun` and weapon tags, while weapon/attachment roots and mechanism topology drive the remaining recommendations.
+- Applied detection consistently to file-picker imports, model-list drops, path-field drops, and typed/pasted paths when the field loses focus; parsing runs off the UI thread for interactive paths.
+- Added localized confidence and evidence feedback in the model inspector. Suggested types and `tag_weapon` parenting remain editable, and manual overrides are visibly preserved.
+- Kept detection metadata transient so existing `.aprj` files are neither reclassified on load nor changed on disk.
+- Added self-contained topology fixtures and real Hawk checks for hands/weapon classification before the Native AOT export regression.
+
 ## 1.3.0-preview.10 — 2026-09-06
 
 - Replaced flat face shading in CAST preview with skinned vertex normals, dual-light clay shading, controlled highlights and a subtle rim light. Legacy meshes without normals receive deterministic area-weighted smooth normals.

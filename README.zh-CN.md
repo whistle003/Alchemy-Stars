@@ -2,7 +2,7 @@
 
 # Alchemy Stars（炼金之星）
 
-> **Avalonia AOT 预览测试分支：** 本测试线使用 .NET 11 Preview 7、Avalonia 12.1.2，版本为 `1.3.0-preview.10`，完整桌面工作流已可作为自包含 Native AOT 程序运行。正式版仍是 `main` 上的 v1.1.9；在 .NET 11 GA 前，现有 WPF 程序仍是稳定基线，请勿把本分支构建作为稳定版分发。
+> **Avalonia AOT 预览测试分支：** 本测试线使用 .NET 11 Preview 7、Avalonia 12.1.2，版本为 `1.3.0-preview.11`，完整桌面工作流已可作为自包含 Native AOT 程序运行。正式版仍是 `main` 上的 v1.1.9；在 .NET 11 GA 前，现有 WPF 程序仍是稳定基线，请勿把本分支构建作为稳定版分发。
 
 使用方法见 [Avalonia 预览版快速指南](docs/avalonia-aot-user-guide.zh-CN.md)；详细结果见 [Avalonia AOT 迁移报告](docs/avalonia-aot-migration.md)与 [.NET 11 Preview 兼容性报告](docs/dotnet11-preview.md)。
 
@@ -29,6 +29,7 @@ Alchemy Stars 保留原版批处理、动画层、IK 与 RedFox 转换管线，�
 
 ## 已完成的改进
 
+- 导入模型部件时读取 CAST 骨架结构，自动区分手臂、武器与附件，推荐 `tag_weapon` 挂接并显示置信度和判断依据；类型仍可手动覆盖。文件名只作为弱提示，因此含辅助 `j_gun` 的完整左右手骨架不会被误判为武器。
 - 区分用途不同的同名骨骼：右腕辅助骨骼保留 `j_gun`，武器根为 `tag_weapon` 下的 `j_gun__weapon`；模型、蒙皮和动画共用一份映射。
 - 导出时按 ViewHands → Weapon → Attachment 规范化模型顺序，并把全部部件物理合并成一个 Model；即使工程把武器放在手臂之前、Maya 未启用 Import Merge，也只会生成一套骨架。
 - 每个输出 CAST 保留全部模型网格、材质和重映射后的蒙皮权重，但只包含当前选中的一个烘焙动画。
@@ -115,7 +116,7 @@ Alchemy Stars 保留原版批处理、动画层、IK 与 RedFox 转换管线，�
 
 `run-tests.ps1` 会编译稳定 WPF 基线并执行 Maya 转换回归。`verify-avalonia-aot.ps1` 会发布裁剪后的本机程序，执行 AOT 契约与标准工程导出，启动真实 Win32 窗口，通过 Windows UI Automation 检查控件名称、焦点和操作区，并在 900 × 600 最小尺寸渲染四个页面与居中对话框。
 
-项目约定每次功能性改动都迭代版本；本次测试版本为 `1.3.0-preview.10`，稳定版本仍为 `1.1.9`。
+项目约定每次功能性改动都迭代版本；本次测试版本为 `1.3.0-preview.11`，稳定版本仍为 `1.1.9`。
 
 1.1.9 的 UI 检查修正了 About 图标裁切、工具栏挤压、动画层路径过窄及部分控件对比度不足的问题。检查范围和验证边界见 [UI 检查记录](design-system/alchemy-stars/pages/ui-audit-1.1.9.md)。
 

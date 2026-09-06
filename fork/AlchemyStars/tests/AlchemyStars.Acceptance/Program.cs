@@ -77,6 +77,14 @@ var idleProject = LoadExampleProject(exampleDirectory, improvedExamples["hawk-id
 var smdProject = LoadExampleProject(exampleDirectory, improvedExamples["hawk-sprint"].Path);
 var fbxProject = LoadExampleProject(exampleDirectory, improvedExamples["hawk-sprint"].Path);
 var batchProject = LoadExampleProject(exampleDirectory, improvedExamples["hawk-batch"].Path);
+foreach (var project in new[]
+{
+    sprintProject, animationOnlyProject, selectiveBakeProject, weaponFirstSprintProject,
+    idleProject, smdProject, fbxProject, batchProject,
+})
+{
+    ResolveRelocatedModelFixtures(project);
+}
 var mp5BaseProject = LoadExampleProject(exampleDirectory, standardExamples["mp5-base"].Path);
 var mp5GripProject = LoadExampleProject(exampleDirectory, standardExamples["mp5-grip"].Path);
 var sprintTemplate = sprintProject.Animations.Single();
@@ -703,6 +711,33 @@ static void TestExampleProject(MainViewModel viewModel, int expectedLayerCount)
     Assert(animation.Layers.All(layer => ReferenceEquals(layer.Owner, animation)), "Layer owner was not restored.");
     Assert(viewModel.Parts.All(part => ReferenceEquals(part.Owner, viewModel)), "Part owners were not restored.");
     Assert(!animation.EnableRightHandIK, "Example project must not enable cyclic right-hand IK.");
+}
+
+static void ResolveRelocatedModelFixtures(MainViewModel viewModel)
+{
+    foreach (var part in viewModel.Parts.Where(part => !File.Exists(part.FilePath)))
+    {
+        var sourceDirectory = Path.GetDirectoryName(part.FilePath);
+        if (sourceDirectory is null
+            || !Path.GetFileName(sourceDirectory).Equals("Merged Models", StringComparison.OrdinalIgnoreCase))
+            continue;
+
+        var exportedFiles = Directory.GetParent(sourceDirectory)?.FullName;
+        var extractionRoot = exportedFiles is null
+            ? null
+            : Directory.GetParent(exportedFiles)?.Parent?.FullName;
+        var fileName = Path.GetFileName(part.FilePath);
+        var modelName = Path.GetFileNameWithoutExtension(fileName);
+        if (modelName.EndsWith("_LOD0", StringComparison.OrdinalIgnoreCase))
+            modelName = modelName[..^5];
+        var relocated = new[]
+        {
+            extractionRoot is null ? string.Empty : Path.Combine(extractionRoot, "mergedmodels", fileName),
+            exportedFiles is null ? string.Empty : Path.Combine(exportedFiles, "bo7", "models", modelName, fileName),
+        }.FirstOrDefault(File.Exists);
+        if (relocated is not null)
+            part.FilePath = relocated;
+    }
 }
 
 static void TestBatchExample(MainViewModel viewModel, MainViewModel sprintProject, MainViewModel idleProject)

@@ -2,11 +2,11 @@
 
 # Alchemy Stars Avalonia preview quick guide
 
-This guide applies to `1.3.0-preview.10` on the test branch. WPF v1.1.9 remains the supported release until .NET 11 GA.
+This guide applies to `1.3.0-preview.11` on the test branch. WPF v1.1.9 remains the supported release until .NET 11 GA.
 
 The 48 DIP activity rail switches between Animations, Model parts, Settings and About. The base-animation library sits on the left, a real CAST preview in the center, composition layers across the bottom, and collapsible properties on the right. Drag the dividers or focus them and use arrow keys to resize panels. Icon commands have localized tooltips and UI Automation names; the current page remains visible in the breadcrumb.
 
-1. Open **Model parts** and add view hands first, then the weapon and attachments. The first item defaults to View hands; later items default to Weapon attached to `tag_weapon`.
+1. Open **Model parts** and add view hands first, then the weapon and attachments. Each CAST is classified from its skeleton topology; the inspector shows confidence and evidence, recommends `tag_weapon` for weapons, and lets you override either field. Low-confidence or unreadable files retain a visible review path. Existing `.aprj` entries are not reclassified when opened.
 2. Open **Animations** and add the base animation. Paths remain editable and accept pasted Windows **Copy as path** values.
 3. Add optional left/right pose files and enable only the IK chains required by the animation.
 4. Add layers in order. A file dropped or right-click imported inside **Animation layers** is always treated as a layer, not a new base animation.

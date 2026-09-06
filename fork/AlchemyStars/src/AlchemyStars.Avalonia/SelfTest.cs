@@ -19,10 +19,29 @@ internal static class SelfTest
             var another = CastPreviewRenderer.Render(scene, scene.FrameCount / 2, 640, 400, PreviewCamera.Default, false);
             var repeat = CastPreviewRenderer.Render(scene, 0, 640, 400, PreviewCamera.Default, false);
             var firstPerson = CastPreviewRenderer.Render(scene, 0, 640, 400, PreviewCamera.FirstPerson, false);
+            var gpuFrame = CastPreviewRenderer.Prepare(scene, 0, 640, 400, PreviewCamera.FirstPerson, false);
+            Require(gpuFrame.TriangleCount > 0 && gpuFrame.Width == 640 && gpuFrame.Height == 400,
+                "GPU preview frame was not prepared.");
+            Require(gpuFrame.TrianglePoints.Length == gpuFrame.TriangleColors.Length,
+                "GPU preview vertex colors are incomplete.");
             Require(first.Count(pixel => pixel != CastPreviewRenderer.Background) > 50, "CAST geometry was not rasterized.");
             Require(!first.SequenceEqual(another), "Animation sampling did not change the preview.");
             Require(first.SequenceEqual(repeat), "Reverse frame scrubbing accumulated transforms.");
             Require(firstPerson.Count(pixel => pixel != CastPreviewRenderer.Background) > 50, "First-person CAST geometry was not rasterized.");
+            var firstPersonGeometry = firstPerson.Select((pixel, index) => (pixel, index))
+                .Where(item => item.pixel != CastPreviewRenderer.Background).Select(item => item.index).ToArray();
+            var firstPersonBounds = new
+            {
+                Left = firstPersonGeometry.Min(index => index % 640),
+                Top = firstPersonGeometry.Min(index => index / 640),
+                Right = firstPersonGeometry.Max(index => index % 640),
+                Bottom = firstPersonGeometry.Max(index => index / 640),
+            };
+            Require(firstPersonBounds.Left > 1 && firstPersonBounds.Top > 1 && firstPersonBounds.Right < 638 && firstPersonBounds.Bottom < 398,
+                $"First-person weapon is clipped by the viewport: {firstPersonBounds}.");
+            Require(first.Where(pixel => pixel != CastPreviewRenderer.Background).Distinct().Count() > 16,
+                "Smooth clay shading did not produce enough tonal detail.");
+            Require(CastPreviewRenderer.AntiAliasingSamples == 2, "CAST preview anti-aliasing is disabled.");
             Require(before.SequenceEqual(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(path))), "Preview modified the CAST.");
             Console.WriteLine($"CAST preview: PASS ({scene.VertexCount} vertices, {scene.BoneCount} bones, {scene.FrameCount} frames; orbit and 90-degree first-person renders {watch.ElapsedMilliseconds} ms)");
             return 0;

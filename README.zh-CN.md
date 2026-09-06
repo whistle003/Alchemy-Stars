@@ -2,7 +2,7 @@
 
 # Alchemy Stars（炼金之星）
 
-> **Avalonia AOT 预览测试分支：** 本测试线使用 .NET 11 Preview 7、Avalonia 12.1.2，版本为 `1.3.0-preview.9`，完整桌面工作流已可作为自包含 Native AOT 程序运行。正式版仍是 `main` 上的 v1.1.9；在 .NET 11 GA 前，现有 WPF 程序仍是稳定基线，请勿把本分支构建作为稳定版分发。
+> **Avalonia AOT 预览测试分支：** 本测试线使用 .NET 11 Preview 7、Avalonia 12.1.2，版本为 `1.3.0-preview.10`，完整桌面工作流已可作为自包含 Native AOT 程序运行。正式版仍是 `main` 上的 v1.1.9；在 .NET 11 GA 前，现有 WPF 程序仍是稳定基线，请勿把本分支构建作为稳定版分发。
 
 使用方法见 [Avalonia 预览版快速指南](docs/avalonia-aot-user-guide.zh-CN.md)；详细结果见 [Avalonia AOT 迁移报告](docs/avalonia-aot-migration.md)与 [.NET 11 Preview 兼容性报告](docs/dotnet11-preview.md)。
 
@@ -48,7 +48,7 @@ Alchemy Stars 保留原版批处理、动画层、IK 与 RedFox 转换管线，�
 - 设置窗口按“输出 / IK 骨骼”重新分区，在最小窗口尺寸下仍可滚动使用；语言与 About 固定在受保护的右侧区域，不再被工具栏遮挡。
 - 使用“炼金术瓶 + 星芒”主题的新应用图标。
 - Avalonia 预览界面把 Beutl 的编辑器层级改造为可实际操作的“资源库 / 合成工作区 / 动画层轨道 / 属性检查器”；表单间距和列表细节参考 AtomBox，但不引入两个项目的 UI 依赖。
-- CAST 预览在原有环绕视角之外新增固定第一人称摄像机：水平 FOV 90°，Maya 变换为 `T(0,0,0)`、`R(90°,0°,-90°)`。
+- CAST 预览通过 Avalonia 的 GPU 加速 Skia 自定义绘制实现平滑蒙皮着色，并在原有环绕视角之外提供固定第一人称摄像机：水平 FOV 90°，Maya 变换为 `T(0,0,0)`、`R(90°,0°,-90°)`。仅用于预览的整体取景会保持武器完整显示，不会修改 CAST 数据。
 - 动画层轨道会在后台读取每个 CAST 的真实帧数，并按时长显示不同宽度；正、负帧偏移会改变条状物在共同帧范围内的起点。帧数文字和本地化无障碍名称让用户不必只依赖长度或颜色判断。
 - 合并后的有权重网格会在 CAST 中明确写入双四元数（`quaternion`）蒙皮方法；较旧 CAST 未指定蒙皮方法时，随附的 Maya 导入器也默认使用 DQS。
 - 控件保留常驻标签、44 DIP 操作区、明显的键盘焦点、双语 UI Automation 名称和快捷键；拖放与排序均有按钮替代操作。
@@ -115,7 +115,7 @@ Alchemy Stars 保留原版批处理、动画层、IK 与 RedFox 转换管线，�
 
 `run-tests.ps1` 会编译稳定 WPF 基线并执行 Maya 转换回归。`verify-avalonia-aot.ps1` 会发布裁剪后的本机程序，执行 AOT 契约与标准工程导出，启动真实 Win32 窗口，通过 Windows UI Automation 检查控件名称、焦点和操作区，并在 900 × 600 最小尺寸渲染四个页面与居中对话框。
 
-项目约定每次功能性改动都迭代版本；本次测试版本为 `1.3.0-preview.9`，稳定版本仍为 `1.1.9`。
+项目约定每次功能性改动都迭代版本；本次测试版本为 `1.3.0-preview.10`，稳定版本仍为 `1.1.9`。
 
 1.1.9 的 UI 检查修正了 About 图标裁切、工具栏挤压、动画层路径过窄及部分控件对比度不足的问题。检查范围和验证边界见 [UI 检查记录](design-system/alchemy-stars/pages/ui-audit-1.1.9.md)。
 

@@ -2,7 +2,7 @@
 
 # Alchemy Stars
 
-> **Avalonia AOT preview branch:** this test line targets .NET 11 Preview 7, Avalonia 12.1.2 and version `1.3.0-preview.9`. The complete desktop workflow now runs as a self-contained Native AOT application. Production remains v1.1.9 on `main`; the existing WPF application is still the stable baseline until .NET 11 GA. Do not distribute this build as a stable release.
+> **Avalonia AOT preview branch:** this test line targets .NET 11 Preview 7, Avalonia 12.1.2 and version `1.3.0-preview.10`. The complete desktop workflow now runs as a self-contained Native AOT application. Production remains v1.1.9 on `main`; the existing WPF application is still the stable baseline until .NET 11 GA. Do not distribute this build as a stable release.
 
 See the [Avalonia preview quick guide](docs/avalonia-aot-user-guide.md), [migration report](docs/avalonia-aot-migration.md) and [.NET 11 preview compatibility report](docs/dotnet11-preview.md).
 
@@ -42,7 +42,7 @@ Alchemy Stars keeps the upstream animation-layer concepts intact. Attribution an
 - Keeps all completion, warning, and error dialogs centered over the application; long diagnostics are scrollable and copyable.
 - Uses a redesigned alchemy-flask-and-star application icon and function-specific toolbar icons.
 - The Avalonia preview adapts Beutl's editor hierarchy into a functional asset-library / composition / layer-track / inspector workspace. AtomBox informs the restrained form spacing and list treatment without adding either project's UI dependencies.
-- CAST preview includes a fixed first-person camera with a 90° horizontal FOV and Maya transform `T(0,0,0)`, `R(90°,0°,-90°)`, alongside the existing orbit view.
+- CAST preview uses Avalonia's GPU-backed Skia custom rendering for smooth skinned shading, and includes a fixed first-person camera with a 90° horizontal FOV and Maya transform `T(0,0,0)`, `R(90°,0°,-90°)`, alongside the existing orbit view. Preview-only whole-scene fitting keeps weapons fully framed without altering CAST data.
 - Layer-track bars read each CAST source in the background and scale their width to its true frame count; configured positive or negative offsets move the bar on the shared frame range. Frame-count text and localized accessible names keep duration understandable without relying on length or color alone.
 - Merged skinned meshes write Dual Quaternion (`quaternion`) as their CAST skinning method, and the bundled Maya importer also uses DQS when an older CAST has no explicit method.
 - Persistent labels, 44 DIP targets, visible focus, localized UI Automation names, keyboard shortcuts and button alternatives cover every drop/reorder operation.
@@ -107,7 +107,7 @@ This preview branch requires .NET SDK `11.0.100-preview.7.26381.103` to build. `
 
 `run-tests.ps1` builds the stable WPF baseline and runs the Maya-backed conversion regressions. `verify-avalonia-aot.ps1` publishes the trimmed native application, runs its AOT contract/project export checks, starts a real Win32 window, validates Windows UI Automation names/focus/target bounds, and renders all four pages plus a centered dialog at the 900 × 600 minimum size.
 
-Every functional preview change increments the prerelease revision; this test version is `1.3.0-preview.9`. The stable release remains `1.1.9`.
+Every functional preview change increments the prerelease revision; this test version is `1.3.0-preview.10`. The stable release remains `1.1.9`.
 
 The 1.1.9 UI audit fixes the clipped About icon, toolbar overflow, cramped layer paths, and low-contrast controls. See the [UI audit and validation notes](design-system/alchemy-stars/pages/ui-audit-1.1.9.md) for coverage and limitations.
 

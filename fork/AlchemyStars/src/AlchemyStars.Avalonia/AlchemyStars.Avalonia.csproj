@@ -8,11 +8,11 @@
     <Product>Alchemy Stars</Product>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <ApplicationIcon>..\Alchemist.UI\Assets\AlchemyStarsIcon.ico</ApplicationIcon>
-    <Version>1.3.0-preview.9</Version>
+    <ApplicationIcon>Assets\AlchemyStarsIcon.ico</ApplicationIcon>
+    <Version>1.3.0-preview.10</Version>
     <FileVersion>1.3.0.0</FileVersion>
     <AssemblyVersion>1.3.0.0</AssemblyVersion>
-    <InformationalVersion>1.3.0-preview.9</InformationalVersion>
+    <InformationalVersion>1.3.0-preview.10</InformationalVersion>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <PublishAot>true</PublishAot>
     <PublishTrimmed>true</PublishTrimmed>
@@ -29,7 +29,9 @@
 
   <ItemGroup>
     <PackageReference Include="Avalonia.Desktop" Version="12.1.2" />
+    <PackageReference Include="Avalonia.Skia" Version="12.1.2" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.2" />
+    <PackageReference Include="SkiaSharp" Version="3.119.4" />
   </ItemGroup>
 
   <ItemGroup>
@@ -37,8 +39,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <AvaloniaResource Include="..\Alchemist.UI\Assets\AlchemyStarsIcon.png" Link="Assets\AlchemyStarsIcon.png" />
-    <AvaloniaResource Include="..\Alchemist.UI\Assets\AlchemyStarsIcon.ico" Link="Assets\AlchemyStarsIcon.ico" />
+    <AvaloniaResource Include="Assets\AlchemyStarsIcon.png" />
+    <AvaloniaResource Include="Assets\AlchemyStarsIcon.ico" />
     <Content Include="..\..\..\..\third_party\cast\maya\*.py">
       <Link>MayaPlugin\%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

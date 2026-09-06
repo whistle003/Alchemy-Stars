@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.3.0-preview.10 — 2026-09-06
+
+- Replaced flat face shading in CAST preview with skinned vertex normals, dual-light clay shading, controlled highlights and a subtle rim light. Legacy meshes without normals receive deterministic area-weighted smooth normals.
+- Moved interactive CAST rasterization to an Avalonia/Skia custom draw operation so the desktop backend submits shaded triangle vertices to the GPU. The deterministic CPU renderer remains available for headless regression and software fallback verification.
+- Added 2-sample multisample anti-aliasing to the deterministic CPU fallback and Skia anti-aliasing to the interactive preview.
+- Rebuilt playback as a compact Premiere-inspired two-tier control: an adaptive frame ruler sits above centered previous/play/next controls, with the current/total frame readout anchored at the right.
+- Fixed first-person previews whose weapon crossed the Maya-origin camera and was cut by the viewport. A preview-only whole-scene fit keeps the subject visible without changing CAST transforms or exports.
+- Reduced preview command chrome to 40 DIPs and 17-DIP glyphs, tightened status/badge spacing, and unified workspace, menu and tooltip typography across English and Chinese.
+- Added a new optimistic Alchemy Stars icon with a strong small-size silhouette: a sunrise-gold star emerges from a sky-blue alchemy flask while a single orbit represents animation composition. Avalonia uses dedicated transparent PNG and multi-resolution ICO assets; the stable WPF icon remains unchanged.
+
 ## 1.3.0-preview.9 — 2026-09-06
 
 - Added a fixed first-person CAST preview camera matching Maya transform `T(0,0,0)`, `R(90°,0°,-90°)`, with a 90° horizontal FOV and 0.1 near clip. The camera toolbar toggle, `1` shortcut, localized state badge and accessibility name keep orbit and first-person modes explicit.

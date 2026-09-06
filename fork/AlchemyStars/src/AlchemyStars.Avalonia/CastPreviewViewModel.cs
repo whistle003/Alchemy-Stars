@@ -1,10 +1,6 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using Avalonia;
-using Avalonia.Media.Imaging;
-using Avalonia.Platform;
 using Avalonia.Threading;
 
 namespace AlchemyStars.Avalonia;
@@ -14,7 +10,7 @@ public sealed class CastPreviewViewModel : INotifyPropertyChanged, IDisposable
     private readonly DispatcherTimer timer = new() { Interval = TimeSpan.FromMilliseconds(40) };
     private readonly Stopwatch clock = new();
     private CastPreviewScene? scene;
-    private WriteableBitmap? bitmap;
+    private CastPreviewFrame? frameData;
     private PreviewCamera camera = PreviewCamera.Default;
     private UiText text;
     private int generation, renderRevision, width = 640, height = 360;
@@ -33,12 +29,20 @@ public sealed class CastPreviewViewModel : INotifyPropertyChanged, IDisposable
     }
     public event PropertyChangedEventHandler? PropertyChanged;
     public UiText Text { get => text; set { text = value; Changed(); RefreshLabels(); } }
-    public WriteableBitmap? Image => bitmap;
+    public CastPreviewFrame? FrameData => frameData;
     public bool HasScene => scene is not null;
     public bool IsLoading { get => loading; private set { loading = value; Changed(); Changed(nameof(Status)); } }
     public bool IsPlaying => playing;
     public bool CanPlay => scene is { FrameCount: > 1 };
     public int LastFrame => Math.Max(0, (scene?.FrameCount ?? 1) - 1);
+    public double PreviewTickFrequency => LastFrame switch
+    {
+        <= 30 => 1,
+        <= 120 => 5,
+        <= 300 => 10,
+        <= 600 => 25,
+        _ => 50,
+    };
     public double Frame { get => frame; set { frame = Math.Clamp(value, 0, LastFrame); Changed(); Changed(nameof(FrameLabel)); RequestRender(); } }
     public string FrameLabel => $"{(int)Frame} / {LastFrame}";
     public string Source => source;
@@ -83,7 +87,7 @@ public sealed class CastPreviewViewModel : INotifyPropertyChanged, IDisposable
         renderRevision++;
         Pause();
         scene = null; frame = 0; source = string.Empty; error = string.Empty; camera = PreviewCamera.Default; IsLoading = false;
-        var previous = bitmap; bitmap = null; Changed(nameof(Image)); previous?.Dispose();
+        frameData = null; Changed(nameof(FrameData));
         Changed(nameof(Source)); RefreshLabels();
     }
 
@@ -147,12 +151,9 @@ public sealed class CastPreviewViewModel : INotifyPropertyChanged, IDisposable
                 var current = scene;
                 if (current is null || disposed) break;
                 var w = width; var h = height; var f = (float)frame; var view = camera; var bones = ShowBones;
-                var pixels = await Task.Run(() => CastPreviewRenderer.Render(current, f, w, h, view, bones));
+                var prepared = await Task.Run(() => CastPreviewRenderer.Prepare(current, f, w, h, view, bones));
                 if (disposed || version != generation) continue;
-                var rendered = new WriteableBitmap(new PixelSize(w, h), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Opaque);
-                using (var buffer = rendered.Lock())
-                    for (var y = 0; y < h; y++) Marshal.Copy(pixels, y * w, buffer.Address + y * buffer.RowBytes, w);
-                var previous = bitmap; bitmap = rendered; Changed(nameof(Image)); previous?.Dispose();
+                frameData = prepared; Changed(nameof(FrameData));
             } while (revision != renderRevision && !disposed);
         }
         catch (Exception exception) { Pause(); error = Text.PreviewFailed + ": " + exception.Message; Changed(nameof(Status)); }
@@ -163,7 +164,7 @@ public sealed class CastPreviewViewModel : INotifyPropertyChanged, IDisposable
         foreach (var name in new[]
         {
             nameof(HasScene), nameof(CanPlay), nameof(LastFrame), nameof(Frame), nameof(FrameLabel), nameof(Status),
-            nameof(IsPlaying), nameof(PlayLabel), nameof(IsFirstPerson), nameof(CanAdjustCamera), nameof(CameraModeLabel),
+            nameof(PreviewTickFrequency), nameof(IsPlaying), nameof(PlayLabel), nameof(IsFirstPerson), nameof(CanAdjustCamera), nameof(CameraModeLabel),
             nameof(InteractionHelp), nameof(FirstPersonBadge),
         }) Changed(name);
     }

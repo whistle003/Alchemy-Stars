@@ -7,10 +7,16 @@
     <FluentTheme />
 
     <Style Selector="Window">
-      <Setter Property="FontFamily" Value="Segoe UI, Noto Sans CJK SC, sans-serif" />
+      <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI, Microsoft YaHei UI, Noto Sans CJK SC, sans-serif" />
       <Setter Property="FontSize" Value="13" />
       <Setter Property="Background" Value="{DynamicResource AlchemyBackgroundBrush}" />
       <Setter Property="Foreground" Value="{DynamicResource AlchemyTextBrush}" />
+    </Style>
+    <!-- Popup roots do not always inherit the owning Window's typography. Keep
+         menus and tooltips on the same bilingual UI family as the workspace. -->
+    <Style Selector="MenuItem, ToolTip">
+      <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI, Microsoft YaHei UI, Noto Sans CJK SC, sans-serif" />
+      <Setter Property="FontSize" Value="13" />
     </Style>
 
     <Style Selector="Button">
@@ -69,6 +75,20 @@
       <Setter Property="Padding" Value="10" />
       <Setter Property="CornerRadius" Value="0" />
     </Style>
+    <Style Selector="Button.panel-command.compact-preview-command">
+      <Setter Property="MinWidth" Value="40" />
+      <Setter Property="Width" Value="40" />
+      <Setter Property="MinHeight" Value="40" />
+      <Setter Property="Height" Value="40" />
+      <Setter Property="Padding" Value="10" />
+    </Style>
+    <Style Selector="Button.panel-command.preview-transport-command">
+      <Setter Property="MinWidth" Value="32" />
+      <Setter Property="Width" Value="32" />
+      <Setter Property="MinHeight" Value="32" />
+      <Setter Property="Height" Value="32" />
+      <Setter Property="Padding" Value="8" />
+    </Style>
     <Style Selector="ToggleButton.preview-command">
       <Setter Property="MinWidth" Value="44" />
       <Setter Property="Width" Value="44" />
@@ -97,6 +117,13 @@
     </Style>
     <Style Selector="ToggleButton.preview-command:disabled">
       <Setter Property="Opacity" Value="0.48" />
+    </Style>
+    <Style Selector="ToggleButton.preview-command.compact-preview-command">
+      <Setter Property="MinWidth" Value="40" />
+      <Setter Property="Width" Value="40" />
+      <Setter Property="MinHeight" Value="40" />
+      <Setter Property="Height" Value="40" />
+      <Setter Property="Padding" Value="10" />
     </Style>
     <Style Selector="Button.activity">
       <Setter Property="Width" Value="44" />
@@ -212,6 +239,23 @@
       <Setter Property="CornerRadius" Value="6" />
       <Setter Property="Padding" Value="9,4" />
     </Style>
+    <Style Selector="Border.preview-badge.compact-preview-badge">
+      <Setter Property="CornerRadius" Value="5" />
+      <Setter Property="Padding" Value="7,3" />
+    </Style>
+    <Style Selector="Slider.preview-scrubber">
+      <Setter Property="Background" Value="#FF4A4D52" />
+      <Setter Property="Foreground" Value="{DynamicResource AlchemyAccentBrush}" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="MinHeight" Value="24" />
+      <Setter Property="Height" Value="24" />
+    </Style>
+    <Style Selector="Slider.preview-scrubber:focus-visible">
+      <Setter Property="BorderBrush" Value="{DynamicResource AlchemyFocusBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+    </Style>
 
     <Style Selector="TextBox, ComboBox">
       <Setter Property="MinHeight" Value="40" />
@@ -289,6 +333,16 @@
       <Setter Property="StrokeThickness" Value="1.8" />
       <Setter Property="StrokeLineCap" Value="Round" />
       <Setter Property="StrokeJoin" Value="Round" />
+    </Style>
+    <Style Selector="Path.icon-glyph.preview-icon">
+      <Setter Property="Width" Value="17" />
+      <Setter Property="Height" Value="17" />
+      <Setter Property="StrokeThickness" Value="1.65" />
+    </Style>
+    <Style Selector="Path.icon-glyph.transport-icon">
+      <Setter Property="Width" Value="15" />
+      <Setter Property="Height" Value="15" />
+      <Setter Property="StrokeThickness" Value="1.7" />
     </Style>
     <Style Selector="Path.icon-glyph.muted"><Setter Property="Stroke" Value="{DynamicResource AlchemyMutedTextBrush}" /></Style>
     <Style Selector="Path.icon-glyph.on-accent"><Setter Property="Stroke" Value="#FF0E0E0F" /></Style>

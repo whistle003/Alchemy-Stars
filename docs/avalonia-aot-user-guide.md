@@ -2,7 +2,7 @@
 
 # Alchemy Stars Avalonia preview quick guide
 
-This guide applies to `1.3.0-preview.9` on the test branch. WPF v1.1.9 remains the supported release until .NET 11 GA.
+This guide applies to `1.3.0-preview.10` on the test branch. WPF v1.1.9 remains the supported release until .NET 11 GA.
 
 The 48 DIP activity rail switches between Animations, Model parts, Settings and About. The base-animation library sits on the left, a real CAST preview in the center, composition layers across the bottom, and collapsible properties on the right. Drag the dividers or focus them and use arrow keys to resize panels. Icon commands have localized tooltips and UI Automation names; the current page remains visible in the breadcrumb.
 
@@ -23,13 +23,13 @@ For the canonical Hawk recipe, open `fork/AlchemyStars/Example/Hawk/HawkSprint.a
 Choose **Build preview** in the composition workspace header to merge the selected animation into a unique temporary CAST with the existing export engine. It does not require or change the formal output folder; its cache is removed after loading an independent scene. **Open CAST preview** reads an existing merged file. A successful CAST export also previews the selected result.
 
 - Drag the viewport or use arrow keys to orbit; use the wheel or +/− to zoom.
-- Choose the camera button or press `1` for a fixed first-person view. It matches a newly created Maya camera at `T(0,0,0)`, applies `R(90°,0°,-90°)`, and uses a 90° horizontal FOV. Press `1` again, or use either Fit command, to return to orbit view.
+- Choose the camera button or press `1` for a fixed first-person view. It matches a newly created Maya camera at `T(0,0,0)`, applies `R(90°,0°,-90°)`, and uses a 90° horizontal FOV. Preview-only safe framing keeps the complete weapon visible without changing the CAST scene or export. Press `1` again, or use either Fit command, to return to orbit view.
 - Use playback, Space, the frame slider and previous/next frame buttons to inspect animation.
 - Press F to frame the subject. Right-click **Fit subject** or press Shift+F to include all geometry, including distant spare parts.
 - Toggle the bone button for a skeleton overlay. Animation-only CAST contains curves, not an embedded skeleton: load its matching model parts into the current project first. The viewport identifies this project-supplied skeleton; matching bone names alone cannot guarantee a matching bind pose.
 - The current renderer shows clay geometry without textures/materials. Settings edits do not automatically rebuild a snapshot: choose **Build preview** again.
 - Track bars read source metadata in the background. Their widths represent true CAST frame counts, their horizontal positions include configured frame offsets, and the header shows the shared frame range. The text inside each bar repeats its frame count; an unreadable source stays visible and is marked **Frames unavailable**.
-- Sampling and drawing run in the background, with at most one render in flight and a 960×640 resolution cap. Playback performance depends on scene complexity; validate final usage in Maya.
+- Animation sampling, skinning, projection and lighting run in the background with at most one frame in flight and a 960×640 projection cap. The interactive viewport submits the prepared triangles through Avalonia's GPU-backed Skia custom drawing; a deterministic software renderer is retained for headless verification. Playback performance depends on scene complexity; validate final usage in Maya.
 
 Keyboard commands:
 

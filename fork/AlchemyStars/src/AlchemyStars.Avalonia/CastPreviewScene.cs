@@ -10,7 +10,8 @@ namespace AlchemyStars.Avalonia;
 // A private, read-only copy of the exported scene. Sampling never touches export inputs.
 internal sealed class CastPreviewScene
 {
-    internal sealed record Surface(Mesh Mesh, Skeleton? Skeleton, Matrix4x4[] InverseBind);
+    internal sealed record Surface(Mesh Mesh, Skeleton? Skeleton, Matrix4x4[] InverseBind, Vector3[] BindNormals);
+    internal readonly record struct ShadedSurface(Vector3[] Positions, Vector3[] Normals);
     private readonly List<SkeletonAnimationSampler> samplers = [];
     internal List<Surface> Surfaces { get; } = [];
     internal Skeleton[] Skeletons { get; private init; } = [];
@@ -94,7 +95,7 @@ internal sealed class CastPreviewScene
                         if (!float.IsFinite(weight) || weight < 0 || (weight > 0 && (uint)bone >= inverseBind.Length))
                             throw new InvalidDataException("Invalid skin weight.");
                 }
-                preview.Surfaces.Add(new(mesh, model.Skeleton, inverseBind));
+                preview.Surfaces.Add(new(mesh, model.Skeleton, inverseBind, ReadBindNormals(mesh)));
             }
         }
         if (preview.VertexCount == 0 && preview.BoneCount == 0)
@@ -151,7 +152,68 @@ internal sealed class CastPreviewScene
         return output;
     }
 
+    internal ShadedSurface SkinShaded(Surface surface)
+    {
+        var mesh = surface.Mesh;
+        var positions = mesh.Positions!;
+        var outputPositions = new Vector3[positions.Count];
+        var outputNormals = new Vector3[positions.Count];
+        var transforms = surface.Skeleton?.Bones.Select((bone, index) => surface.InverseBind[index]
+            * Matrix4x4.CreateFromQuaternion(bone.WorldRotation) * Matrix4x4.CreateTranslation(bone.WorldTranslation)).ToArray() ?? [];
+        for (var i = 0; i < positions.Count; i++)
+        {
+            var positionSum = Vector3.Zero;
+            var normalSum = Vector3.Zero;
+            var total = 0f;
+            if (mesh.Influences is { Count: > 0 } weights && transforms.Length > 0)
+                for (var j = 0; j < weights.Dimension; j++)
+                {
+                    var (bone, weight) = weights[i, j];
+                    if (weight <= 0) continue;
+                    positionSum += Vector3.Transform(positions[i], transforms[bone]) * weight;
+                    normalSum += Vector3.TransformNormal(surface.BindNormals[i], transforms[bone]) * weight;
+                    total += weight;
+                }
+            outputPositions[i] = total > 0 ? positionSum / total : positions[i];
+            var normal = total > 0 ? normalSum / total : surface.BindNormals[i];
+            outputNormals[i] = normal.LengthSquared() > 1e-12f ? Vector3.Normalize(normal) : Vector3.UnitZ;
+        }
+        return new(outputPositions, outputNormals);
+    }
+
     internal static bool IsFinite(Vector3 point) => float.IsFinite(point.X) && float.IsFinite(point.Y) && float.IsFinite(point.Z);
+
+    private static Vector3[] ReadBindNormals(Mesh mesh)
+    {
+        var positions = mesh.Positions!;
+        if (mesh.Normals is { ElementCount: var count, Dimension: > 0 } source && count == positions.Count)
+        {
+            var imported = new Vector3[count];
+            var valid = true;
+            for (var i = 0; i < imported.Length; i++)
+            {
+                var normal = source[i, 0];
+                if (!IsFinite(normal) || normal.LengthSquared() < 1e-12f) { valid = false; break; }
+                imported[i] = Vector3.Normalize(normal);
+            }
+            if (valid) return imported;
+        }
+
+        // Some animation-only or legacy CAST meshes omit normals. Generate a stable,
+        // area-weighted fallback so the preview still receives smooth clay shading.
+        var generated = new Vector3[positions.Count];
+        foreach (var (a, b, c) in mesh.Faces)
+        {
+            var normal = Vector3.Cross(positions[b] - positions[a], positions[c] - positions[a]);
+            if (normal.LengthSquared() < 1e-12f) continue;
+            generated[a] += normal;
+            generated[b] += normal;
+            generated[c] += normal;
+        }
+        for (var i = 0; i < generated.Length; i++)
+            generated[i] = generated[i].LengthSquared() > 1e-12f ? Vector3.Normalize(generated[i]) : Vector3.UnitZ;
+        return generated;
+    }
 
     private static Skeleton ReadSkeleton(SkeletonNode node)
     {

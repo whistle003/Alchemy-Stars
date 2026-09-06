@@ -27,6 +27,7 @@ public sealed partial class CastPreviewView : UserControl
     }
     private void FitClick(object? sender, RoutedEventArgs e) => Preview?.Fit();
     private void FitAllClick(object? sender, RoutedEventArgs e) => Preview?.FitAll();
+    private void FirstPersonClick(object? sender, RoutedEventArgs e) => Preview?.ToggleFirstPerson();
     private void ZoomInClick(object? sender, RoutedEventArgs e) => Preview?.Zoom(1);
     private void ZoomOutClick(object? sender, RoutedEventArgs e) => Preview?.Zoom(-1);
     private void BonesClick(object? sender, RoutedEventArgs e) { if (Preview is { } preview) preview.ShowBones = !preview.ShowBones; }
@@ -59,6 +60,7 @@ public sealed partial class CastPreviewView : UserControl
             case Key.Up: Preview?.Orbit(0, -10); break;
             case Key.Down: Preview?.Orbit(0, 10); break;
             case Key.F: if (e.KeyModifiers.HasFlag(KeyModifiers.Shift)) Preview?.FitAll(); else Preview?.Fit(); break;
+            case Key.D1: case Key.NumPad1: Preview?.ToggleFirstPerson(); break;
             case Key.Add: case Key.OemPlus: Preview?.Zoom(1); break;
             case Key.Subtract: case Key.OemMinus: Preview?.Zoom(-1); break;
             case Key.Space: Preview?.TogglePlayback(); break;

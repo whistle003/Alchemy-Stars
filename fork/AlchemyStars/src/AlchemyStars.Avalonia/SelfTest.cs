@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Numerics;
 
 namespace AlchemyStars.Avalonia;
 
@@ -17,11 +18,13 @@ internal static class SelfTest
             var first = CastPreviewRenderer.Render(scene, 0, 640, 400, PreviewCamera.Default, false);
             var another = CastPreviewRenderer.Render(scene, scene.FrameCount / 2, 640, 400, PreviewCamera.Default, false);
             var repeat = CastPreviewRenderer.Render(scene, 0, 640, 400, PreviewCamera.Default, false);
+            var firstPerson = CastPreviewRenderer.Render(scene, 0, 640, 400, PreviewCamera.FirstPerson, false);
             Require(first.Count(pixel => pixel != CastPreviewRenderer.Background) > 50, "CAST geometry was not rasterized.");
             Require(!first.SequenceEqual(another), "Animation sampling did not change the preview.");
             Require(first.SequenceEqual(repeat), "Reverse frame scrubbing accumulated transforms.");
+            Require(firstPerson.Count(pixel => pixel != CastPreviewRenderer.Background) > 50, "First-person CAST geometry was not rasterized.");
             Require(before.SequenceEqual(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(path))), "Preview modified the CAST.");
-            Console.WriteLine($"CAST preview: PASS ({scene.VertexCount} vertices, {scene.BoneCount} bones, {scene.FrameCount} frames; three 640x400 renders {watch.ElapsedMilliseconds} ms)");
+            Console.WriteLine($"CAST preview: PASS ({scene.VertexCount} vertices, {scene.BoneCount} bones, {scene.FrameCount} frames; orbit and 90-degree first-person renders {watch.ElapsedMilliseconds} ms)");
             return 0;
         }
         catch (Exception exception) { Console.Error.WriteLine(exception); return 1; }
@@ -38,6 +41,13 @@ internal static class SelfTest
             Require(capabilities.SupportsAnimationOnlyCast, "Animation-only CAST is not advertised.");
             Require(capabilities.SupportsSelectiveBoneBake, "Selective bone baking is not advertised.");
             Require(capabilities.SupportsNativeAot, "Native AOT is not advertised.");
+            var firstPersonView = CastPreviewRenderer.ResolveView(new CastPreviewScene(), 640, 400, PreviewCamera.FirstPerson);
+            Require(Vector3.Distance(firstPersonView.Eye, Vector3.Zero) < 1e-5f, "First-person camera must use Maya's default origin.");
+            Require(Vector3.Distance(firstPersonView.Forward, Vector3.UnitX) < 1e-5f, "Maya camera X/Z rotation did not produce forward +X.");
+            Require(Vector3.Distance(firstPersonView.Right, -Vector3.UnitY) < 1e-5f && Vector3.Distance(firstPersonView.Up, Vector3.UnitZ) < 1e-5f,
+                "Maya camera X/Z rotation produced an invalid view basis.");
+            Require(MathF.Abs(firstPersonView.FocalLength - 320) < 1e-4f, "First-person horizontal FOV is not 90 degrees.");
+            Require(MathF.Abs(firstPersonView.NearClip - 0.1f) < 1e-5f, "First-person camera does not use Maya's default near clip.");
             try
             {
                 engine.Export(new AnimationExportRequest(
@@ -74,6 +84,13 @@ internal static class SelfTest
                     && viewModel.Text.ImportLayersMenu == "Import animation layers…"
                     && viewModel.Text.ImportPartsMenu == "Import model parts…"
                     && viewModel.Text.FitSubjectMenu == "Fit subject (F)", "English context menus are not localized.");
+                viewModel.Preview.ToggleFirstPerson();
+                Require(viewModel.Preview.IsFirstPerson
+                    && viewModel.Preview.CameraModeLabel == "Return to orbit view / 1"
+                    && viewModel.Preview.FirstPersonBadge == "FIRST PERSON · 90° FOV",
+                    "First-person preview state or English accessibility text is invalid.");
+                viewModel.Preview.ToggleFirstPerson();
+                Require(!viewModel.Preview.IsFirstPerson, "First-person preview did not return to orbit mode.");
 
                 Require(viewModel.AddAnimationPaths([Path.Combine(testDirectory, "idle.cast")]) == 1, "Animation import routing failed.");
                 Require(viewModel.SelectedAnimation?.OutputFolder == string.Empty, "New animation output folder must stay blank.");

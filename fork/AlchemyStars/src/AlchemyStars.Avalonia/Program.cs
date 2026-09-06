@@ -14,6 +14,7 @@ internal static class Program
     internal static bool AccessibilitySmokeRequested { get; private set; }
     internal static string? PreviewSmokePath { get; private set; }
     internal static bool BuildPreviewSmoke { get; private set; }
+    internal static bool FirstPersonPreviewRequested { get; private set; }
 
     [STAThread]
     public static int Main(string[] args)
@@ -51,6 +52,7 @@ internal static class Program
         RenderDialogKind = GetOption(args, "--dialog");
         PreviewSmokePath = GetOption(args, "--preview-cast");
         BuildPreviewSmoke = args.Contains("--build-preview", StringComparer.OrdinalIgnoreCase);
+        FirstPersonPreviewRequested = args.Contains("--first-person-preview", StringComparer.OrdinalIgnoreCase);
         AccessibilitySmokeRequested = args.Contains("--accessibility-smoke", StringComparer.OrdinalIgnoreCase);
         StartupProjectPath = args
             .Where(argument => !argument.StartsWith("--", StringComparison.Ordinal))

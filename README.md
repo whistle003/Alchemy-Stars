@@ -42,6 +42,7 @@ Alchemy Stars keeps the upstream animation-layer concepts intact. Attribution an
 - Keeps all completion, warning, and error dialogs centered over the application; long diagnostics are scrollable and copyable.
 - Uses a redesigned alchemy-flask-and-star application icon and function-specific toolbar icons.
 - The Avalonia preview adapts Beutl's editor hierarchy into a functional asset-library / composition / layer-track / inspector workspace. AtomBox informs the restrained form spacing and list treatment without adding either project's UI dependencies.
+- CAST preview includes a fixed first-person camera with a 90° horizontal FOV and Maya transform `T(0,0,0)`, `R(90°,0°,-90°)`, alongside the existing orbit view.
 - Layer-track bars read each CAST source in the background and scale their width to its true frame count; configured positive or negative offsets move the bar on the shared frame range. Frame-count text and localized accessible names keep duration understandable without relying on length or color alone.
 - Merged skinned meshes write Dual Quaternion (`quaternion`) as their CAST skinning method, and the bundled Maya importer also uses DQS when an older CAST has no explicit method.
 - Persistent labels, 44 DIP targets, visible focus, localized UI Automation names, keyboard shortcuts and button alternatives cover every drop/reorder operation.

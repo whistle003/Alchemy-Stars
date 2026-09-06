@@ -45,6 +45,11 @@ public sealed class CastPreviewViewModel : INotifyPropertyChanged, IDisposable
     public string Status => IsLoading ? Text.PreviewLoading : error.Length > 0 ? error : scene is null ? Text.PreviewEmpty : (scene.UsesProjectSkeleton ? Text.ProjectSkeletonPreview + " · " : "") + string.Format(Text.PreviewStats, scene.VertexCount, scene.BoneCount, scene.Framerate);
     public string PlayLabel => playing ? Text.PausePreview : Text.PlayPreview;
     public bool ShowBones { get => showBones; set { showBones = value; Changed(); RequestRender(); } }
+    public bool IsFirstPerson => camera.Mode == PreviewCameraMode.FirstPerson;
+    public bool CanAdjustCamera => HasScene && !IsFirstPerson;
+    public string CameraModeLabel => IsFirstPerson ? Text.ExitFirstPersonView : Text.FirstPersonView;
+    public string InteractionHelp => IsFirstPerson ? Text.FirstPersonPreviewHelp : Text.PreviewHelp;
+    public string FirstPersonBadge => Text.FirstPersonBadge;
 
     public async Task LoadAsync(string path, string? label = null, IReadOnlyList<ModelPartSpec>? parts = null, bool legacy = false)
     {
@@ -77,7 +82,7 @@ public sealed class CastPreviewViewModel : INotifyPropertyChanged, IDisposable
         generation++;
         renderRevision++;
         Pause();
-        scene = null; frame = 0; source = string.Empty; error = string.Empty; IsLoading = false;
+        scene = null; frame = 0; source = string.Empty; error = string.Empty; camera = PreviewCamera.Default; IsLoading = false;
         var previous = bitmap; bitmap = null; Changed(nameof(Image)); previous?.Dispose();
         Changed(nameof(Source)); RefreshLabels();
     }
@@ -100,14 +105,31 @@ public sealed class CastPreviewViewModel : INotifyPropertyChanged, IDisposable
     }
     public void Pause() { playing = false; timer.Stop(); clock.Stop(); RefreshLabels(); }
     public void Step(int delta) { Pause(); Frame = Math.Clamp(Math.Floor(Frame) + delta, 0, LastFrame); }
-    public void Fit() { camera = PreviewCamera.Default; RequestRender(); }
-    public void FitAll() { camera = PreviewCamera.Default with { AllGeometry = true, Zoom = 1 }; RequestRender(); }
+    public void Fit() => SetCamera(PreviewCamera.Default);
+    public void FitAll() => SetCamera(PreviewCamera.Default with { AllGeometry = true, Zoom = 1 });
+    public void ToggleFirstPerson() => SetCamera(IsFirstPerson ? PreviewCamera.Default : PreviewCamera.FirstPerson);
     public void Orbit(double x, double y)
     {
+        if (IsFirstPerson) return;
         camera = camera with { Yaw = camera.Yaw + (float)x * 0.01f, Pitch = Math.Clamp(camera.Pitch + (float)y * 0.01f, -1.45f, 1.45f) };
         RequestRender();
     }
-    public void Zoom(double amount) { camera = camera with { Zoom = Math.Clamp(camera.Zoom * MathF.Pow(1.15f, (float)amount), 0.15f, 8) }; RequestRender(); }
+    public void Zoom(double amount)
+    {
+        if (IsFirstPerson) return;
+        camera = camera with { Zoom = Math.Clamp(camera.Zoom * MathF.Pow(1.15f, (float)amount), 0.15f, 8) };
+        RequestRender();
+    }
+    private void SetCamera(PreviewCamera value)
+    {
+        camera = value;
+        Changed(nameof(IsFirstPerson));
+        Changed(nameof(CanAdjustCamera));
+        Changed(nameof(CameraModeLabel));
+        Changed(nameof(InteractionHelp));
+        Changed(nameof(FirstPersonBadge));
+        RequestRender();
+    }
     private void RequestRender() { renderRevision++; _ = RenderAsync(); }
 
     // At most one scene is sampled/rasterized at a time; requests coalesce to the newest frame.
@@ -138,7 +160,12 @@ public sealed class CastPreviewViewModel : INotifyPropertyChanged, IDisposable
     }
     private void RefreshLabels()
     {
-        foreach (var name in new[] { nameof(HasScene), nameof(CanPlay), nameof(LastFrame), nameof(Frame), nameof(FrameLabel), nameof(Status), nameof(IsPlaying), nameof(PlayLabel) }) Changed(name);
+        foreach (var name in new[]
+        {
+            nameof(HasScene), nameof(CanPlay), nameof(LastFrame), nameof(Frame), nameof(FrameLabel), nameof(Status),
+            nameof(IsPlaying), nameof(PlayLabel), nameof(IsFirstPerson), nameof(CanAdjustCamera), nameof(CameraModeLabel),
+            nameof(InteractionHelp), nameof(FirstPersonBadge),
+        }) Changed(name);
     }
     private void Changed([CallerMemberName] string? property = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
     public void Dispose() { disposed = true; Clear(); timer.Stop(); }

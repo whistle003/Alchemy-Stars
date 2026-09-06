@@ -635,10 +635,14 @@ public sealed class UiText
     public string FitPreview => L("适应主体 / F；右键查看全部几何体", "Fit subject / F; right-click to fit all geometry");
     public string FitSubjectMenu => L("适应主体 (F)", "Fit subject (F)");
     public string FitAllGeometryMenu => L("适应全部几何体 (Shift+F)", "Fit all geometry (Shift+F)");
+    public string FirstPersonView => L("切换到第一人称视角（90° FOV）/ 1", "Switch to first-person view (90° FOV) / 1");
+    public string ExitFirstPersonView => L("返回环绕视角 / 1", "Return to orbit view / 1");
+    public string FirstPersonBadge => L("第一人称 · 90° FOV", "FIRST PERSON · 90° FOV");
     public string ZoomIn => L("放大 / +", "Zoom in / +");
     public string ZoomOut => L("缩小 / −", "Zoom out / −");
     public string ShowBones => L("显示 / 隐藏骨架", "Show / hide skeleton");
     public string PreviewHelp => L("拖动旋转 · 滚轮缩放 · 方向键旋转 · 灰模预览，不含贴图", "Drag or arrow keys to orbit · wheel to zoom · clay preview, no textures");
+    public string FirstPersonPreviewHelp => L("第一人称 90° FOV · Maya 摄像机 T(0,0,0)、R(90°,0°,-90°) · 按 1 返回环绕视角 · 灰模预览，不含贴图", "First person 90° FOV · Maya camera T(0,0,0), R(90°,0°,-90°) · press 1 for orbit · clay preview, no textures");
     public string TrackName => L("名称", "Name");
     public string BaseAnimation => L("基础动画", "Base animation");
     public string CompositionOrder => L("合成顺序 · 非时间轴", "Composition order · not a timeline");

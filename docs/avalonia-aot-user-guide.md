@@ -23,6 +23,7 @@ For the canonical Hawk recipe, open `fork/AlchemyStars/Example/Hawk/HawkSprint.a
 Choose **Build preview** in the composition workspace header to merge the selected animation into a unique temporary CAST with the existing export engine. It does not require or change the formal output folder; its cache is removed after loading an independent scene. **Open CAST preview** reads an existing merged file. A successful CAST export also previews the selected result.
 
 - Drag the viewport or use arrow keys to orbit; use the wheel or +/− to zoom.
+- Choose the camera button or press `1` for a fixed first-person view. It matches a newly created Maya camera at `T(0,0,0)`, applies `R(90°,0°,-90°)`, and uses a 90° horizontal FOV. Press `1` again, or use either Fit command, to return to orbit view.
 - Use playback, Space, the frame slider and previous/next frame buttons to inspect animation.
 - Press F to frame the subject. Right-click **Fit subject** or press Shift+F to include all geometry, including distant spare parts.
 - Toggle the bone button for a skeleton overlay. Animation-only CAST contains curves, not an embedded skeleton: load its matching model parts into the current project first. The viewport identifies this project-supplied skeleton; matching bone names alone cannot guarantee a matching bind pose.
@@ -38,6 +39,7 @@ Keyboard commands:
 | Save project | `Ctrl+S` |
 | Save project as | `Ctrl+Shift+S` |
 | Export all | `Ctrl+E` |
+| Toggle first-person CAST preview | `1` |
 | Close result/error dialog | `Esc` |
 
 Merged CAST output uses DQS (`quaternion`) for skinned meshes. The bundled Maya importer respects an explicit CAST skinning method and defaults legacy files without one to DQS.

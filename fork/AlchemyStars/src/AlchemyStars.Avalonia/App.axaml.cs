@@ -52,6 +52,8 @@ public sealed partial class App : Application
                 {
                     if (Program.BuildPreviewSmoke) await viewModel.BuildPreviewAsync();
                     else if (Program.PreviewSmokePath is { } castPath) await viewModel.Preview.LoadAsync(castPath);
+                    if (Program.FirstPersonPreviewRequested && viewModel.Preview.HasScene)
+                        viewModel.Preview.ToggleFirstPerson();
                     await Task.Delay(500);
                     mainWindow.VerifyToolbarLayout();
                     if (Program.RenderSmokePath is not null)

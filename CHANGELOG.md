@@ -2,6 +2,7 @@
 
 ## 1.3.0-preview.9 — 2026-09-06
 
+- Added a fixed first-person CAST preview camera matching Maya transform `T(0,0,0)`, `R(90°,0°,-90°)`, with a 90° horizontal FOV and 0.1 near clip. The camera toolbar toggle, `1` shortcut, localized state badge and accessibility name keep orbit and first-person modes explicit.
 - Made animation-track bars read each source CAST asynchronously and scale to its true frame count. The shared frame range also reflects positive and negative layer offsets; frame-count labels, localized tooltips and UI Automation names supplement the visual length encoding.
 - Set merged skinned CAST meshes to Dual Quaternion (`quaternion`) skinning. The bundled Maya importer now defaults older meshes without an explicit skinning method to DQS while continuing to honor explicit methods.
 - Added pure layout, canonical Hawk metadata, Native AOT UI Automation geometry and merged-output DQS regressions. The standard Hawk project visibly resolves to 1-frame idle, 67-frame sprint-loop and 1-frame additive-offset tracks.

@@ -1,0 +1,67 @@
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <!-- Only visual tokens vary: hit targets, padding and panel sizes remain stable. -->
+  <Style Selector="Button, Button.panel-command, Button.activity.selected, ToggleButton.preview-command, TextBox, ComboBox">
+    <Setter Property="CornerRadius" Value="{DynamicResource AppearanceButtonRadius}" />
+  </Style>
+  <Style Selector="Button.primary, Button.secondary">
+    <Setter Property="CornerRadius" Value="{DynamicResource AppearanceActionRadius}" />
+  </Style>
+  <Style Selector="Button /template/ ContentPresenter, Button.secondary /template/ ContentPresenter, Button.icon /template/ ContentPresenter">
+    <Setter Property="BoxShadow" Value="{DynamicResource AppearanceRaisedShadow}" />
+  </Style>
+  <Style Selector="Button:pressed /template/ ContentPresenter, Button.secondary:pressed /template/ ContentPresenter, Button.icon:pressed /template/ ContentPresenter">
+    <Setter Property="BoxShadow" Value="{DynamicResource AppearanceInsetShadow}" />
+  </Style>
+  <Style Selector="Button.toolbar /template/ ContentPresenter, Button.panel-command /template/ ContentPresenter, Button.activity /template/ ContentPresenter, Button.subtle /template/ ContentPresenter">
+    <Setter Property="BoxShadow" Value="none" />
+  </Style>
+  <Style Selector="Button.activity.selected /template/ ContentPresenter, ToggleButton.preview-command:checked /template/ ContentPresenter, ListBoxItem:selected /template/ ContentPresenter">
+    <Setter Property="BoxShadow" Value="{DynamicResource AppearanceInsetShadow}" />
+  </Style>
+  <Style Selector="TextBox /template/ Border#PART_BorderElement, ComboBox /template/ Border#Background">
+    <Setter Property="BoxShadow" Value="{DynamicResource AppearanceInsetShadow}" />
+  </Style>
+  <Style Selector="Border.card, Border.subcard, Border.hero-card, Border.dialog-card">
+    <Setter Property="BoxShadow" Value="{DynamicResource AppearancePanelShadow}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource AppearanceCardRadius}" />
+    <Setter Property="BorderThickness" Value="{DynamicResource AppearanceCardBorder}" />
+  </Style>
+  <Style Selector="Border.workspace-panel">
+    <Setter Property="BoxShadow" Value="{DynamicResource AppearancePanelShadow}" />
+  </Style>
+  <Style Selector="Border.workspace-panel, Border.composition-canvas">
+    <Setter Property="CornerRadius" Value="{DynamicResource AppearancePanelRadius}" />
+  </Style>
+  <Style Selector="Border.dock-header">
+    <Setter Property="CornerRadius" Value="{DynamicResource AppearanceHeaderRadius}" />
+  </Style>
+  <Style Selector="TextBlock.command-text">
+    <Setter Property="Foreground" Value="{DynamicResource AlchemyCommandTextBrush}" />
+  </Style>
+  <Style Selector="TextBlock.command-text.muted">
+    <Setter Property="Foreground" Value="{DynamicResource AlchemyOnDarkMutedBrush}" />
+  </Style>
+  <Style Selector="Border.command-bar Path.icon-glyph">
+    <Setter Property="Stroke" Value="{DynamicResource AlchemyCommandTextBrush}" />
+  </Style>
+  <Style Selector="Button.primary">
+    <Setter Property="Background" Value="{DynamicResource AlchemyActionBrush}" />
+    <Setter Property="Foreground" Value="White" />
+  </Style>
+  <Style Selector="Button.primary:pressed /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AlchemyActionBrush}" />
+  </Style>
+  <Style Selector="TextBlock.command-action-text">
+    <Setter Property="Foreground" Value="White" />
+  </Style>
+  <!-- Tooltips own their surface and ink; toolbar foreground must not leak into popups. -->
+  <Style Selector="ToolTip">
+    <Setter Property="Background" Value="{DynamicResource AlchemySurfaceRaisedBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource AlchemyTextBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AlchemyBorderStrongBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+  <Style Selector="ToolTip TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource AlchemyTextBrush}" />
+  </Style>
+</Styles>

@@ -47,6 +47,9 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged, IDispo
         this.preferences = preferences;
         this.picker = picker;
         var preferenceSnapshot = preferences.Snapshot();
+        themeStyleIndex = preferenceSnapshot.ThemeStyle == "neumorphic" ? 1 : 0;
+        themeModeIndex = preferenceSnapshot.ThemeMode switch { "dark" => 1, "system" => 2, _ => 0 };
+        ApplyAppearance(false);
         languageMode = NormalizeLanguageMode(preferenceSnapshot.Language);
         text = new UiText(ResolveChinese(languageMode));
         Preview = new CastPreviewViewModel(text);

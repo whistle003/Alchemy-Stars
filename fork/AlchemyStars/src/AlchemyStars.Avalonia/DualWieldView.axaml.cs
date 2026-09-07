@@ -21,9 +21,9 @@ public partial class DualWieldView : UserControl
         if (selected is not null)
         {
             var original = selected.ExportWeaponModels;
-            ExportModelsCheckBox.IsChecked = !original;
+            ExportModelsSwitch.IsChecked = !original;
             if (selected.ExportWeaponModels == original) throw new InvalidOperationException("Model export switch did not update the task.");
-            ExportModelsCheckBox.IsChecked = original;
+            ExportModelsSwitch.IsChecked = original;
         }
         if (selected is null || ViewModel.Animations.Count < 3) return;
         var originalIndex = LeftSourcePicker.SelectedIndex;

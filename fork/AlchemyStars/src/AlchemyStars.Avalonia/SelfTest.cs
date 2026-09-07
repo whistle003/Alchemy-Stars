@@ -91,6 +91,17 @@ internal static class SelfTest
             {
                 CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("zh-CN");
                 var preferences = new ApplicationPreferencesStore(Path.Combine(testDirectory, "settings.json"));
+                Require(preferences.Snapshot().ThemeStyle == "apple" && preferences.Snapshot().ThemeMode == "light",
+                    "Existing installations must retain the Apple light default.");
+                preferences.SaveAppearance("neumorphic", "dark");
+                preferences.SaveLanguage("system");
+                preferences.SaveDefaults("system", preferences.CreateWorkspace());
+                var reloadedAppearance = new ApplicationPreferencesStore(Path.Combine(testDirectory, "settings.json")).Snapshot();
+                Require(reloadedAppearance.ThemeStyle == "neumorphic" && reloadedAppearance.ThemeMode == "dark",
+                    "Appearance must persist without being overwritten by other preference saves.");
+                preferences.SaveAppearance("unknown", "unknown");
+                Require(preferences.Snapshot().ThemeStyle == "apple" && preferences.Snapshot().ThemeMode == "light",
+                    "Unknown appearance values must fall back safely.");
                 var projectStore = new WorkspaceProjectStore();
                 var viewModel = new MainWindowViewModel(engine, projectStore, preferences, new SelfTestFilePicker());
                 Require(viewModel.IsChinese, "Chinese system language was not detected.");

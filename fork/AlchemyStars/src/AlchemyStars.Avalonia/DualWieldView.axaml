@@ -1,74 +1,110 @@
 <UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
  xmlns:local="using:AlchemyStars.Avalonia" xmlns:engine="using:AlchemyStars.Engine"
  x:Class="AlchemyStars.Avalonia.DualWieldView" x:DataType="local:MainWindowViewModel">
+ <UserControl.Styles>
+  <Style Selector="ToggleButton.dual-export-switch">
+   <Setter Property="Width" Value="44" />
+   <Setter Property="Height" Value="44" />
+   <Setter Property="Template">
+    <ControlTemplate>
+     <Grid Background="Transparent">
+      <Border Name="SwitchTrack" Width="40" Height="20" CornerRadius="10" VerticalAlignment="Center" HorizontalAlignment="Center" BorderThickness="1" BorderBrush="{DynamicResource AlchemyMutedTextBrush}" Background="{DynamicResource AlchemySurfaceBrush}">
+       <Ellipse Name="SwitchThumb" Width="12" Height="12" Margin="3,0" HorizontalAlignment="Left" VerticalAlignment="Center" Fill="{DynamicResource AlchemyMutedTextBrush}" />
+      </Border>
+     </Grid>
+    </ControlTemplate>
+   </Setter>
+  </Style>
+  <Style Selector="ToggleButton.dual-export-switch:checked /template/ Border#SwitchTrack">
+   <Setter Property="Background" Value="{DynamicResource AlchemyAccentBrush}" />
+   <Setter Property="BorderBrush" Value="{DynamicResource AlchemyAccentBrush}" />
+  </Style>
+  <Style Selector="ToggleButton.dual-export-switch:checked /template/ Ellipse#SwitchThumb">
+   <Setter Property="HorizontalAlignment" Value="Right" />
+   <Setter Property="Fill" Value="White" />
+  </Style>
+  <Style Selector="ToggleButton.dual-export-switch:disabled"><Setter Property="Opacity" Value="0.4" /></Style>
+ </UserControl.Styles>
  <Grid x:Name="DualEditor">
   <Grid.ColumnDefinitions>
-   <ColumnDefinition Width="200" MinWidth="180" MaxWidth="360" />
+   <ColumnDefinition Width="240" MinWidth="180" MaxWidth="360" />
    <ColumnDefinition Width="4" />
    <ColumnDefinition Width="*" MinWidth="240" />
    <ColumnDefinition Width="4" />
-   <ColumnDefinition Width="280" MinWidth="280" MaxWidth="460" />
+   <ColumnDefinition Width="320" MinWidth="280" MaxWidth="460" />
   </Grid.ColumnDefinitions>
   <Border Classes="workspace-panel">
-   <Grid RowDefinitions="44,Auto,*,Auto">
-    <Border Classes="dock-header"><TextBlock Text="{Binding Text.DualAnimations}" Classes="dock-title" /></Border>
-    <StackPanel Grid.Row="1" Margin="10" Spacing="6">
-     <Button Content="{Binding Text.DualAdd}" Click="AddClick" AutomationProperties.Name="{Binding Text.DualAdd}" />
-     <Button Content="{Binding Text.DualPair}" Click="PairClick" AutomationProperties.Name="{Binding Text.DualPair}" />
-    </StackPanel>
+   <Grid RowDefinitions="44,32,*,44">
+    <Border Classes="dock-header"><Grid ColumnDefinitions="*,Auto"><StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"><Image Classes="product-icon" Source="avares://AlchemyStars.Avalonia/Assets/AppleBlue/dual-wield.png" RenderOptions.BitmapInterpolationMode="HighQuality" Stretch="Uniform" IsHitTestVisible="False" /><TextBlock Text="{Binding Text.DualAnimations}" Classes="dock-title" /></StackPanel><StackPanel Grid.Column="1" Orientation="Horizontal"><Button Classes="panel-command" Click="AddClick" ToolTip.Tip="{Binding Text.DualAdd}" AutomationProperties.Name="{Binding Text.DualAdd}" ><Image Classes="product-icon" Source="avares://AlchemyStars.Avalonia/Assets/AppleBlue/add.png" RenderOptions.BitmapInterpolationMode="HighQuality" Stretch="Uniform" IsHitTestVisible="False" /></Button></StackPanel></Grid></Border>
+    <Grid Grid.Row="1" ColumnDefinitions="*,Auto" Margin="14,0"><TextBlock Text="{Binding Text.DualTasks}" Classes="muted" VerticalAlignment="Center" /><TextBlock Grid.Column="1" Text="{Binding DualAnimations.Count}" Classes="muted" VerticalAlignment="Center" /></Grid>
     <ListBox Grid.Row="2" ItemsSource="{Binding DualAnimations}" SelectedItem="{Binding SelectedDual}" Classes="asset-list" AutomationProperties.Name="{Binding Text.DualAnimations}">
-     <ListBox.ItemTemplate><DataTemplate x:DataType="engine:WorkspaceDualAnimation"><TextBlock Text="{Binding Name}" TextWrapping="Wrap" ToolTip.Tip="{Binding Name}" /></DataTemplate></ListBox.ItemTemplate>
+     <ListBox.ItemTemplate><DataTemplate x:DataType="engine:WorkspaceDualAnimation"><Grid ColumnDefinitions="22,*"><Image Classes="product-icon" Source="avares://AlchemyStars.Avalonia/Assets/AppleBlue/dual-wield.png" RenderOptions.BitmapInterpolationMode="HighQuality" Stretch="Uniform" IsHitTestVisible="False" /><TextBlock Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" Text="{Binding Name}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Name}" /></Grid></DataTemplate></ListBox.ItemTemplate>
     </ListBox>
-    <StackPanel Grid.Row="3" Margin="10" Spacing="8">
-     <TextBlock Text="{Binding Text.DualPairHelp}" Classes="muted" TextWrapping="Wrap" />
-     <Button Content="{Binding Text.Remove}" Click="RemoveClick" IsEnabled="{Binding HasSelectedDual}" AutomationProperties.Name="{Binding Text.Remove}" />
-    </StackPanel>
+    <TextBlock Grid.Row="2" Margin="14,24,14,0" VerticalAlignment="Top" Text="{Binding Text.DualPairHelp}" Classes="muted" TextWrapping="Wrap" IsVisible="{Binding !DualAnimations.Count}" IsHitTestVisible="False" />
+    <Grid Grid.Row="3" ColumnDefinitions="*,44" Margin="4,0">
+     <Button Click="PairClick" ToolTip.Tip="{Binding Text.DualPairHelp}" AutomationProperties.Name="{Binding Text.DualPair}" HorizontalAlignment="Stretch" Padding="8,0"><StackPanel Orientation="Horizontal" Spacing="8"><Image Classes="product-icon" Source="avares://AlchemyStars.Avalonia/Assets/AppleBlue/dual-wield.png" RenderOptions.BitmapInterpolationMode="HighQuality" Stretch="Uniform" IsHitTestVisible="False" /><TextBlock Text="{Binding Text.DualPair}" VerticalAlignment="Center" /></StackPanel></Button>
+     <Button Grid.Column="1" Classes="panel-command" Click="RemoveClick" IsEnabled="{Binding HasSelectedDual}" ToolTip.Tip="{Binding Text.Remove}" AutomationProperties.Name="{Binding Text.Remove}"><Image Classes="product-icon" Source="avares://AlchemyStars.Avalonia/Assets/AppleBlue/delete.png" RenderOptions.BitmapInterpolationMode="HighQuality" Stretch="Uniform" IsHitTestVisible="False" /></Button>
+    </Grid>
    </Grid>
   </Border>
   <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ResizeDirection="Columns" ResizeBehavior="PreviousAndNext" Focusable="True" KeyboardIncrement="16" Background="{DynamicResource AlchemyBorderBrush}" AutomationProperties.Name="{Binding Text.ResizePanels}" ToolTip.Tip="{Binding Text.ResizePanels}" />
   <Border Grid.Column="2" Classes="composition-canvas">
-   <Grid RowDefinitions="Auto,*,Auto">
-    <WrapPanel Margin="8">
-     <Button Classes="primary" Content="{Binding Text.BuildPreview}" Click="PreviewClick" IsEnabled="{Binding HasSelectedDual}" AutomationProperties.Name="{Binding Text.BuildPreview}" />
-     <Button Margin="6,0,0,0" Content="{Binding CurrentExportLabel}" Click="ExportClick" IsEnabled="{Binding HasSelectedDual}" AutomationProperties.Name="{Binding CurrentExportLabel}" />
-    </WrapPanel>
+   <Grid RowDefinitions="44,*,Auto">
+    <Border Classes="dock-header"><Grid ColumnDefinitions="*,Auto"><StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"><Image Classes="product-icon" Source="avares://AlchemyStars.Avalonia/Assets/AppleBlue/cast-preview.png" RenderOptions.BitmapInterpolationMode="HighQuality" Stretch="Uniform" IsHitTestVisible="False" /><TextBlock Text="{Binding Text.Composition}" Classes="dock-title" /></StackPanel><StackPanel Grid.Column="1" Orientation="Horizontal"><Button Classes="panel-command" Click="PreviewClick" ToolTip.Tip="{Binding Text.BuildPreview}" AutomationProperties.Name="{Binding Text.BuildPreview}" IsEnabled="{Binding HasSelectedDual}"><Image Classes="product-icon" Source="avares://AlchemyStars.Avalonia/Assets/AppleBlue/cast-preview.png" RenderOptions.BitmapInterpolationMode="HighQuality" Stretch="Uniform" IsHitTestVisible="False" /></Button><Button Classes="panel-command" Click="ExportClick" ToolTip.Tip="{Binding CurrentExportLabel}" AutomationProperties.Name="{Binding CurrentExportLabel}" IsEnabled="{Binding HasSelectedDual}"><Image Classes="product-icon" Source="avares://AlchemyStars.Avalonia/Assets/AppleBlue/export-animation.png" RenderOptions.BitmapInterpolationMode="HighQuality" Stretch="Uniform" IsHitTestVisible="False" /></Button></StackPanel></Grid></Border>
     <local:CastPreviewView Grid.Row="1" DataContext="{Binding Preview}" />
-    <StackPanel Grid.Row="2" Margin="14" Spacing="8">
+    <StackPanel Grid.Row="2" Margin="14,10" Spacing="6">
      <TextBlock Text="{Binding DualSourceSummary}" TextWrapping="Wrap" />
-     <TextBlock Text="{Binding Text.DualTimingHelp}" Classes="muted" TextWrapping="Wrap" />
+     <TextBlock Text="{Binding Text.DualTimingHelp}" FontSize="12" Classes="muted" TextWrapping="Wrap" />
     </StackPanel>
    </Grid>
   </Border>
   <GridSplitter Grid.Column="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ResizeDirection="Columns" ResizeBehavior="PreviousAndNext" Focusable="True" KeyboardIncrement="16" Background="{DynamicResource AlchemyBorderBrush}" AutomationProperties.Name="{Binding Text.ResizePanels}" ToolTip.Tip="{Binding Text.ResizePanels}" />
   <Border Grid.Column="4" Classes="workspace-panel">
-   <ScrollViewer HorizontalScrollBarVisibility="Disabled">
-    <StackPanel Margin="12" Spacing="10">
-     <TextBlock Text="{Binding Text.DualHelp}" Classes="muted" TextWrapping="Wrap" />
-     <StackPanel Spacing="10" IsEnabled="{Binding HasSelectedDual}">
-      <CheckBox x:Name="ExportModelsCheckBox" Content="{Binding Text.DualExportModels}" IsChecked="{Binding SelectedDual.ExportWeaponModels, Mode=TwoWay}" AutomationProperties.Name="{Binding Text.DualExportModels}" />
-      <TextBlock Text="{Binding Text.DualExportModelsHelp}" Classes="muted" TextWrapping="Wrap" />
-      <TextBlock Text="{Binding Text.DualName}" Classes="field-label" />
-      <TextBox Text="{Binding SelectedDual.Name}" AutomationProperties.Name="{Binding Text.DualName}" />
-      <TextBlock Text="{Binding Text.DualLeft}" Classes="field-label" />
+   <Grid RowDefinitions="44,*">
+    <Border Classes="dock-header"><StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"><Image Classes="product-icon" Source="avares://AlchemyStars.Avalonia/Assets/AppleBlue/output-settings.png" RenderOptions.BitmapInterpolationMode="HighQuality" Stretch="Uniform" IsHitTestVisible="False" /><TextBlock Text="{Binding Text.Inspector}" Classes="dock-title" /></StackPanel></Border>
+    <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
+     <StackPanel>
+      <TextBlock Margin="14,12" Text="{Binding Text.DualHelp}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+      <Expander Classes="property-group" Header="{Binding Text.ExportTarget}" IsExpanded="True">
+       <StackPanel Spacing="16" IsEnabled="{Binding HasSelectedDual}">
+        <StackPanel><TextBlock Text="{Binding Text.DualName}" Classes="field-label" /><TextBox Text="{Binding SelectedDual.Name}" AutomationProperties.Name="{Binding Text.DualName}" /></StackPanel>
+        <StackPanel Spacing="4">
+         <Grid ColumnDefinitions="*,Auto" MinHeight="44">
+          <TextBlock Text="{Binding Text.DualExportModels}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,12,0" />
+          <ToggleButton x:Name="ExportModelsSwitch" Classes="dual-export-switch" Grid.Column="1" MinWidth="0" Height="44" VerticalAlignment="Center" IsChecked="{Binding SelectedDual.ExportWeaponModels, Mode=TwoWay}" AutomationProperties.Name="{Binding Text.DualExportModels}" />
+         </Grid>
+         <TextBlock Text="{Binding Text.DualExportModelsHelp}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+        </StackPanel>
+        <StackPanel><TextBlock Text="{Binding Text.OutputFolder}" Classes="field-label" /><Grid ColumnDefinitions="*,8,44"><TextBox Text="{Binding SelectedDual.OutputFolder}" AutomationProperties.Name="{Binding Text.OutputFolder}" /><Button Grid.Column="2" Classes="icon secondary" Click="FolderClick" ToolTip.Tip="{Binding Text.Browse}" AutomationProperties.Name="{Binding Text.Browse}"><Image Classes="product-icon" Source="avares://AlchemyStars.Avalonia/Assets/AppleBlue/import-assets.png" RenderOptions.BitmapInterpolationMode="HighQuality" Stretch="Uniform" IsHitTestVisible="False" /></Button></Grid></StackPanel>
+       </StackPanel>
+      </Expander>
+      <Expander Classes="property-group" Header="{Binding Text.DualSources}" IsExpanded="True"><StackPanel Spacing="16" IsEnabled="{Binding HasSelectedDual}">
+      <StackPanel><TextBlock Text="{Binding Text.DualLeft}" Classes="field-label" />
       <ComboBox x:Name="LeftSourcePicker" ItemsSource="{Binding Animations}" SelectedItem="{Binding DualLeftSource, Mode=TwoWay}" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding Text.DualLeft}" ToolTip.Tip="{Binding DualLeftSource.Name}">
        <ComboBox.ItemTemplate><DataTemplate x:DataType="engine:WorkspaceAnimation"><TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" /></DataTemplate></ComboBox.ItemTemplate>
-      </ComboBox>
+      </ComboBox></StackPanel>
       <Button Content="{Binding Text.DualEditLeft}" Click="EditLeftClick" AutomationProperties.Name="{Binding Text.DualEditLeft}" />
-      <TextBlock Text="{Binding Text.DualRight}" Classes="field-label" />
+      <StackPanel><TextBlock Text="{Binding Text.DualRight}" Classes="field-label" />
       <ComboBox x:Name="RightSourcePicker" ItemsSource="{Binding Animations}" SelectedItem="{Binding DualRightSource, Mode=TwoWay}" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding Text.DualRight}" ToolTip.Tip="{Binding DualRightSource.Name}">
        <ComboBox.ItemTemplate><DataTemplate x:DataType="engine:WorkspaceAnimation"><TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" /></DataTemplate></ComboBox.ItemTemplate>
-      </ComboBox>
+      </ComboBox></StackPanel>
       <Button Content="{Binding Text.DualEditRight}" Click="EditRightClick" AutomationProperties.Name="{Binding Text.DualEditRight}" />
-      <TextBlock Text="{Binding Text.DualLeftMount}" Classes="field-label" /><TextBox Text="{Binding SelectedDual.LeftMount}" AutomationProperties.Name="{Binding Text.DualLeftMount}" />
-      <TextBlock Text="{Binding Text.DualRightMount}" Classes="field-label" /><TextBox Text="{Binding SelectedDual.RightMount}" AutomationProperties.Name="{Binding Text.DualRightMount}" />
-      <TextBlock Text="{Binding Text.DualSourceMount}" Classes="field-label" /><TextBox Text="{Binding SelectedDual.SourceMount}" AutomationProperties.Name="{Binding Text.DualSourceMount}" />
-      <TextBlock Text="{Binding Text.OutputFolder}" Classes="field-label" /><TextBox Text="{Binding SelectedDual.OutputFolder}" AutomationProperties.Name="{Binding Text.OutputFolder}" />
-      <Button Content="{Binding Text.Browse}" Click="FolderClick" AutomationProperties.Name="{Binding Text.Browse}" />
-      <Button Content="{Binding Text.DualAllFolder}" Click="AllFolderClick" AutomationProperties.Name="{Binding Text.DualAllFolder}" />
-      <Button Content="{Binding Text.DualExportAll}" Click="ExportAllClick" AutomationProperties.Name="{Binding Text.DualExportAll}" />
+      </StackPanel></Expander>
+      <Expander Classes="property-group" Header="{Binding Text.DualMounts}" IsExpanded="True"><StackPanel Spacing="16" IsEnabled="{Binding HasSelectedDual}">
+      <StackPanel><TextBlock Text="{Binding Text.DualLeftMount}" Classes="field-label" />
+      <TextBox Text="{Binding SelectedDual.LeftMount}" AutomationProperties.Name="{Binding Text.DualLeftMount}" /></StackPanel>
+      <StackPanel><TextBlock Text="{Binding Text.DualRightMount}" Classes="field-label" />
+      <TextBox Text="{Binding SelectedDual.RightMount}" AutomationProperties.Name="{Binding Text.DualRightMount}" /></StackPanel>
+      <StackPanel><TextBlock Text="{Binding Text.DualSourceMount}" Classes="field-label" />
+      <TextBox Text="{Binding SelectedDual.SourceMount}" AutomationProperties.Name="{Binding Text.DualSourceMount}" /></StackPanel>
+      </StackPanel></Expander>
+      <Expander Classes="property-group" Header="{Binding Text.DualBatch}" IsExpanded="False"><StackPanel Spacing="8" IsEnabled="{Binding HasSelectedDual}">
+       <Button Content="{Binding Text.DualAllFolder}" Click="AllFolderClick" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding Text.DualAllFolder}" />
+       <Button Content="{Binding Text.DualExportAll}" Click="ExportAllClick" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding Text.DualExportAll}" />
+      </StackPanel></Expander>
      </StackPanel>
-    </StackPanel>
-   </ScrollViewer>
+    </ScrollViewer>
+   </Grid>
   </Border>
  </Grid>
 </UserControl>

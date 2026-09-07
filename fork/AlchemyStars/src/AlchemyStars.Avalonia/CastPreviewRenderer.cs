@@ -36,7 +36,7 @@ internal readonly record struct PreviewView(
 // deterministic z-buffered software rasterizer for headless regressions.
 internal static class CastPreviewRenderer
 {
-    internal const int Background = unchecked((int)0xFF10151C);
+    internal const int Background = unchecked((int)0xFF252527);
     internal const int AntiAliasingSamples = 2;
 
     public static CastPreviewFrame Prepare(CastPreviewScene scene, float frame, int width, int height, PreviewCamera camera, bool bones)

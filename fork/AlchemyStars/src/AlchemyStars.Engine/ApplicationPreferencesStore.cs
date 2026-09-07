@@ -65,6 +65,12 @@ public sealed class ApplicationPreferencesStore
     public void SaveLanguage(string language) =>
         Update(preferences => preferences.Language = string.IsNullOrWhiteSpace(language) ? "system" : language);
 
+    public void SaveAppearance(string style, string mode) => Update(preferences =>
+    {
+        preferences.ThemeStyle = style == "neumorphic" ? style : "apple";
+        preferences.ThemeMode = mode is "dark" or "system" ? mode : "light";
+    });
+
     private AppPreferenceData Read()
     {
         if (data is not null)
@@ -82,6 +88,8 @@ public sealed class ApplicationPreferencesStore
         data ??= new AppPreferenceData();
         data.LastDirectories ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         data.DefaultOutputFormat = OutputFormats.Normalize(data.DefaultOutputFormat);
+        data.ThemeStyle = data.ThemeStyle == "neumorphic" ? "neumorphic" : "apple";
+        data.ThemeMode = data.ThemeMode is "dark" or "system" ? data.ThemeMode : "light";
         return data;
     }
 
@@ -122,6 +130,8 @@ public sealed class ApplicationPreferencesStore
 
 public sealed class AppPreferenceData
 {
+    public string ThemeStyle { get; set; } = "apple";
+    public string ThemeMode { get; set; } = "light";
     public string Language { get; set; } = "system";
     public string DefaultOutputFormat { get; set; } = ".cast";
     public bool DefaultCastAnimationOnly { get; set; }
@@ -131,6 +141,8 @@ public sealed class AppPreferenceData
     internal AppPreferenceData Clone() => new()
     {
         Language = Language,
+        ThemeStyle = ThemeStyle,
+        ThemeMode = ThemeMode,
         DefaultOutputFormat = DefaultOutputFormat,
         DefaultCastAnimationOnly = DefaultCastAnimationOnly,
         DefaultBakeRelevantBonesOnly = DefaultBakeRelevantBonesOnly,

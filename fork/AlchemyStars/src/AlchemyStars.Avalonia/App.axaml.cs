@@ -58,6 +58,8 @@ public sealed partial class App : Application
                     if (Program.FirstPersonPreviewRequested && viewModel.Preview.HasScene)
                         viewModel.Preview.ToggleFirstPerson();
                     await Task.Delay(500);
+                    if (Program.AppearanceSmokeRequested)
+                        await AppearanceSmoke.RunAsync(mainWindow, viewModel);
                     mainWindow.VerifyToolbarLayout();
                     if (viewModel.IsDualPage)
                         mainWindow.GetVisualDescendants().OfType<DualWieldView>().Single().VerifySourceSelection();

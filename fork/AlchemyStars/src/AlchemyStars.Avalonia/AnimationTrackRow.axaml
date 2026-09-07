@@ -6,8 +6,8 @@
     xmlns:local="using:AlchemyStars.Avalonia">
   <Grid ColumnDefinitions="200,*,84" Margin="0,4">
     <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-      <Path Classes="icon-glyph muted" Data="M3,5 L17,5 L17,17 L3,17 Z M3,9 L17,9 M7,2 L7,7 M13,2 L13,7 M8,11 L13,14 L8,17 Z" IsVisible="{Binding IsBase}" IsHitTestVisible="False" />
-      <Path Classes="icon-glyph muted" Data="M10,2 L18,6 L10,10 L2,6 Z M2,10 L10,14 L18,10 M2,14 L10,18 L18,14" IsVisible="{Binding IsLayer}" IsHitTestVisible="False" />
+      <Image Classes="product-icon" Width="20" Height="20" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="HighQuality" Source="avares://AlchemyStars.Avalonia/Assets/AppleBlue/animation-library.png" IsVisible="{Binding IsBase}" IsHitTestVisible="False" />
+      <Image Classes="product-icon" Width="20" Height="20" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="HighQuality" Source="avares://AlchemyStars.Avalonia/Assets/AppleBlue/animation-layers.png" IsVisible="{Binding IsLayer}" IsHitTestVisible="False" />
       <TextBlock Text="{Binding TrackLabel}" Width="162" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding SourcePath}" />
     </StackPanel>
     <Grid Grid.Column="1" Classes="track-lane">

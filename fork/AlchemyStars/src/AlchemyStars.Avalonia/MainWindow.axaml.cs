@@ -41,8 +41,8 @@ public sealed partial class MainWindow : Window
         }
         AnimationEditor.RowDefinitions[0].Height = new GridLength(3, GridUnitType.Star);
         AnimationEditor.RowDefinitions[2].Height = new GridLength(2, GridUnitType.Star);
-        DualWorkspace.EditorGrid.ColumnDefinitions[0].Width = new GridLength(200);
-        DualWorkspace.EditorGrid.ColumnDefinitions[4].Width = new GridLength(280);
+        DualWorkspace.EditorGrid.ColumnDefinitions[0].Width = new GridLength(240);
+        DualWorkspace.EditorGrid.ColumnDefinitions[4].Width = new GridLength(320);
         KeepEditorsWithinWindow();
     }
 
@@ -67,6 +67,19 @@ public sealed partial class MainWindow : Window
         if (buttons.Length != 4) throw new InvalidOperationException("The project toolbar must expose four commands.");
         foreach (var button in buttons)
         {
+            var productIcon = button.GetVisualDescendants().OfType<Image>().SingleOrDefault();
+            if (productIcon is not null)
+            {
+                var imageOrigin = productIcon.TranslatePoint(default, button)
+                    ?? throw new InvalidOperationException("Toolbar image is not attached to its button.");
+                if (productIcon.Source is null || button.Bounds.Width < 44 || button.Bounds.Height < 44
+                    || productIcon.Bounds.Width < productIcon.Width || productIcon.Bounds.Height < productIcon.Height
+                    || imageOrigin.X < 2 || imageOrigin.Y < 2
+                    || imageOrigin.X + productIcon.Bounds.Width > button.Bounds.Width - 2
+                    || imageOrigin.Y + productIcon.Bounds.Height > button.Bounds.Height - 2)
+                    throw new InvalidOperationException("A toolbar image or hit target is clipped.");
+                continue;
+            }
             var glyph = button.GetVisualDescendants().OfType<global::Avalonia.Controls.Shapes.Path>().Single();
             var ink = glyph.Data!.Bounds.Inflate(glyph.StrokeThickness / 2);
             var origin = glyph.TranslatePoint(default, button)

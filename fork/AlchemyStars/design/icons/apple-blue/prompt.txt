@@ -1,0 +1,26 @@
+A cohesive Alchemy Stars desktop animation-editor spot icon family, matching its Apple-inspired white/parchment interface and Action Blue controls. Refined flat geometric outline drawings, blue monoline, softly rounded ends, generous open negative space. These are medium-size feature illustrations, not illustrations of the Apple logo. No gradients, no shadows, no 3D, no glossy material, no chunky dark fills.
+
+Construction: 48-unit grid, 34-unit live area, consistent optical mass and equal padding. uniform 2-unit Action Blue outline, round caps and joins. consistent 4-unit rounded rectangle corners. horizontal, vertical, 45 degrees. one recognizable core metaphor and at most 3 secondary details per icon. open outlines; occasional tiny white inset, never large solid fills. Action Blue #0066cc outlines; white #ffffff only as small optional inset; no other icon colors. same rounded panel, same arrow, same keyframe diamond and same joint node throughout. flat frontal schematic, no isometric projection. none. small keyframe diamond integrated where it helps describe animation, never a detached decorative sparkle. blue linework defines every silhouette, any white inset is subordinate. Each icon occupies at most 65% of its cell width and height; maintain equal visual scale and consistent line thickness throughout.
+
+Use only these colours and no others: #0066cc, #ffffff for the icons, and #808080 for the removable backdrop. Keep the saturation as given; do not brighten or shift the hues.
+
+The 16 icons in row-major order:
+1. a film strip with one diamond keyframe in its center
+2. three separated model components represented by three stacked beveled rectangular plates
+3. two mirrored simplified hand-held rig handles connected by a U-shaped link and a central keyframe diamond; not realistic guns
+4. three horizontal animation tracks with a single offset diamond marker on each
+5. a simplified open hand outline with three clearly spaced fingers and a thumb, one small joint diamond in the palm
+6. a bent three-joint bone chain aimed at a small diamond target
+7. a rounded preview monitor enclosing a wireframe cube and a small play triangle
+8. an open asset folder with an arrow entering downward
+9. a shallow output tray with an arrow exiting upward and a small diamond below the arrow
+10. three identical document sheets in a stepped stack, the front sheet has a diamond keyframe
+11. a rounded workspace window divided into three panes, one tiny diamond in the central pane
+12. three horizontal adjustment sliders with rounded square knobs
+13. a simplified camera outline with a circular lens containing a small diamond
+14. a horizontal time ruler with a play triangle and a single diamond playhead
+15. a document with two short blank horizontal naming lines and a small diamond insertion marker; absolutely no letters
+16. a circular globe with two meridians and one equator, small opposing translation arrows attached below; absolutely no letters
+Each is a simple, clear metaphor. No text anywhere.
+
+A neat 4x4 grid on a perfectly uniform solid flat medium-grey background, exact hex #808080. The background must have no gradient, no vignette, no lighting, no texture, no paper grain, and no shadow. Even and generous equal gaps between every cell so icons never touch, each icon centered in its own cell, all icons the same size. No grid lines, no borders, no frames, no text, no labels, no numbers, and no drop shadow cast onto the grey background. Square image. Render at 2048x2048 if supported. The no frames restriction refers to the sheet layout, not the functional window and folder symbols.

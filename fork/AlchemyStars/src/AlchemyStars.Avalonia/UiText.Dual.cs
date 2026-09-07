@@ -2,6 +2,10 @@ namespace AlchemyStars.Avalonia;
 
 public sealed partial class UiText
 {
+    public string DualTasks => L("任务", "Tasks");
+    public string DualSources => L("动画来源", "Animation sources");
+    public string DualMounts => L("武器挂点", "Weapon mounts");
+    public string DualBatch => L("批量操作", "Batch actions");
     public string DualAnimations => L("双持动画", "Dual wield");
     public string DualAdd => L("新建双持任务", "New dual task");
     public string DualPair => L("配对已有动画", "Pair source tasks");

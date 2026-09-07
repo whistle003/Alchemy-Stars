@@ -1,0 +1,108 @@
+{
+  "name": "alchemy-apple-blue",
+  "label": "Alchemy Stars 蓝色功能图标",
+  "preamble": "A cohesive Alchemy Stars desktop animation-editor spot icon family, matching its Apple-inspired white/parchment interface and Action Blue controls. Refined flat geometric outline drawings, blue monoline, softly rounded ends, generous open negative space. These are medium-size feature illustrations, not illustrations of the Apple logo. No gradients, no shadows, no 3D, no glossy material, no chunky dark fills.",
+  "palette": [
+    "#0066cc",
+    "#ffffff"
+  ],
+  "cutout": "floodfill",
+  "thresh": 30,
+  "construction": {
+    "grid": "48-unit grid, 34-unit live area, consistent optical mass and equal padding",
+    "stroke": "uniform 2-unit Action Blue outline, round caps and joins",
+    "corner_radius": "consistent 4-unit rounded rectangle corners",
+    "angles": "horizontal, vertical, 45 degrees",
+    "detail_budget": "one recognizable core metaphor and at most 3 secondary details per icon",
+    "fill_rule": "open outlines; occasional tiny white inset, never large solid fills",
+    "color_rule": "Action Blue #0066cc outlines; white #ffffff only as small optional inset; no other icon colors",
+    "shared_parts": "same rounded panel, same arrow, same keyframe diamond and same joint node throughout",
+    "perspective": "flat frontal schematic, no isometric projection",
+    "shadow": "none",
+    "motif": "small keyframe diamond integrated where it helps describe animation, never a detached decorative sparkle",
+    "weight_hierarchy": "blue linework defines every silhouette, any white inset is subordinate"
+  },
+  "fits": "48-128px feature, category and empty-state icons; retain vector glyphs for dense toolbars",
+  "icons": [
+    {
+      "index": 1,
+      "name": "animation-library",
+      "metaphor": "a film strip with one diamond keyframe in its center"
+    },
+    {
+      "index": 2,
+      "name": "model-parts",
+      "metaphor": "three separated model components represented by three stacked beveled rectangular plates"
+    },
+    {
+      "index": 3,
+      "name": "dual-wield",
+      "metaphor": "two mirrored simplified hand-held rig handles connected by a U-shaped link and a central keyframe diamond; not realistic guns"
+    },
+    {
+      "index": 4,
+      "name": "animation-layers",
+      "metaphor": "three horizontal animation tracks with a single offset diamond marker on each"
+    },
+    {
+      "index": 5,
+      "name": "hand-pose",
+      "metaphor": "a simplified open hand outline with three clearly spaced fingers and a thumb, one small joint diamond in the palm"
+    },
+    {
+      "index": 6,
+      "name": "inverse-kinematics",
+      "metaphor": "a bent three-joint bone chain aimed at a small diamond target"
+    },
+    {
+      "index": 7,
+      "name": "cast-preview",
+      "metaphor": "a rounded preview monitor enclosing a wireframe cube and a small play triangle"
+    },
+    {
+      "index": 8,
+      "name": "import-assets",
+      "metaphor": "an open asset folder with an arrow entering downward"
+    },
+    {
+      "index": 9,
+      "name": "export-animation",
+      "metaphor": "a shallow output tray with an arrow exiting upward and a small diamond below the arrow"
+    },
+    {
+      "index": 10,
+      "name": "batch-processing",
+      "metaphor": "three identical document sheets in a stepped stack, the front sheet has a diamond keyframe"
+    },
+    {
+      "index": 11,
+      "name": "project-workspace",
+      "metaphor": "a rounded workspace window divided into three panes, one tiny diamond in the central pane"
+    },
+    {
+      "index": 12,
+      "name": "output-settings",
+      "metaphor": "three horizontal adjustment sliders with rounded square knobs"
+    },
+    {
+      "index": 13,
+      "name": "camera-view",
+      "metaphor": "a simplified camera outline with a circular lens containing a small diamond"
+    },
+    {
+      "index": 14,
+      "name": "timeline-playback",
+      "metaphor": "a horizontal time ruler with a play triangle and a single diamond playhead"
+    },
+    {
+      "index": 15,
+      "name": "output-naming",
+      "metaphor": "a document with two short blank horizontal naming lines and a small diamond insertion marker; absolutely no letters"
+    },
+    {
+      "index": 16,
+      "name": "language",
+      "metaphor": "a circular globe with two meridians and one equator, small opposing translation arrows attached below; absolutely no letters"
+    }
+  ]
+}

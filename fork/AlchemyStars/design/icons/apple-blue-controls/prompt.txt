@@ -1,0 +1,19 @@
+Create a cohesive Alchemy Stars animation editor supplemental icon sheet. Match existing Apple Blue family: flat frontal geometric blue outlines #0066cc, white #ffffff inner shapes, uniform medium stroke, rounded caps and joins, restrained rounded corners, no gradients, shadows, textures or 3D. Each concept is instantly legible at small size; only 2-3 elements per icon. Equal optical size. No enclosing tiles except the actual shape described. No decorative stars. Exactly sixteen symbols in a 4x4 grid, row-major:
+1 save: simple floppy disk with white body, blue outline, upper slot and lower label.
+2 save as: same floppy disk with a short diagonal pencil at lower right.
+3 about: blue outlined circle, white interior, simple lowercase i information glyph.
+4 add: thick blue outlined plus sign with white interior.
+5 delete: blue outlined white trash bin, lid, two vertical inner strokes.
+6 move up: blue outlined white upward arrow.
+7 move down: identical arrow pointing downward.
+8 restore layout: a blue rounded almost-circular return arrow enclosing one small white outlined square.
+9 fit view: four blue right-angle corner brackets arranged into a square, generous clear middle.
+10 zoom in: blue outlined white magnifying glass containing blue plus.
+11 zoom out: matching magnifier containing blue minus.
+12 previous frame: blue outlined white left-pointing triangle and one vertical bar immediately to its left.
+13 play: blue outlined white right-pointing triangle.
+14 pause: two identical blue outlined white vertical rounded bars close together.
+15 next frame: blue outlined white right-pointing triangle and one vertical bar immediately to its right.
+16 notification: blue outlined white circle with blue exclamation point.
+Use only #0066cc and #ffffff in the symbols. All disconnected functional parts must stay very close to the core symbol. Each icon fits within the central 65% of its own cell. Centers x=12.5%,37.5%,62.5%,87.5% and y=12.5%,37.5%,62.5%,87.5%.
+A neat 4x4 grid on a perfectly uniform solid flat medium-grey background, exact hex #808080. The background must have no gradient, no vignette, no lighting, no texture, no paper grain, and no shadow. Even and generous equal gaps between every cell so icons never touch, each icon centered in its own cell, all icons the same size. No grid lines, no borders, no frames, no text, no labels, no numbers, and no drop shadow cast onto the grey background. Square image. The i and exclamation are functional symbols only, no written captions. Output 2048 square if possible.
